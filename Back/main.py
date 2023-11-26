@@ -188,3 +188,7 @@ def update_user_Autorisation(edit_user: schemas.UserEditAutorisation, db: Sessio
             db, edit_user.Email, edit_user.Autorisation)
         return user
 # endregion : Connexion visualisation et création d'un utilisateur
+
+# region : Visualisation et création d'un article
+# Récupération de la liste des articles
+
