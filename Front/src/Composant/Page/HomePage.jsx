@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
 
 function HomePage({ isAdmin }) {
   const [content, setContent] = useState("default");
@@ -163,6 +164,7 @@ function HomePage({ isAdmin }) {
       mainContent = (
         <div>
           <h1 style={{ color: "white" }}>Gestion des utilisateurs </h1>
+          <TableUtilisateurs />
         </div>
       );
       break;
