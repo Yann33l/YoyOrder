@@ -41,7 +41,7 @@ function App() {
     const ConfirmPassword = event.target.elements.ConfirmPassword.value;
 
     // Vérification de l'email
-    if (Email.endsWith("@goldenline.fr")) {
+    if (Email.endsWith("@a")) {
       try {
         // Vérification de l'existence de l'utilisateur
         const response = await checkUser(Email);
@@ -67,7 +67,7 @@ function App() {
         }
       }
     } else {
-      alert("Vous devez utiliser un email @goldenline.fr");
+      alert("Vous devez utiliser un email @a");
     }
   };
 

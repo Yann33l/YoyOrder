@@ -34,8 +34,6 @@ export const createUser = async (Email, Password) => {
     const response = await axios.post(`${API_URL}/create_user/`, {
       Email: Email,
       Password: Password,
-      Admin: false,
-      Autorisation: false,
     });
     const data = response.data;
     return data;
