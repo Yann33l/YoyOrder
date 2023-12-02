@@ -1,3 +1,6 @@
+from datetime import date, datetime
+
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from . import models, schemas
@@ -20,8 +23,8 @@ def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.users(
         Email=user.Email,
         Password=user.Password,
-        Admin=user.Admin,
-        Autorisation=user.Autorisation,
+        Admin=False,
+        Autorisation=False,
     )
     db.add(db_user)
     db.commit()
@@ -48,6 +51,33 @@ def edit_autorisation_status(db: Session, email: str, autorisation: bool):
     return db_user
 
 
+def edit_user_secteur(db: Session, user_id: int, secteur_id: int):
+    db_user = db.query(models.users).filter(
+        models.users.ID == user_id).scalar()
+    r_user_secteur = db.query(models.r_user_secteur).filter(
+        and_(models.r_user_secteur.user_id == db_user.ID,
+             models.r_user_secteur.secteur_id == secteur_id)
+    ).scalar()
+    # si le secteur existe déjà pour l'utilisateur, on le supprime
+    if db_user and r_user_secteur:
+        db.delete(r_user_secteur)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    else:
+        # sinon on l'ajoute
+        db_r_user_secteur = models.r_user_secteur(
+            user_id=user_id,
+            secteur_id=secteur_id,
+        )
+        db.add(db_r_user_secteur)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+
+    # sinon on l'ajoute
+
+
 # Articles
 def get_articles(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.articles).offset(skip).limit(limit).all()
@@ -55,13 +85,12 @@ def get_articles(db: Session, skip: int = 0, limit: int = 100):
 
 def create_article(db: Session, article: schemas.Articles):
     db_article = models.articles(
-        ID=article.ID,
         libelle=article.libelle,
         ref=article.ref,
         fournisseur_id=article.fournisseur_id,
         conditionnement=article.conditionnement,
-        dateDebutValidite=article.dateDebutValidite,
-        dateFinValidite=article.dateFinValidite,
+        dateDebutValidite=date.today(),
+        dateFinValidite=datetime(3000, 12, 31),
     )
     db.add(db_article)
     db.commit()
@@ -76,7 +105,6 @@ def get_fournisseurs(db: Session, skip: int = 0, limit: int = 100):
 
 def create_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
     db_fournisseur = models.fournisseurs(
-        ID=fournisseur.ID,
         libelle=fournisseur.libelle,
         telephone=fournisseur.telephone,
         email=fournisseur.email,
@@ -86,6 +114,8 @@ def create_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
     db.add(db_fournisseur)
     db.commit()
     return db_fournisseur
+
+# Voir pour ne changer que les champs modifiés idem sur les autres edits
 
 
 def edit_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
@@ -216,3 +246,35 @@ def edit_commande(db: Session, commande: schemas.Commandes):
         db.commit()
         db.refresh(db_commande)
     return db_commande
+
+
+# Lieux de stockage
+def get_lieuxdestockage(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.lieuxdestockage).offset(skip).limit(limit).all()
+
+
+def create_lieuxdestockage(db: Session, lieuxdestockage: schemas.LieuxDeStockage):
+    db_lieuxdestockage = models.lieuxdestockage(
+        ID=lieuxdestockage.ID,
+        libelle=lieuxdestockage.libelle,
+        temperature=lieuxdestockage.temperature,
+    )
+    db.add(db_lieuxdestockage)
+    db.commit()
+    return db_lieuxdestockage
+
+
+# gestion des dates
+def get_usersdates(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.usersdates).offset(skip).limit(limit).all()
+
+
+def create_userdate(db: Session, userdate: schemas.usersdates):
+    db_userdate = models.usersdates(
+        ID=userdate.ID,
+        user_id=userdate.user_id,
+        date=userdate.date,
+    )
+    db.add(db_userdate)
+    db.commit()
+    return db_userdate

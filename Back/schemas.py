@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -34,8 +35,8 @@ class UserEditAutorisation (BaseModel):
 
 class UserBase(BaseModel):
     Email: str
-    Admin: bool
-    Autorisation: bool
+    Admin: Optional[bool] = False
+    Autorisation: Optional[bool] = False
 
     class Config:
         orm_mode = True
@@ -52,7 +53,7 @@ class Articles(BaseModel):
     libelle: str
     ref: str
     fournisseur_id: int
-    conditionnement: str
+    conditionnement: Optional[str] = None
     dateDebutValidite: date
     dateFinValidite: date
 
@@ -60,10 +61,10 @@ class Articles(BaseModel):
 class Fournisseurs(BaseModel):
     ID: int
     libelle: str
-    telephone: str
-    email: str
-    siteWeb: str
-    getCertificatAnalyse: str
+    telephone: Optional[str] = None
+    email: Optional[str] = None
+    siteWeb: Optional[str] = None
+    getCertificatAnalyse: Optional[str] = None
 
 
 class Commandes(BaseModel):
@@ -72,8 +73,8 @@ class Commandes(BaseModel):
     quantite: int
     secteur_id: int
     dateCommande: date
-    dateReception: date
-    dateAchat: date
+    dateAchat: Optional[date] = None
+    dateReception: Optional[date] = None
 
 
 class Secteurs(BaseModel):
@@ -84,17 +85,18 @@ class Secteurs(BaseModel):
 class Stocks(BaseModel):
     ID: int
     article_id: int
-    quantite: int
-    secteur_id: int
-    dateAchat: date
-    datePeremption: date
-    dateReception: date
+    quantiteInitiale: Optional[int] = None
+    quantiteRestante: Optional[int] = None
+    lot: Optional[str] = None
+    datePeremption: Optional[date] = None
+    dateReception: Optional[date] = None
+    COA: Optional[bytes] = None
 
 
 class GestionDesCouts(BaseModel):
     ID: int
     article_id: int
-    prixUnitaire: date
+    prixUnitaire: Optional[float] = None
     dateDebutValidite: date
     dateFinValidite: date
 
@@ -105,10 +107,21 @@ class LieuxDeStockage(BaseModel):
     temperature: int
 
 
+class Pieces(BaseModel):
+    ID: int
+    libelle: str
+
+
 class r_articles_lieux(BaseModel):
     ID: int
     article_id: int
     lieuxDeStockage_id: int
+
+
+class r_articles_pieces(BaseModel):
+    ID: int
+    article_id: int
+    piece_id: int
 
 
 class r_articles_secteurs(BaseModel):
@@ -121,7 +134,7 @@ class r_user_stock(BaseModel):
     ID: int
     user_id: int
     stock_id: int
-    quantiteUpdtae: int
+    quantiteUpdate: int
     dateUpdate: date
 
 
@@ -133,9 +146,8 @@ class r_user_commande(BaseModel):
 
 
 class r_user_secteur(BaseModel):
-    ID: int
     user_id: int
-    secteur_id: int
+    secteur_libelle: str
 
 
 class usersdates(BaseModel):
