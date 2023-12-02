@@ -20,7 +20,7 @@ local_ip = socket.gethostbyname(socket.gethostname())
 if ENV == "local":
     SECRET_KEY = "B4AB1DBD6953186D3ABF5C8D5625CF06"
     ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES = 5
+    ACCESS_TOKEN_EXPIRE_MINUTES = 180
 else:
     SECRET_KEY = str(os.getenv("SECRET_KEY"))
     ALGORITHM = str(os.getenv("ALGORITHM"))
@@ -150,14 +150,30 @@ def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
         user.Password = bcrypt.hashpw(user.Password, salt)
         return CRUD.create_user(db, user)
 
+
 # Récupération de la liste des utilisateurs
 
-
-@app.get("/users/", response_model=list[schemas.UserBase])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+@app.get("/users/")
+def read_users(current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Admin is True:
-        users = CRUD.get_users(db, skip=skip, limit=limit)
-        return users
+        try:
+            results = client_repository.get_users()
+            formatted_results = []
+            for row in results:
+                formatted_results.append({
+                    "user_id": row[0],
+                    "Email": row[1],
+                    "Admin": row[2],
+                    "Autorisation": row[3],
+                    "secteur_libelle": row[4],
+                    "secteur_id": row[5],
+                })
+            return {"results": formatted_results}
+        
+        except Exception as e:
+            return {"error": str(e)}
+    else:
+        raise HTTPException(status_code=400, detail="Inactive user")
 
 # Récupération d'un utilisateur par son email
 
@@ -182,7 +198,7 @@ def update_user_Admin(user_edit: schemas.UserEditAdmin, db: Session = Depends(ge
 # Mise à jour du statu Autorisation d'un utilisateur
 
 
-@app.put("/editUserAutorisation/", response_model=schemas.UserBase)
+@app.put("/editUserAutorisation/")
 def update_user_Autorisation(edit_user: schemas.UserEditAutorisation, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Admin is True:
         user = CRUD.edit_autorisation_status(
@@ -190,6 +206,15 @@ def update_user_Autorisation(edit_user: schemas.UserEditAutorisation, db: Sessio
         return user
 # endregion : Connexion visualisation et création d'un utilisateur
 
+@app.delete("/editUserSecteur/")
+def update_user_secteur(delete_user_secteur : schemas.r_user_secteur, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Admin is True:
+        try:
+            CRUD.edit_user_secteur(db, delete_user_secteur.user_id, delete_user_secteur.secteur_id)
+        except Exception as e:
+            print(f"Authentication error: {e}")
+
+    
 # region : Visualisation et création d'un article
 # Récupération de la liste des articles
 

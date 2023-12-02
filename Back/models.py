@@ -1,5 +1,5 @@
 from sqlalchemy import Column, LargeBinary
-from sqlalchemy.sql.sqltypes import DATE, Boolean, DateTime, Integer, String
+from sqlalchemy.sql.sqltypes import DATE, Boolean, Integer, String
 
 from .database import Base
 

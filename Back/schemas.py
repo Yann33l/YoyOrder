@@ -85,18 +85,18 @@ class Secteurs(BaseModel):
 class Stocks(BaseModel):
     ID: int
     article_id: int
-    quantiteInitiale: int
+    quantiteInitiale: Optional[int] = None
     quantiteRestante: Optional[int] = None
-    lot: str
+    lot: Optional[str] = None
     datePeremption: Optional[date] = None
     dateReception: Optional[date] = None
-    COA: str
+    COA: Optional[bytes] = None
 
 
 class GestionDesCouts(BaseModel):
     ID: int
     article_id: int
-    prixUnitaire: Optional[int] = None
+    prixUnitaire: Optional[float] = None
     dateDebutValidite: date
     dateFinValidite: date
 
@@ -106,11 +106,19 @@ class LieuxDeStockage(BaseModel):
     libelle: str
     temperature: int
 
+class Pieces(BaseModel):
+    ID: int
+    libelle: str
 
 class r_articles_lieux(BaseModel):
     ID: int
     article_id: int
     lieuxDeStockage_id: int
+
+class r_articles_pieces(BaseModel):
+    ID: int
+    article_id: int
+    piece_id: int
 
 
 class r_articles_secteurs(BaseModel):
@@ -135,7 +143,6 @@ class r_user_commande(BaseModel):
 
 
 class r_user_secteur(BaseModel):
-    ID: int
     user_id: int
     secteur_id: int
 

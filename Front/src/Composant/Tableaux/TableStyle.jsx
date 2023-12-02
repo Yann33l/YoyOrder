@@ -13,6 +13,8 @@ const columnsTableUtilisateur = [
   { field: "Email", headerName: "Email", width: 250 },
   { field: "Admin", headerName: "Admin", width: 100 },
   { field: "Autorisation", headerName: "Compte actif", width: 100 },
+  { field: "secteur_libelle", headerName: "Secteur", width: 150},
+  { field: "delete", headerName: "Supprimer", width: 150},
 ];
 
 export {

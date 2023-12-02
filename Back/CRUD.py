@@ -1,6 +1,8 @@
 from datetime import date, datetime
 
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
+
 
 from . import models, schemas
 
@@ -48,6 +50,24 @@ def edit_autorisation_status(db: Session, email: str, autorisation: bool):
         db.commit()
         db.refresh(db_user)
     return db_user
+
+
+def edit_user_secteur(db: Session, user_id: int, secteur_id: int):
+    db_user = db.query(models.users).filter(
+        models.users.ID == user_id).scalar()
+    r_user_secteur = db.query(models.r_user_secteur).filter(
+    and_(models.r_user_secteur.user_id == db_user.ID,
+        models.r_user_secteur.secteur_id == secteur_id)
+).scalar()
+    # si le secteur existe déjà pour l'utilisateur, on le supprime
+    if db_user and r_user_secteur:
+        db.delete(r_user_secteur)
+        db.commit()
+        db.refresh(db_user)
+        
+    # sinon on l'ajoute
+
+
 
 
 # Articles
@@ -220,6 +240,7 @@ def edit_commande(db: Session, commande: schemas.Commandes):
     return db_commande
 
 
+# Lieux de stockage
 def get_lieuxdestockage(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.lieuxdestockage).offset(skip).limit(limit).all()
 
@@ -235,6 +256,7 @@ def create_lieuxdestockage(db: Session, lieuxdestockage: schemas.LieuxDeStockage
     return db_lieuxdestockage
 
 
+# gestion des dates
 def get_usersdates(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.usersdates).offset(skip).limit(limit).all()
 

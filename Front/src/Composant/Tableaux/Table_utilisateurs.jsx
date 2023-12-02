@@ -14,7 +14,15 @@ const TableUtilisateurs = () => {
       try {
         const response = await axios.get(`${API_URL}/users/`, authHeader);
         const responseData = response.data;
-        setData(responseData);
+        const dataWithIds = responseData.results.map((row, index) => ({
+          ...row,
+          id: index + 1,
+        }));
+        const dataWithDelete = dataWithIds.map((row) => ({
+          ...row,
+          delete: "Supprimer",
+        }));
+        setData(dataWithDelete);
       } catch (error) {
         console.error(error);
       }
@@ -22,8 +30,6 @@ const TableUtilisateurs = () => {
 
     getCollecte();
   }, []);
-
-  const getRowId = (row) => row.Email;
 
   const handleCheckBoxChange = async (event, params) => {
     const newValue = event.target.checked;
@@ -39,7 +45,6 @@ const TableUtilisateurs = () => {
     const authHeader = getAuthHeader();
 
     // Envoyer la mise à jour à la base de données via une requête HTTP
-    //voir pour passer avec requestData
     if (params.field === "Admin") {
       try {
         const requestData = {
@@ -68,6 +73,22 @@ const TableUtilisateurs = () => {
         console.error("Erreur lors de la mise à jour : ", error);
       }
     }
+    if (params.field === "delete") {
+      try {  
+        const requestData = {
+          user_id: params.row.user_id,
+          secteur_id: params.row.secteur_id,
+        };
+        await axios.delete(
+          `${API_URL}/editUserSecteur/`,
+          requestData,
+          authHeader
+        );
+        setData(updatedData);
+      } catch (error) {
+        console.error("Erreur lors de la mise à jour : ", error);
+      }
+    }
   };
 
   const renderCheckCell = (params) => {
@@ -82,7 +103,7 @@ const TableUtilisateurs = () => {
 
   // modification des colonnes Admin et Autorisation pour afficher les checkbox
   const columns = columnsTableUtilisateur.map((column) => {
-    if (column.field === "Admin" || column.field === "Autorisation") {
+    if (column.field === "Admin" || column.field === "Autorisation" || column.field === "delete") {
       return {
         ...column,
         renderCell: renderCheckCell,
@@ -98,7 +119,7 @@ const TableUtilisateurs = () => {
       columns={columns}
       loading={!data.length}
       sx={dataTableStyle}
-      getRowId={getRowId}
+      getRowId={(row) => row.id}
       slots={{ toolbar: GridToolbar }}
     />
   );
