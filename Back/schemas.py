@@ -106,14 +106,17 @@ class LieuxDeStockage(BaseModel):
     libelle: str
     temperature: int
 
+
 class Pieces(BaseModel):
     ID: int
     libelle: str
+
 
 class r_articles_lieux(BaseModel):
     ID: int
     article_id: int
     lieuxDeStockage_id: int
+
 
 class r_articles_pieces(BaseModel):
     ID: int
@@ -144,7 +147,7 @@ class r_user_commande(BaseModel):
 
 class r_user_secteur(BaseModel):
     user_id: int
-    secteur_id: int
+    secteur_libelle: str
 
 
 class usersdates(BaseModel):

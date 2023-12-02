@@ -165,11 +165,14 @@ def read_users(current_user: schemas.UserBase = Depends(get_current_active_user)
                     "Email": row[1],
                     "Admin": row[2],
                     "Autorisation": row[3],
-                    "secteur_libelle": row[4],
-                    "secteur_id": row[5],
+                    "ACP": row[4],
+                    "BIO": row[5],
+                    "GEC": row[6],
+                    "PAM": row[7],
+                    "RC": row[8],
                 })
             return {"results": formatted_results}
-        
+
         except Exception as e:
             return {"error": str(e)}
     else:
@@ -206,15 +209,39 @@ def update_user_Autorisation(edit_user: schemas.UserEditAutorisation, db: Sessio
         return user
 # endregion : Connexion visualisation et création d'un utilisateur
 
-@app.delete("/editUserSecteur/")
-def update_user_secteur(delete_user_secteur : schemas.r_user_secteur, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+
+def format_user_results(results):
+    formatted_results = []
+    for row in results:
+        formatted_results.append({
+            "user_id": row[0],
+            "Email": row[1],
+            "Admin": row[2],
+            "Autorisation": row[3],
+            "ACP": row[4],
+            "BIO": row[5],
+            "GEC": row[6],
+            "PAM": row[7],
+            "RC": row[8],
+        })
+    return formatted_results
+
+
+@app.put("/editUserSecteur/")
+def create_r_user_secteur(user_secteur_edited: schemas.r_user_secteur, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Admin is True:
         try:
-            CRUD.edit_user_secteur(db, delete_user_secteur.user_id, delete_user_secteur.secteur_id)
+            secteur_id = client_repository.get_secteurID_by_libelle(
+                user_secteur_edited.secteur_libelle)
+            CRUD.edit_user_secteur(
+                db, user_secteur_edited.user_id, secteur_id)
+            results = client_repository.get_users()
+            formatted_results = format_user_results(results)
+            return {"results": formatted_results}
         except Exception as e:
             print(f"Authentication error: {e}")
 
-    
+
 # region : Visualisation et création d'un article
 # Récupération de la liste des articles
 

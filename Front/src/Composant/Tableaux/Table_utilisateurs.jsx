@@ -73,17 +73,19 @@ const TableUtilisateurs = () => {
         console.error("Erreur lors de la mise à jour : ", error);
       }
     }
-    if (params.field === "delete") {
-      try {  
+    if (
+      params.field === "PAM" ||
+      params.field === "BIO" ||
+      params.field === "RC" ||
+      params.field === "GEC" ||
+      params.field === "ACP"
+    ) {
+      try {
         const requestData = {
           user_id: params.row.user_id,
-          secteur_id: params.row.secteur_id,
+          secteur_libelle: params.field,
         };
-        await axios.delete(
-          `${API_URL}/editUserSecteur/`,
-          requestData,
-          authHeader
-        );
+        await axios.put(`${API_URL}/editUserSecteur/`, requestData, authHeader);
         setData(updatedData);
       } catch (error) {
         console.error("Erreur lors de la mise à jour : ", error);
@@ -103,7 +105,15 @@ const TableUtilisateurs = () => {
 
   // modification des colonnes Admin et Autorisation pour afficher les checkbox
   const columns = columnsTableUtilisateur.map((column) => {
-    if (column.field === "Admin" || column.field === "Autorisation" || column.field === "delete") {
+    if (
+      column.field === "Admin" ||
+      column.field === "Autorisation" ||
+      column.field === "PAM" ||
+      column.field === "BIO" ||
+      column.field === "RC" ||
+      column.field === "GEC" ||
+      column.field === "ACP"
+    ) {
       return {
         ...column,
         renderCell: renderCheckCell,

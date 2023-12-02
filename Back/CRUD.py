@@ -1,8 +1,7 @@
 from datetime import date, datetime
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_
-
+from sqlalchemy.orm import Session
 
 from . import models, schemas
 
@@ -56,18 +55,27 @@ def edit_user_secteur(db: Session, user_id: int, secteur_id: int):
     db_user = db.query(models.users).filter(
         models.users.ID == user_id).scalar()
     r_user_secteur = db.query(models.r_user_secteur).filter(
-    and_(models.r_user_secteur.user_id == db_user.ID,
-        models.r_user_secteur.secteur_id == secteur_id)
-).scalar()
+        and_(models.r_user_secteur.user_id == db_user.ID,
+             models.r_user_secteur.secteur_id == secteur_id)
+    ).scalar()
     # si le secteur existe déjà pour l'utilisateur, on le supprime
     if db_user and r_user_secteur:
         db.delete(r_user_secteur)
         db.commit()
         db.refresh(db_user)
-        
+        return db_user
+    else:
+        # sinon on l'ajoute
+        db_r_user_secteur = models.r_user_secteur(
+            user_id=user_id,
+            secteur_id=secteur_id,
+        )
+        db.add(db_r_user_secteur)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+
     # sinon on l'ajoute
-
-
 
 
 # Articles

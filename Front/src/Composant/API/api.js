@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 import { setAuthHeader } from "./token";
 
 export let API_URL;
@@ -68,7 +68,6 @@ export const checkCredentials = async (Email, Password) => {
     );
     const data = response.data;
     return data;
-    
   } catch (error) {
     console.error(error);
     throw error;
