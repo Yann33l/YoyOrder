@@ -13,9 +13,11 @@ const columnsTableUtilisateur = [
   { field: "Email", headerName: "Email", width: 250 },
   { field: "Admin", headerName: "Admin", width: 100 },
   { field: "Autorisation", headerName: "Compte actif", width: 100 },
+  { field: "ACP", headerName: "ACP", width: 100 },
+  { field: "PAM", headerName: "PAM", width: 100 },
+  { field: "BIO", headerName: "BIO", width: 100 },
+  { field: "RC", headerName: "RC", width: 100 },
+  { field: "GEC", headerName: "GEC", width: 100 },
 ];
 
-export {
-  columnsTableUtilisateur,
-  dataTableStyle,
-};
+export { columnsTableUtilisateur, dataTableStyle };

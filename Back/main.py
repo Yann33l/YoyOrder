@@ -4,7 +4,7 @@ import socket
 from datetime import datetime, timedelta
 
 import bcrypt
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -20,7 +20,7 @@ local_ip = socket.gethostbyname(socket.gethostname())
 if ENV == "local":
     SECRET_KEY = "B4AB1DBD6953186D3ABF5C8D5625CF06"
     ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES = 5
+    ACCESS_TOKEN_EXPIRE_MINUTES = 180
 else:
     SECRET_KEY = str(os.getenv("SECRET_KEY"))
     ALGORITHM = str(os.getenv("ALGORITHM"))
@@ -30,6 +30,7 @@ else:
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
+router = APIRouter()
 
 
 if ENV == "local":
@@ -149,14 +150,33 @@ def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
         user.Password = bcrypt.hashpw(user.Password, salt)
         return CRUD.create_user(db, user)
 
+
 # Récupération de la liste des utilisateurs
 
-
-@app.get("/users/", response_model=list[schemas.UserBase])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+@app.get("/users/")
+def read_users(current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Admin is True:
-        users = CRUD.get_users(db, skip=skip, limit=limit)
-        return users
+        try:
+            results = client_repository.get_users()
+            formatted_results = []
+            for row in results:
+                formatted_results.append({
+                    "user_id": row[0],
+                    "Email": row[1],
+                    "Admin": row[2],
+                    "Autorisation": row[3],
+                    "ACP": row[4],
+                    "BIO": row[5],
+                    "GEC": row[6],
+                    "PAM": row[7],
+                    "RC": row[8],
+                })
+            return {"results": formatted_results}
+
+        except Exception as e:
+            return {"error": str(e)}
+    else:
+        raise HTTPException(status_code=400, detail="Inactive user")
 
 # Récupération d'un utilisateur par son email
 
@@ -181,7 +201,7 @@ def update_user_Admin(user_edit: schemas.UserEditAdmin, db: Session = Depends(ge
 # Mise à jour du statu Autorisation d'un utilisateur
 
 
-@app.put("/editUserAutorisation/", response_model=schemas.UserBase)
+@app.put("/editUserAutorisation/")
 def update_user_Autorisation(edit_user: schemas.UserEditAutorisation, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Admin is True:
         user = CRUD.edit_autorisation_status(
@@ -189,6 +209,142 @@ def update_user_Autorisation(edit_user: schemas.UserEditAutorisation, db: Sessio
         return user
 # endregion : Connexion visualisation et création d'un utilisateur
 
+
+def format_user_results(results):
+    formatted_results = []
+    for row in results:
+        formatted_results.append({
+            "user_id": row[0],
+            "Email": row[1],
+            "Admin": row[2],
+            "Autorisation": row[3],
+            "ACP": row[4],
+            "BIO": row[5],
+            "GEC": row[6],
+            "PAM": row[7],
+            "RC": row[8],
+        })
+    return formatted_results
+
+
+@app.put("/editUserSecteur/")
+def create_r_user_secteur(user_secteur_edited: schemas.r_user_secteur, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Admin is True:
+        try:
+            secteur_id = client_repository.get_secteurID_by_libelle(
+                user_secteur_edited.secteur_libelle)
+            CRUD.edit_user_secteur(
+                db, user_secteur_edited.user_id, secteur_id)
+            results = client_repository.get_users()
+            formatted_results = format_user_results(results)
+            return {"results": formatted_results}
+        except Exception as e:
+            print(f"Authentication error: {e}")
+
+
 # region : Visualisation et création d'un article
 # Récupération de la liste des articles
 
+
+@app.get("/articles/", response_model=list[schemas.Articles])
+def read_articles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        articles = CRUD.get_articles(db, skip=skip, limit=limit)
+        return articles
+
+
+@app.post("/create_article/", response_model=schemas.Articles)
+def create_article(article: schemas.Articles, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        return CRUD.create_article(db, article)
+
+# endregion : Visualisation et création d'un article
+
+
+@app.get("/fournisseurs/", response_model=list[schemas.Fournisseurs])
+def read_fournisseurs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        fournisseurs = CRUD.get_fournisseurs(db, skip=skip, limit=limit)
+        return fournisseurs
+
+
+@app.post("/create_fournisseur/", response_model=schemas.Fournisseurs)
+def create_fournisseur(fournisseur: schemas.Fournisseurs, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        return CRUD.create_fournisseur(db, fournisseur)
+
+
+@app.get("/commandes/", response_model=list[schemas.Commandes])
+def read_commandes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        commandes = CRUD.get_commandes(db, skip=skip, limit=limit)
+        return commandes
+
+
+@app.post("/create_commande/", response_model=schemas.Commandes)
+def create_commande(commande: schemas.Commandes, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        return CRUD.create_commande(db, commande)
+
+
+@app.get("/secteurs/", response_model=list[schemas.Secteurs])
+def read_secteurs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        secteurs = CRUD.get_secteurs(db, skip=skip, limit=limit)
+        return secteurs
+
+
+@app.post("/create_secteur/", response_model=schemas.Secteurs)
+def create_secteur(secteur: schemas.Secteurs, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        return CRUD.create_secteur(db, secteur)
+
+
+@app.get("/stocks/", response_model=list[schemas.Stocks])
+def read_stocks(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        stocks = CRUD.get_stocks(db, skip=skip, limit=limit)
+        return stocks
+
+
+@app.post("/create_stock/", response_model=schemas.Stocks)
+def create_stock(stock: schemas.Stocks, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        return CRUD.create_stock(db, stock)
+
+
+@app.get("/gestiondescouts/", response_model=list[schemas.GestionDesCouts])
+def read_gestiondescouts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        gestiondescouts = CRUD.get_gestiondescouts(db, skip=skip, limit=limit)
+        return gestiondescouts
+
+
+@app.post("/create_gestiondescout/", response_model=schemas.GestionDesCouts)
+def create_gestiondescout(gestiondescout: schemas.GestionDesCouts, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        return CRUD.create_gestiondescout(db, gestiondescout)
+
+
+@app.get("/lieuxdestockage/", response_model=list[schemas.LieuxDeStockage])
+def read_lieuxdestockage(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        LieuxDeStockage = CRUD.get_gestiondescouts(db, skip=skip, limit=limit)
+        return LieuxDeStockage
+
+
+@app.post("/create_lieuxdestockage/", response_model=schemas.LieuxDeStockage)
+def create_lieuxdestockage(LieuxDeStockage: schemas.LieuxDeStockage, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        return CRUD.create_lieuxdestockage(db, LieuxDeStockage)
+
+
+@app.get("/usersdates/", response_model=list[schemas.usersdates])
+def read_usersdates(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    usersdates = CRUD.get_usersdates(db, skip=skip, limit=limit)
+    return usersdates
+
+
+@app.post("/create_usersdate/", response_model=schemas.usersdates)
+def create_userdate(userdate: schemas.usersdates, db: Session = Depends(get_db)):
+    return CRUD.create_userdate(db, userdate)

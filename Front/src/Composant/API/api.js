@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 import { setAuthHeader } from "./token";
 
 export let API_URL;
@@ -34,8 +34,6 @@ export const createUser = async (Email, Password) => {
     const response = await axios.post(`${API_URL}/create_user/`, {
       Email: Email,
       Password: Password,
-      Admin: false,
-      Autorisation: false,
     });
     const data = response.data;
     return data;
@@ -70,7 +68,6 @@ export const checkCredentials = async (Email, Password) => {
     );
     const data = response.data;
     return data;
-    
   } catch (error) {
     console.error(error);
     throw error;
