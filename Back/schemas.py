@@ -57,6 +57,14 @@ class Articles(BaseModel):
     dateDebutValidite: date
     dateFinValidite: date
 
+    class Config:
+        orm_mode = True
+
+
+class ArticlesCreate(Articles):
+    temperature: int
+    lieuxDeStockage: str
+
 
 class Fournisseurs(BaseModel):
     ID: int

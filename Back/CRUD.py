@@ -3,7 +3,7 @@ from datetime import date, datetime
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
-from . import models, schemas
+from . import client_repository, models, schemas
 
 
 # Users
@@ -82,19 +82,40 @@ def edit_user_secteur(db: Session, user_id: int, secteur_id: int):
 def get_articles(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.articles).offset(skip).limit(limit).all()
 
+def get_articles_by_libelle(db: Session, libelle: str):
+    return db.query(models.articles).filter(models.articles.libelle == libelle).first()
 
-def create_article(db: Session, article: schemas.Articles):
+
+def create_r_article_lieuxdestockage(db: Session, article: schemas.ArticlesCreate):
+    article_id = client_repository.get_articleID_by_data(
+        article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
+    lieuxdestockage_id = client_repository.get_stockageID_by_emplacement_and_temperature(
+        article.lieuxDeStockage, article.temperature)
+    db_r_article_lieuxdestockage = models.r_articles_lieux(
+        article_id=article_id,
+        lieuDeStockage_id=lieuxdestockage_id)
+    db.add(db_r_article_lieuxdestockage)
+    db.commit()
+    db.refresh(db_r_article_lieuxdestockage)
+    return db_r_article_lieuxdestockage
+
+
+def create_article(db: Session, article: schemas.ArticlesCreate):
     db_article = models.articles(
         libelle=article.libelle,
         ref=article.ref,
         fournisseur_id=article.fournisseur_id,
         conditionnement=article.conditionnement,
         dateDebutValidite=date.today(),
-        dateFinValidite=datetime(3000, 12, 31),
-    )
+        dateFinValidite=datetime(3000, 12, 31),)
     db.add(db_article)
     db.commit()
+    db.refresh(db_article)
+    create_r_article_lieuxdestockage(db, article)
+    db_article.temperature = article.temperature
+    db_article.lieuxDeStockage = article.lieuxDeStockage
     return db_article
+
 
 # Fournisseurs
 

@@ -144,7 +144,7 @@ async def read_user_info(current_user: schemas.UserBase = Depends(get_current_ac
 def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
     user_exists = CRUD.get_user_by_email(db, user.Email)
     if user_exists:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=409, detail="Email déjà enregistré")
     else:
         salt = bcrypt.gensalt(12)
         user.Password = bcrypt.hashpw(user.Password, salt)
@@ -253,10 +253,15 @@ def read_articles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
         return articles
 
 
-@app.post("/create_article/", response_model=schemas.Articles)
-def create_article(article: schemas.Articles, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+@app.post("/create_article/", response_model=schemas.ArticlesCreate)
+def create_article(article: schemas.ArticlesCreate, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Autorisation is True:
-        return CRUD.create_article(db, article)
+        article_exist = CRUD.get_articles_by_libelle(db,  article.libelle)
+        if article_exist is not None:
+            raise HTTPException(
+                status_code=409, detail="l'article existe deja")
+        else:
+            return CRUD.create_article(db, article)
 
 # endregion : Visualisation et création d'un article
 

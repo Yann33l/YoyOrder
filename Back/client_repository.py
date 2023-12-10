@@ -27,7 +27,36 @@ def get_secteurID_by_libelle(secteur_libelle):
             query, {"secteur_libelle": secteur_libelle})
         row = result.fetchone()
         if row:
-            # ou row[0] en fonction de la structure de vos résultats
+            return row.ID
+        else:
+            return None
+
+
+def get_stockageID_by_emplacement_and_temperature(stockage_libelle, temperature):
+    with engine.connect() as connection:
+        query = text(
+            "SELECT ID FROM lieuxdestockage WHERE libelle = :stockage_libelle AND temperature = :temperature")
+        result = connection.execute(
+            query, {"stockage_libelle": stockage_libelle, "temperature": temperature})
+        row = result.fetchone()
+        if row:
+            return row.ID
+        else:
+            return None
+
+
+def get_articleID_by_data(article_libelle, article_ref, article_fournisseur_id):
+    with engine.connect() as connection:
+        query = text(
+            "SELECT ID \
+            FROM articles \
+            WHERE libelle = :article_libelle \
+            AND ref = :article_ref \
+            AND fournisseur_id = :article_fournisseur_id")
+        result = connection.execute(
+            query, {"article_libelle": article_libelle, "article_ref": article_ref, "article_fournisseur_id": article_fournisseur_id})
+        row = result.fetchone()
+        if row:
             return row.ID
         else:
             return None

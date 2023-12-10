@@ -91,7 +91,7 @@ class r_articles_lieux(Base):
 
     ID = Column(Integer, primary_key=True, index=True)
     article_id = Column(Integer)
-    lieuDeStickage_id = Column(Integer)
+    lieuDeStockage_id = Column(Integer)
 
 
 class r_articles_secteurs(Base):
