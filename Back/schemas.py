@@ -64,6 +64,7 @@ class Articles(BaseModel):
 class ArticlesCreate(Articles):
     temperature: int
     lieuxDeStockage: str
+    secteur_liste: list
 
 
 class Fournisseurs(BaseModel):

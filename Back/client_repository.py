@@ -3,18 +3,30 @@ from sqlalchemy.sql.expression import text
 from .database import engine
 
 
-def get_users():
+def get_secteur_labels():
     with engine.connect() as connection:
-        query = text("SELECT u.ID, Email, Admin, Autorisation, "
-                     "MAX(CASE WHEN s.ID = 1 THEN TRUE ELSE FALSE END) AS ACP, "
-                     "MAX(CASE WHEN s.ID = 2 THEN TRUE ELSE FALSE END) AS BIO, "
-                     "MAX(CASE WHEN s.ID = 3 THEN TRUE ELSE FALSE END) AS GEC, "
-                     "MAX(CASE WHEN s.ID = 4 THEN TRUE ELSE FALSE END) AS PAM, "
-                     "MAX(CASE WHEN s.ID = 5 THEN TRUE ELSE FALSE END) AS RC "
+        result = connection.execute(
+            text("SELECT DISTINCT libelle FROM secteurs;"))
+        return [row.libelle for row in result.fetchall()]
+
+
+def get_users():
+
+    with engine.connect() as connection:
+        secteur_labels = connection.execute(
+            text("SELECT DISTINCT libelle FROM secteurs;")).fetchall()
+        select_part = ", ".join(
+            [f"MAX(CASE WHEN s.ID = {s_id} THEN secteur_{s_id}.libelle ELSE NULL END) AS libelle{s_id}" for s_id in range(1, len(secteur_labels) + 1)])
+        join_part = " ".join([f"LEFT JOIN secteurs secteur_{s_id} ON s.ID = secteur_{s_id}.ID" for s_id in range(
+            1, len(secteur_labels) + 1)])
+
+        query = text(f"SELECT u.ID, Email, Admin, Autorisation, {select_part} "
                      "FROM users u "
-                     "LEFT JOIN r_user_secteur r_us on r_us.user_id = u.ID "
-                     "LEFT JOIN secteurs s on s.ID = r_us.secteur_id "
+                     "LEFT JOIN r_user_secteur r_us ON r_us.user_id = u.ID "
+                     "LEFT JOIN secteurs s ON s.ID = r_us.secteur_id "
+                     f"{join_part} "
                      "GROUP BY u.ID, Email, Admin, Autorisation;")
+
         result = connection.execute(query)
         return result.fetchall()
 

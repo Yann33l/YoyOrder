@@ -152,25 +152,29 @@ def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 # Récupération de la liste des utilisateurs
+def format_user_results(results):
+    secteur_labels = client_repository.get_secteur_labels()
+    formatted_results = []
+    for row in results:
+        formatted_result = {
+            "user_id": row[0],
+            "Email": row[1],
+            "Admin": row[2],
+            "Autorisation": row[3],
+        }
+        formatted_result.update(
+            {f"{secteur_labels[i]}": row[i + 4] for i in range(len(secteur_labels))})
+        formatted_results.append(formatted_result)
+    return formatted_results
+
 
 @app.get("/users/")
 def read_users(current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Admin is True:
         try:
             results = client_repository.get_users()
-            formatted_results = []
-            for row in results:
-                formatted_results.append({
-                    "user_id": row[0],
-                    "Email": row[1],
-                    "Admin": row[2],
-                    "Autorisation": row[3],
-                    "ACP": row[4],
-                    "BIO": row[5],
-                    "GEC": row[6],
-                    "PAM": row[7],
-                    "RC": row[8],
-                })
+
+            formatted_results = format_user_results(results)
             return {"results": formatted_results}
 
         except Exception as e:
@@ -208,23 +212,6 @@ def update_user_Autorisation(edit_user: schemas.UserEditAutorisation, db: Sessio
             db, edit_user.Email, edit_user.Autorisation)
         return user
 # endregion : Connexion visualisation et création d'un utilisateur
-
-
-def format_user_results(results):
-    formatted_results = []
-    for row in results:
-        formatted_results.append({
-            "user_id": row[0],
-            "Email": row[1],
-            "Admin": row[2],
-            "Autorisation": row[3],
-            "ACP": row[4],
-            "BIO": row[5],
-            "GEC": row[6],
-            "PAM": row[7],
-            "RC": row[8],
-        })
-    return formatted_results
 
 
 @app.put("/editUserSecteur/")
