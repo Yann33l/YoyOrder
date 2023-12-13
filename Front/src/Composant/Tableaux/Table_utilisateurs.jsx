@@ -10,10 +10,11 @@ const TableUtilisateurs = () => {
   const authHeader = getAuthHeader();
 
   useEffect(() => {
-    const getCollecte = async () => {
+    const getUtilisateurs = async () => {
       try {
         const response = await axios.get(`${API_URL}/users/`, authHeader);
         const responseData = response.data;
+        console.log(responseData);
         const dataWithIds = responseData.results.map((row, index) => ({
           ...row,
           id: index + 1,
@@ -23,12 +24,13 @@ const TableUtilisateurs = () => {
           delete: "Supprimer",
         }));
         setData(dataWithDelete);
+
       } catch (error) {
         console.error(error);
       }
     };
 
-    getCollecte();
+    getUtilisateurs();
   }, []);
 
   const handleCheckBoxChange = async (event, params) => {
@@ -74,11 +76,9 @@ const TableUtilisateurs = () => {
       }
     }
     if (
-      params.field === "PAM" ||
-      params.field === "BIO" ||
-      params.field === "RC" ||
-      params.field === "GEC" ||
-      params.field === "ACP"
+      params.field !== "Email" &&
+      params.field !== "Admin" &&
+      params.field !== "Autorisation"
     ) {
       try {
         const requestData = {
@@ -105,15 +105,7 @@ const TableUtilisateurs = () => {
 
   // modification des colonnes Admin et Autorisation pour afficher les checkbox
   const columns = columnsTableUtilisateur.map((column) => {
-    if (
-      column.field === "Admin" ||
-      column.field === "Autorisation" ||
-      column.field === "PAM" ||
-      column.field === "BIO" ||
-      column.field === "RC" ||
-      column.field === "GEC" ||
-      column.field === "ACP"
-    ) {
+    if (column.field !== "Email") {
       return {
         ...column,
         renderCell: renderCheckCell,
