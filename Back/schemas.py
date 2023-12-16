@@ -116,7 +116,7 @@ class LieuxDeStockage(BaseModel):
     temperature: int
 
 
-class Pieces(BaseModel):
+class Piece(BaseModel):
     ID: int
     libelle: str
 

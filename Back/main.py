@@ -173,7 +173,6 @@ def read_users(current_user: schemas.UserBase = Depends(get_current_active_user)
     if current_user.Admin is True:
         try:
             results = client_repository.get_users()
-
             formatted_results = format_user_results(results)
             return {"results": formatted_results}
 
@@ -340,3 +339,8 @@ def read_usersdates(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
 @app.post("/create_usersdate/", response_model=schemas.usersdates)
 def create_userdate(userdate: schemas.usersdates, db: Session = Depends(get_db)):
     return CRUD.create_userdate(db, userdate)
+
+@app.get("/get_pieces/", response_model=list[schemas.Piece])
+def read_pieces(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    pieces = CRUD.get_pieces(db, skip=skip, limit=limit)
+    return pieces

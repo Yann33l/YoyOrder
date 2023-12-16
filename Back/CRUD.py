@@ -7,8 +7,8 @@ from . import client_repository, models, schemas
 
 
 # Users
-def get_user_by_ID(db: Session, id: int):
-    return db.query(models.users).filter(models.users.ID == id).first()
+def get_user_by_ID(db: Session, user_id: int):
+    return db.query(models.users).filter(models.users.ID == user_id).first()
 
 
 def get_user_by_email(db: Session, email: str):
@@ -308,3 +308,6 @@ def create_userdate(db: Session, userdate: schemas.usersdates):
     db.add(db_userdate)
     db.commit()
     return db_userdate
+
+def get_pieces(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.pieces).offset(skip).limit(limit).all()

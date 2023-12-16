@@ -72,3 +72,10 @@ def get_articleID_by_data(article_libelle, article_ref, article_fournisseur_id):
             return row.ID
         else:
             return None
+
+def get_piece():
+    with engine.connect() as connection:
+        query = text(
+            "SELECT ID, libelle FROM piece")
+        result = connection.execute(query)
+        return result.fetchall()

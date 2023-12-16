@@ -3,9 +3,10 @@ import axios from "axios";
 import React, { useEffect } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
-import { columnsTableUtilisateur, dataTableStyle } from "./TableStyle";
+import { dataTableStyle } from "./TableStyle";
 
 const TableUtilisateurs = () => {
+  const [responseData, setResponseData] = React.useState([]);
   const [data, setData] = React.useState([]);
   const authHeader = getAuthHeader();
 
@@ -14,17 +15,13 @@ const TableUtilisateurs = () => {
       try {
         const response = await axios.get(`${API_URL}/users/`, authHeader);
         const responseData = response.data;
+        setResponseData(responseData);
         console.log(responseData);
         const dataWithIds = responseData.results.map((row, index) => ({
           ...row,
           id: index + 1,
         }));
-        const dataWithDelete = dataWithIds.map((row) => ({
-          ...row,
-          delete: "Supprimer",
-        }));
-        setData(dataWithDelete);
-
+        setData(dataWithIds);
       } catch (error) {
         console.error(error);
       }
@@ -97,14 +94,47 @@ const TableUtilisateurs = () => {
     return (
       <input
         type="checkbox"
-        checked={params.value}
+        checked={params.value || false} // Provide a default value of false
         onChange={(event) => handleCheckBoxChange(event, params)}
       />
     );
   };
 
+  const secteurLabels =
+    responseData.results && responseData.results.length > 0
+      ? Object.keys(responseData.results[0]).filter(
+          (key) =>
+            key !== "user_id" &&
+            key !== "Email" &&
+            key !== "Admin" &&
+            key !== "Autorisation"
+        )
+      : [];
+
+  const dynamicColumns = [
+    { field: "Email", headerName: "Email", width: 250 },
+    {
+      field: "Admin",
+      headerName: "Admin",
+      width: 100,
+      renderCell: renderCheckCell,
+    },
+    {
+      field: "Autorisation",
+      headerName: "Compte actif",
+      width: 100,
+      renderCell: renderCheckCell,
+    },
+    ...secteurLabels.map((label) => ({
+      field: label,
+      headerName: label,
+      width: 100,
+      renderCell: renderCheckCell,
+    })),
+  ];
+
   // modification des colonnes Admin et Autorisation pour afficher les checkbox
-  const columns = columnsTableUtilisateur.map((column) => {
+  const columns = dynamicColumns.map((column) => {
     if (column.field !== "Email") {
       return {
         ...column,

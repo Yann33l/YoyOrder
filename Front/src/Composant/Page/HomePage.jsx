@@ -1,13 +1,35 @@
 import React, { useState, useEffect } from "react";
 import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
+import {GetPiece} from "../API/api"
 
-function HomePage({ isAdmin }) {
+function HomePage({ isAdmin, onLogout }) {
   const [content, setContent] = useState("default");
+  const [pieces, setPieces] = useState([]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const piecesData = await GetPiece();
+        setPieces(piecesData);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des pièces :", error);
+      }
+    };
+
+    fetchData();
+  }, []);
   // Fonctions pour gérer les clics des boutons et mettre à jour le contenu
   const handleButtonClick = (newContent) => {
-    setContent(newContent);
+    if (newContent === "Déconnexion") {
+      // Handle logout
+      setUserState({ loggedIn: false, isAdmin: false, isAuthorized: false });
+    } else {
+      // Handle other button clicks
+      setContent(newContent);
+    }
   };
+
+
   // Contenu du main basé sur l'état
   let mainContent;
   switch (content) {
@@ -68,23 +90,20 @@ function HomePage({ isAdmin }) {
       );
       break;
 
-    case "graphiques":
+    case "Commande":
       mainContent = (
         <div>
           <nav className="sous_menu-nav">
-            <ul>
-              <li
-                className="bouton"
-                onClick={() => handleButtonClick("Graph1")}
-              >
-                Dépenses
-              </li>
-              <li
-                className="bouton"
-                onClick={() => handleButtonClick("Graph2")}
-              >
-                Paniers
-              </li>
+          <ul>
+              {pieces.map((piece) => (
+                <li
+                  key={piece.ID}
+                  className="bouton"
+                  onClick={() => handleButtonClick(piece.ID)}
+                >
+                  {piece.libelle}
+                </li>
+              ))}
             </ul>
           </nav>
         </div>
@@ -188,9 +207,9 @@ function HomePage({ isAdmin }) {
             </li>
             <li
               className="bouton"
-              onClick={() => handleButtonClick("graphiques")}
+              onClick={() => handleButtonClick("Commande")}
             >
-              Graphiques
+              Commande
             </li>
             <li
               className="bouton"
@@ -203,9 +222,9 @@ function HomePage({ isAdmin }) {
                 Admin
               </li>
             )}
-            <li className="bouton" onClick={() => window.location.reload()}>
-              Déconnexion
-            </li>
+      <li className="bouton" onClick={() => onLogout()}>
+        Déconnexion
+      </li>
           </ul>
         </nav>
       </header>
