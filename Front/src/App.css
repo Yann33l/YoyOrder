@@ -1,3 +1,18 @@
+:root[data-theme="light"] {
+  --text: #0a0905;
+  --background: #fefbf6;
+  --primary: #97afaf;
+  --secondary: #a0d9d5;
+  --accent: #95a3db;
+}
+:root[data-theme="dark"] {
+  --text: #faf9f5;
+  --background: #090601;
+  --primary: #506868;
+  --secondary: #265f5b;
+  --accent: #24326a;
+}
+
 /* app */
 .Connexion {
   color: #d4af37;
