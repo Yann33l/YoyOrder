@@ -10,8 +10,9 @@ load_dotenv()
 
 # Détection de l'environnement
 local_ip = socket.gethostbyname(socket.gethostname())
+print(local_ip)
 
-if local_ip == '192.168.1.64':
+if local_ip == '192.168.1.67':
     ENV = "local"
 else:
     # Environnement en ligne
@@ -31,14 +32,10 @@ SCALINGO_MYSQL_URL = f"mysql://{Login}:{Password}@{Server_Host}:{Port}/{Database
 # Local
 SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://root:Study_projet3@localhost:3310/yoyorder"
 
-# Local_test
-SQLALCHEMY_DATABASE_URL_TEST = "mysql+mysqlconnector://root:Study_projet3@localhost:3310/yoyorder_test"
-
 
 if ENV == "local":
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
-elif ENV == "local_test":
-    engine = create_engine(SQLALCHEMY_DATABASE_URL_TEST)
+
 else:
     engine = create_engine(SCALINGO_MYSQL_URL)
 
