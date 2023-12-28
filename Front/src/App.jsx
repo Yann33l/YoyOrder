@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { checkCredentials, checkUser, createUser } from "./Composant/API/api";
 import HomePage from "./Composant/Page/HomePage";
 
@@ -10,8 +10,6 @@ function App() {
   });
 
   const [isRegistering, setIsRegistering] = useState(false);
-
-
 
   // Fonction de connexion
   const handleLogin = async (event) => {
@@ -114,11 +112,11 @@ function App() {
           />
           <br />
           <br />
-          <button type="submit, reset"> Connexion </button>
+          <button type="submit"> Connexion </button>
         </form>
         <br />
         <p style={{ color: "#D4AF37", margin: 0 }}>
-          Besoin d'un compte?
+          Besoin d&#39;un compte?
           <br />
           <button style={{ width: "25%" }} onClick={handleRegisterClick}>
             Cliquer ici
@@ -127,7 +125,7 @@ function App() {
       </main>
     );
   };
-  
+
   // Rendu conditionnel en fonction de l'état isRegistering = Page d'inscription
   if (isRegistering) {
     return (
@@ -176,7 +174,11 @@ function App() {
 
   if (userState.loggedIn && userState.isAdmin && userState.isAuthorized) {
     return <HomePage isAdmin={true} onLogout={handleLogout} />;
-  } else if (userState.loggedIn && !userState.isAdmin && userState.isAuthorized) {
+  } else if (
+    userState.loggedIn &&
+    !userState.isAdmin &&
+    userState.isAuthorized
+  ) {
     return <HomePage isAdmin={false} onLogout={handleLogout} />;
   } else if (userState.loggedIn && !userState.isAuthorized) {
     alert("Votre compte n'est pas encore activé par un administrateur");

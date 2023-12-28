@@ -1,7 +1,6 @@
 import axios from "axios";
 import { setAuthHeader } from "./token";
 
-
 export let API_URL;
 
 if (
@@ -82,9 +81,10 @@ export const GetPiece = async () => {
     console.log(pieces);
     return pieces;
   } catch (error) {
-    console.error("Erreur lors de la récupération des pièces depuis l'API :", error);
+    console.error(
+      "Erreur lors de la récupération des pièces depuis l'API :",
+      error
+    );
     throw error;
   }
 };
-
-

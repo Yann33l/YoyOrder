@@ -28,7 +28,7 @@ const TableUtilisateurs = () => {
     };
 
     getUtilisateurs();
-  }, []);
+  }, [authHeader]);
 
   const handleCheckBoxChange = async (event, params) => {
     const newValue = event.target.checked;
