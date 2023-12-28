@@ -102,9 +102,7 @@ def liaison_article_lieuxdestockage(db: Session, article: schemas.ArticlesCreate
 
 
 def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list):
-    print(secteur_liste)
     for secteur in secteur_liste:
-        print(secteur)
         secteur_id = client_repository.get_secteurID_by_libelle(secteur)
         db_r_article_secteur = models.r_articles_secteurs(
             article_id=article_id,
@@ -116,7 +114,6 @@ def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list
 
 
 def create_article(db: Session, article: schemas.ArticlesCreate):
-    print(article)
     db_article = models.articles(
         libelle=article.libelle,
         ref=article.ref,
@@ -279,13 +276,13 @@ def edit_commande(db: Session, commande: schemas.Commandes):
 
 
 # Lieux de stockage
+
 def get_lieuxdestockage(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.lieuxdestockage).offset(skip).limit(limit).all()
 
 
 def create_lieuxdestockage(db: Session, lieuxdestockage: schemas.LieuxDeStockage):
     db_lieuxdestockage = models.lieuxdestockage(
-        ID=lieuxdestockage.ID,
         libelle=lieuxdestockage.libelle,
         temperature=lieuxdestockage.temperature,
     )
@@ -301,7 +298,6 @@ def get_usersdates(db: Session, skip: int = 0, limit: int = 100):
 
 def create_userdate(db: Session, userdate: schemas.usersdates):
     db_userdate = models.usersdates(
-        ID=userdate.ID,
         user_id=userdate.user_id,
         date=userdate.date,
     )

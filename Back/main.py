@@ -318,9 +318,9 @@ def create_gestiondescout(gestiondescout: schemas.GestionDesCouts, db: Session =
 
 
 @app.get("/lieuxdestockage/", response_model=list[schemas.LieuxDeStockage])
-def read_lieuxdestockage(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+def read_lieuxdestockage(skip: int = 0, limit: int = 100,db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Autorisation is True:
-        LieuxDeStockage = CRUD.get_gestiondescouts(db, skip=skip, limit=limit)
+        LieuxDeStockage = CRUD.get_lieuxdestockage(db, skip=skip, limit=limit)
         return LieuxDeStockage
 
 
