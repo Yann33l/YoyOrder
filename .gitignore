@@ -25,4 +25,4 @@ Brand files/
 *.njsproj
 *.sln
 *.sw?
-.eslintrc.cjs
+Front/.eslintrc.cjs
