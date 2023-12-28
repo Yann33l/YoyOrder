@@ -3,12 +3,12 @@ from datetime import date, datetime
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
-from . import models, schemas
+from . import client_repository, models, schemas
 
 
 # Users
-def get_user_by_ID(db: Session, id: int):
-    return db.query(models.users).filter(models.users.ID == id).first()
+def get_user_by_ID(db: Session, user_id: int):
+    return db.query(models.users).filter(models.users.ID == user_id).first()
 
 
 def get_user_by_email(db: Session, email: str):
@@ -83,18 +83,54 @@ def get_articles(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.articles).offset(skip).limit(limit).all()
 
 
-def create_article(db: Session, article: schemas.Articles):
+def get_articles_by_libelle(db: Session, libelle: str):
+    return db.query(models.articles).filter(models.articles.libelle == libelle).first()
+
+
+def liaison_article_lieuxdestockage(db: Session, article: schemas.ArticlesCreate):
+    article_id = client_repository.get_articleID_by_data(
+        article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
+    lieuxdestockage_id = client_repository.get_stockageID_by_emplacement_and_temperature(
+        article.lieuxDeStockage, article.temperature)
+    db_r_article_lieuxdestockage = models.r_articles_lieux(
+        article_id=article_id,
+        lieuDeStockage_id=lieuxdestockage_id)
+    db.add(db_r_article_lieuxdestockage)
+    db.commit()
+    db.refresh(db_r_article_lieuxdestockage)
+    return db_r_article_lieuxdestockage
+
+
+def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list):
+    for secteur in secteur_liste:
+        secteur_id = client_repository.get_secteurID_by_libelle(secteur)
+        db_r_article_secteur = models.r_articles_secteurs(
+            article_id=article_id,
+            secteur_id=secteur_id)
+        db.add(db_r_article_secteur)
+        db.commit()
+        db.refresh(db_r_article_secteur)
+    return db_r_article_secteur
+
+
+def create_article(db: Session, article: schemas.ArticlesCreate):
     db_article = models.articles(
         libelle=article.libelle,
         ref=article.ref,
         fournisseur_id=article.fournisseur_id,
         conditionnement=article.conditionnement,
         dateDebutValidite=date.today(),
-        dateFinValidite=datetime(3000, 12, 31),
-    )
+        dateFinValidite=datetime(3000, 12, 31),)
     db.add(db_article)
     db.commit()
+    db.refresh(db_article)
+    liaison_article_lieuxdestockage(db, article)
+    liaison_article_to_secteur(db, db_article.ID, article.secteur_liste)
+    db_article.secteur_liste = article.secteur_liste
+    db_article.temperature = article.temperature
+    db_article.lieuxDeStockage = article.lieuxDeStockage
     return db_article
+
 
 # Fournisseurs
 
@@ -147,15 +183,6 @@ def create_secteur(db: Session, secteur: schemas.Secteurs):
     db.commit()
     return db_secteur
 
-
-def edit_secteur(db: Session, secteur: schemas.Secteurs):
-    db_secteur = db.query(models.secteurs).filter(
-        models.secteurs.ID == secteur.ID).scalar()
-    if db_secteur:
-        db_secteur.libelle = secteur.libelle
-        db.commit()
-        db.refresh(db_secteur)
-    return db_secteur
 
 # Stocks
 
@@ -249,13 +276,13 @@ def edit_commande(db: Session, commande: schemas.Commandes):
 
 
 # Lieux de stockage
+
 def get_lieuxdestockage(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.lieuxdestockage).offset(skip).limit(limit).all()
 
 
 def create_lieuxdestockage(db: Session, lieuxdestockage: schemas.LieuxDeStockage):
     db_lieuxdestockage = models.lieuxdestockage(
-        ID=lieuxdestockage.ID,
         libelle=lieuxdestockage.libelle,
         temperature=lieuxdestockage.temperature,
     )
@@ -271,10 +298,12 @@ def get_usersdates(db: Session, skip: int = 0, limit: int = 100):
 
 def create_userdate(db: Session, userdate: schemas.usersdates):
     db_userdate = models.usersdates(
-        ID=userdate.ID,
         user_id=userdate.user_id,
         date=userdate.date,
     )
     db.add(db_userdate)
     db.commit()
     return db_userdate
+
+def get_pieces(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.pieces).offset(skip).limit(limit).all()

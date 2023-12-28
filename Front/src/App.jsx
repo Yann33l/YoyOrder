@@ -1,11 +1,15 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { checkCredentials, checkUser, createUser } from "./Composant/API/api";
 import HomePage from "./Composant/Page/HomePage";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [userState, setUserState] = useState({
+    loggedIn: false,
+    isAdmin: false,
+    isAuthorized: false,
+  });
+
   const [isRegistering, setIsRegistering] = useState(false);
-  const [isAutorized, setIsAutorized] = useState(false);
 
   // Fonction de connexion
   const handleLogin = async (event) => {
@@ -16,20 +20,19 @@ function App() {
 
     try {
       const data = await checkCredentials(Email, Password);
-      // Si l'utilisateur est un administrateur => loggedIn à 'admin'
-      if (data.Admin === true) {
-        setLoggedIn("admin");
-      } else {
-        setLoggedIn(true);
-      }
-      if (data.Autorisation === true) {
-        setIsAutorized(true);
-      } else {
-        setIsAutorized(false);
-      }
+      setUserState({
+        loggedIn: true,
+        isAdmin: data.Admin,
+        isAuthorized: data.Autorisation,
+      });
     } catch (error) {
       alert("Utilisateur ou mot de passe incorrect");
     }
+  };
+
+  // Fonction de déconnexion
+  const handleLogout = () => {
+    setUserState({ loggedIn: false, isAdmin: false, isAuthorized: false });
   };
 
   // Fonction d'inscription
@@ -60,6 +63,7 @@ function App() {
           } else {
             await createUser(Email, Password);
             alert("Utilisateur créé");
+            setIsRegistering(false);
           }
         } else {
           // Gérer les autres erreurs de requête ou de réseau
@@ -108,11 +112,11 @@ function App() {
           />
           <br />
           <br />
-          <button type="submit, reset"> Connexion </button>
+          <button type="submit"> Connexion </button>
         </form>
         <br />
         <p style={{ color: "#D4AF37", margin: 0 }}>
-          Besoin d'un compte?
+          Besoin d&#39;un compte?
           <br />
           <button style={{ width: "25%" }} onClick={handleRegisterClick}>
             Cliquer ici
@@ -121,13 +125,13 @@ function App() {
       </main>
     );
   };
+
   // Rendu conditionnel en fonction de l'état isRegistering = Page d'inscription
   if (isRegistering) {
     return (
       <main className="Connexion centered-element">
         <h1>Inscription</h1>
         <p style={{ color: "#D4AF37" }}>
-          {" "}
           Apres inscription votre compte doit etre activé par un administrateur
         </p>
         <form onSubmit={handleInscription}>
@@ -151,36 +155,35 @@ function App() {
           <input
             name="ConfirmPassword"
             type="password"
-            placeholder="Mot de passe"
+            placeholder="Confirmation mot de passe"
           />
           <br />
           <button type="submit"> Valider </button>
           <br />
-          <br />
           <button
             id="reset"
             type="reset"
-            onClick={() => window.location.reload()}
+            onClick={() => setIsRegistering(false)}
           >
-            {" "}
-            Retour{" "}
+            Retour
           </button>
         </form>
       </main>
     );
   }
 
-  if (loggedIn === "admin" && isAutorized === true) {
-    return <HomePage isAdmin={true} />;
+  if (userState.loggedIn && userState.isAdmin && userState.isAuthorized) {
+    return <HomePage isAdmin={true} onLogout={handleLogout} />;
   } else if (
-    (loggedIn === "admin" && isAutorized === false) ||
-    (loggedIn === true && isAutorized === false)
+    userState.loggedIn &&
+    !userState.isAdmin &&
+    userState.isAuthorized
   ) {
+    return <HomePage isAdmin={false} onLogout={handleLogout} />;
+  } else if (userState.loggedIn && !userState.isAuthorized) {
     alert("Votre compte n'est pas encore activé par un administrateur");
-    setLoggedIn(false);
+    setUserState({ loggedIn: false, isAdmin: false, isAuthorized: false });
     return handleConnexion();
-  } else if (loggedIn === true && isAutorized === true) {
-    return <HomePage isAdmin={false} />;
   } else {
     return handleConnexion();
   }

@@ -73,3 +73,18 @@ export const checkCredentials = async (Email, Password) => {
     throw error;
   }
 };
+
+export const GetPiece = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/get_pieces/`);
+    const pieces = response.data;
+    console.log(pieces);
+    return pieces;
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des pièces depuis l'API :",
+      error
+    );
+    throw error;
+  }
+};

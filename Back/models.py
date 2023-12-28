@@ -91,7 +91,7 @@ class r_articles_lieux(Base):
 
     ID = Column(Integer, primary_key=True, index=True)
     article_id = Column(Integer)
-    lieuDeStickage_id = Column(Integer)
+    lieuDeStockage_id = Column(Integer)
 
 
 class r_articles_secteurs(Base):
@@ -136,3 +136,11 @@ class usersdates(Base):
     user_id = Column(Integer)
     date = Column(DATE)
     statut = Column(String(255))
+
+class pieces(Base):
+    __tablename__ = "piece"
+
+    ID = Column(Integer, primary_key=True, index=True)
+    libelle = Column(String(255))
+
+    

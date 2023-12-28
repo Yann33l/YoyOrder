@@ -9,15 +9,4 @@ const dataTableStyle = {
   boxShadow: "0px 0px 5px 0px rgba(0,0,0,0.75)",
 };
 
-const columnsTableUtilisateur = [
-  { field: "Email", headerName: "Email", width: 250 },
-  { field: "Admin", headerName: "Admin", width: 100 },
-  { field: "Autorisation", headerName: "Compte actif", width: 100 },
-  { field: "ACP", headerName: "ACP", width: 100 },
-  { field: "PAM", headerName: "PAM", width: 100 },
-  { field: "BIO", headerName: "BIO", width: 100 },
-  { field: "RC", headerName: "RC", width: 100 },
-  { field: "GEC", headerName: "GEC", width: 100 },
-];
-
-export { columnsTableUtilisateur, dataTableStyle };
+export { dataTableStyle };

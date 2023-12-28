@@ -1,7 +1,7 @@
 let authHeader = null;
 
 export const setAuthHeader = (header) => {
-    authHeader = header;
+  authHeader = header;
 };
 
 export const getAuthHeader = () => {
