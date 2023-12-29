@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from fastapi import HTTPException
 
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
@@ -30,26 +31,25 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     return db_user
 
-
-def edit_admin_status(db: Session, email: str, admin: bool):
+def edit_user_status(db: Session, email: str, admin: bool = None, autorisation: bool = None, acheteur: bool = None, demandeur: bool = None):
     db_user = db.query(models.users).filter(
         models.users.Email == email).scalar()
+
     if db_user:
-        db_user.Admin = admin
+        if admin is not None:
+            db_user.Admin = admin
+        elif autorisation is not None:
+            db_user.Autorisation = autorisation
+        elif acheteur is not None:
+            db_user.Acheteur = acheteur
+        elif demandeur is not None:
+            db_user.Demandeur = demandeur
+
         db.commit()
         db.refresh(db_user)
-    return db_user
+        return db_user
 
-
-def edit_autorisation_status(db: Session, email: str, autorisation: bool):
-    db_user = db.query(models.users).filter(
-        models.users.Email == email).scalar()
-    if db_user:
-        db_user.Autorisation = autorisation
-        db.commit()
-        db.refresh(db_user)
-    return db_user
-
+    raise HTTPException(status_code=404, detail="User not found")
 
 def edit_user_secteur(db: Session, user_id: int, secteur_id: int):
     db_user = db.query(models.users).filter(

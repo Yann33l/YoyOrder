@@ -19,14 +19,14 @@ let AcceuilContent = (
     <p> Trois types d&#39;utilisateurs </p>
     <ul>
       <li> Acheteurs </li>
-      <li> Utilisateurs </li>
+      <li> Demandeurs </li>
       <li> Administrateurs </li>
     </ul>{" "}
     Voir pour passer les details de chaque utilisateurs en fenetre qui
     s&#39;ettand au clic sur l&#39;utilisateur
     <br /> <br />
     <br /> <br />
-    <p>Les Utilisateurs peuvent : </p>
+    <p>Les Demandeurs peuvent : </p>
     <ul>
       <li>creer des</li>{" "}
       <ul>

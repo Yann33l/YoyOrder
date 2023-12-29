@@ -10,6 +10,8 @@ class users(Base):
     ID = Column(Integer, primary_key=True, index=True)
     Email = Column(String(45))
     Admin = Column(Boolean)
+    Acheteur = Column(Boolean)
+    Demandeur = Column(Boolean)
     Password = Column(LargeBinary)
     Autorisation = Column(Boolean)
 

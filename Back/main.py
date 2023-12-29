@@ -161,9 +161,11 @@ def format_user_results(results):
             "Email": row[1],
             "Admin": row[2],
             "Autorisation": row[3],
+            "Demandeur": row[4],
+            "Acheteur": row[5],
         }
         formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 4] for i in range(len(secteur_labels))})
+            {f"{secteur_labels[i]}": row[i + 6] for i in range(len(secteur_labels))})
         formatted_results.append(formatted_result)
     return formatted_results
 
@@ -191,25 +193,16 @@ def read_user_email(email: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
-# Mise à jour du statu Admin d'un utilisateur
-
-
-@app.put("/editUserAdmin/", response_model=schemas.UserBase)
-def update_user_Admin(user_edit: schemas.UserEditAdmin, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+# Mise à jour du status d'un utilisateur
+@router.put("/editUserStatus/{status}/", response_model=schemas.UserBase)
+def update_user_status(status: str, edit_user: schemas.UserEditStatus, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Admin is True:
-        user = CRUD.edit_admin_status(
-            db, user_edit.Email, user_edit.Admin)
-        return user
+        update_function = None
+        update_function = CRUD.edit_user_status(db, edit_user.Email, **{status.lower(): edit_user.Status})
+        if update_function:
+            return update_function
+app.include_router(router)
 
-# Mise à jour du statu Autorisation d'un utilisateur
-
-
-@app.put("/editUserAutorisation/")
-def update_user_Autorisation(edit_user: schemas.UserEditAutorisation, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-    if current_user.Admin is True:
-        user = CRUD.edit_autorisation_status(
-            db, edit_user.Email, edit_user.Autorisation)
-        return user
 # endregion : Connexion visualisation et création d'un utilisateur
 
 

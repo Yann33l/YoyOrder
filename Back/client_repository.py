@@ -20,7 +20,7 @@ def get_users():
         join_part = " ".join([f"LEFT JOIN secteurs secteur_{s_id} ON s.ID = secteur_{s_id}.ID" for s_id in range(
             1, len(secteur_labels) + 1)])
 
-        query = text(f"SELECT u.ID, Email, Admin, Autorisation, {select_part} "
+        query = text(f"SELECT u.ID, Email, Admin, Autorisation, Demandeur, Acheteur , {select_part} "
                      "FROM users u "
                      "LEFT JOIN r_user_secteur r_us ON r_us.user_id = u.ID "
                      "LEFT JOIN secteurs s ON s.ID = r_us.secteur_id "

@@ -44,37 +44,35 @@ const TableUtilisateurs = () => {
     const authHeader = getAuthHeader();
 
     // Envoyer la mise à jour à la base de données via une requête HTTP
-    if (params.field === "Admin") {
+    if (
+      params.field === "Admin" ||
+      params.field === "Demandeur" ||
+      params.field === "Acheteur" ||
+      params.field === "Autorisation"
+    ) {
       try {
         const requestData = {
           Email: params.row.Email,
-          Admin: newValue,
+          Status: newValue,
         };
-        await axios.put(`${API_URL}/editUserAdmin/`, requestData, authHeader);
-        setData(updatedData);
-      } catch (error) {
-        console.error("Erreur lors de la mise à jour : ", error);
-      }
-    }
-    if (params.field === "Autorisation") {
-      try {
-        const requestData = {
-          Email: params.row.Email,
-          Autorisation: newValue,
-        };
+        console.log(`${API_URL}/editUserStatus/${params.field}/`);
         await axios.put(
-          `${API_URL}/editUserAutorisation/`,
+          `${API_URL}/editUserStatus/${params.field}/`,
           requestData,
           authHeader
         );
         setData(updatedData);
+        console.log(requestData);
       } catch (error) {
         console.error("Erreur lors de la mise à jour : ", error);
       }
     }
+
     if (
       params.field !== "Email" &&
       params.field !== "Admin" &&
+      params.field !== "Demandeur" &&
+      params.field !== "Acheteur" &&
       params.field !== "Autorisation"
     ) {
       try {
@@ -100,45 +98,28 @@ const TableUtilisateurs = () => {
     );
   };
 
-  const secteurLabels =
+  const userStatusAndSecteurs =
     responseData.results && responseData.results.length > 0
       ? Object.keys(responseData.results[0]).filter(
-          (key) =>
-            key !== "user_id" &&
-            key !== "Email" &&
-            key !== "Admin" &&
-            key !== "Autorisation"
+          (key) => key !== "user_id" && key !== "Email"
         )
       : [];
 
   const dynamicColumns = [
     { field: "Email", headerName: "Email", width: 250 },
-    {
-      field: "Admin",
-      headerName: "Admin",
-      width: 100,
-      renderCell: renderCheckCell,
-    },
-    {
-      field: "Autorisation",
-      headerName: "Compte actif",
-      width: 100,
-      renderCell: renderCheckCell,
-    },
-    ...secteurLabels.map((label) => ({
+    ...userStatusAndSecteurs.map((label) => ({
       field: label,
       headerName: label,
-      width: 100,
-      renderCell: renderCheckCell,
     })),
   ];
 
-  // modification des colonnes Admin et Autorisation pour afficher les checkbox
+  // modification des colonnes pour affichage en checkbox
   const columns = dynamicColumns.map((column) => {
     if (column.field !== "Email") {
       return {
         ...column,
         renderCell: renderCheckCell,
+        width: 110,
       };
     }
     return column;
