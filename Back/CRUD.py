@@ -26,6 +26,8 @@ def create_user(db: Session, user: schemas.UserCreate):
         Password=user.Password,
         Admin=False,
         Autorisation=False,
+        Acheteur=False,
+        Demandeur=False,
     )
     db.add(db_user)
     db.commit()

@@ -103,6 +103,13 @@ class r_articles_secteurs(Base):
     article_id = Column(Integer)
     secteur_id = Column(Integer)
 
+class r_articles_pieces(Base):
+    __tablename__ = "r_articles_pieces"
+
+    ID = Column(Integer, primary_key=True, index=True)
+    article_id = Column(Integer)
+    piece_id = Column(Integer)
+
 
 class r_user_stock(Base):
     __tablename__ = "r_user_stock"

@@ -16,7 +16,6 @@ const TableUtilisateurs = () => {
         const response = await axios.get(`${API_URL}/users/`, authHeader);
         const responseData = response.data;
         setResponseData(responseData);
-        console.log(responseData);
         const dataWithIds = responseData.results.map((row, index) => ({
           ...row,
           id: index + 1,

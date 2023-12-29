@@ -3,11 +3,13 @@ import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
 import { GetPiece } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
+import mainSubContentDemande from "./Demande";
 
 // eslint-disable-next-line react/prop-types
 function HomePage({ isAdmin, onLogout }) {
   const [content, setContent] = useState("default");
   const [pieces, setPieces] = useState([]);
+  const [subContent, setSubContent] = useState("default");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,6 +25,7 @@ function HomePage({ isAdmin, onLogout }) {
   }, []);
 
   // Contenu du main basé sur l'état
+
   let mainContent;
   switch (content) {
     case "acceuil":
@@ -30,29 +33,29 @@ function HomePage({ isAdmin, onLogout }) {
       mainContent = AcceuilContent;
       break;
 
-    case "Commande":
+    case "Demande":
       mainContent = (
         <div>
-          <nav className="sous_menu-nav">
-            <ul>
-              {pieces.map((piece) => (
-                <li
-                  key={piece.ID}
-                  className="bouton"
-                  onClick={() => setContent(piece.ID)}
-                >
-                  {piece.libelle}
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <div>
+            <nav className="sous_menu-nav">
+              <ul>
+                {pieces.map((piece) => (
+                  <li
+                    key={piece.ID}
+                    className="bouton"
+                    onClick={() => setSubContent(piece.libelle)}
+                  >
+                    {piece.libelle}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+          <div>{mainSubContentDemande(subContent, pieces)}</div>
         </div>
       );
       break;
     case "Creation":
-      mainContent = <div></div>;
-      break;
-    case "Graph2":
       mainContent = <div></div>;
       break;
 
@@ -68,7 +71,7 @@ function HomePage({ isAdmin, onLogout }) {
 
   return (
     <div>
-      <Headers isAdmin2={isAdmin} onClick={setContent} onLogout2={onLogout} />
+      <Headers {...{ isAdmin, setContent, onLogout }} />
 
       <main className="ZoneTravail">{mainContent}</main>
 

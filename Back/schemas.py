@@ -140,6 +140,11 @@ class r_articles_lieux(BaseModel):
     article_id: int
     lieuxDeStockage_id: int
 
+class r_articles_pieces(BaseModel):
+    ID: int
+    article_id: int
+    piece_id: int
+
 
 class r_articles_pieces(BaseModel):
     ID: int
