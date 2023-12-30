@@ -1,34 +1,33 @@
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import { dataTableStyle } from "./TableStyle";
 
+const IGNORED_FIELDS = ["user_id", "Email", "id"];
+const STATUS_FIELDS = ["Admin", "Demandeur", "Acheteur", "Autorisation"];
+
 const TableUtilisateurs = () => {
-  const [responseData, setResponseData] = React.useState([]);
-  const [data, setData] = React.useState([]);
-  const authHeader = getAuthHeader();
+  const [data, setData] = useState([]);
+
+  const getUtilisateurs = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/users/`, getAuthHeader());
+      const data = response.data;
+      const dataWithIds = data.results.map((row, index) => ({
+        ...row,
+        id: index + 1,
+      }));
+      setData(dataWithIds);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
-    const getUtilisateurs = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/users/`, authHeader);
-        const responseData = response.data;
-        setResponseData(responseData);
-        console.log(responseData);
-        const dataWithIds = responseData.results.map((row, index) => ({
-          ...row,
-          id: index + 1,
-        }));
-        setData(dataWithIds);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
     getUtilisateurs();
-  }, [authHeader]);
+  }, []);
 
   const handleCheckBoxChange = async (event, params) => {
     const newValue = event.target.checked;
@@ -41,52 +40,32 @@ const TableUtilisateurs = () => {
       }
       return row;
     });
-    const authHeader = getAuthHeader();
 
-    // Envoyer la mise à jour à la base de données via une requête HTTP
-    if (params.field === "Admin") {
-      try {
+    try {
+      if (STATUS_FIELDS.includes(params.field)) {
         const requestData = {
           Email: params.row.Email,
-          Admin: newValue,
-        };
-        await axios.put(`${API_URL}/editUserAdmin/`, requestData, authHeader);
-        setData(updatedData);
-      } catch (error) {
-        console.error("Erreur lors de la mise à jour : ", error);
-      }
-    }
-    if (params.field === "Autorisation") {
-      try {
-        const requestData = {
-          Email: params.row.Email,
-          Autorisation: newValue,
+          Status: newValue,
         };
         await axios.put(
-          `${API_URL}/editUserAutorisation/`,
+          `${API_URL}/editUserStatus/${params.field}/`,
           requestData,
-          authHeader
+          getAuthHeader()
         );
-        setData(updatedData);
-      } catch (error) {
-        console.error("Erreur lors de la mise à jour : ", error);
-      }
-    }
-    if (
-      params.field !== "Email" &&
-      params.field !== "Admin" &&
-      params.field !== "Autorisation"
-    ) {
-      try {
+      } else if (!IGNORED_FIELDS.includes(params.field)) {
         const requestData = {
           user_id: params.row.user_id,
           secteur_libelle: params.field,
         };
-        await axios.put(`${API_URL}/editUserSecteur/`, requestData, authHeader);
-        setData(updatedData);
-      } catch (error) {
-        console.error("Erreur lors de la mise à jour : ", error);
+        await axios.put(
+          `${API_URL}/editUserSecteur/`,
+          requestData,
+          getAuthHeader()
+        );
       }
+      setData(updatedData);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour : ", error);
     }
   };
 
@@ -94,51 +73,32 @@ const TableUtilisateurs = () => {
     return (
       <input
         type="checkbox"
-        checked={params.value || false} // Provide a default value of false
+        checked={params.value || false}
         onChange={(event) => handleCheckBoxChange(event, params)}
       />
     );
   };
 
-  const secteurLabels =
-    responseData.results && responseData.results.length > 0
-      ? Object.keys(responseData.results[0]).filter(
-          (key) =>
-            key !== "user_id" &&
-            key !== "Email" &&
-            key !== "Admin" &&
-            key !== "Autorisation"
-        )
+  const userStatusAndSecteurs =
+    data && data.length > 0
+      ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
       : [];
 
   const dynamicColumns = [
     { field: "Email", headerName: "Email", width: 250 },
-    {
-      field: "Admin",
-      headerName: "Admin",
-      width: 100,
-      renderCell: renderCheckCell,
-    },
-    {
-      field: "Autorisation",
-      headerName: "Compte actif",
-      width: 100,
-      renderCell: renderCheckCell,
-    },
-    ...secteurLabels.map((label) => ({
+    ...userStatusAndSecteurs.map((label) => ({
       field: label,
       headerName: label,
-      width: 100,
-      renderCell: renderCheckCell,
     })),
   ];
 
-  // modification des colonnes Admin et Autorisation pour afficher les checkbox
+  // modification des colonnes pour affichage en checkbox
   const columns = dynamicColumns.map((column) => {
     if (column.field !== "Email") {
       return {
         ...column,
         renderCell: renderCheckCell,
+        width: 110,
       };
     }
     return column;

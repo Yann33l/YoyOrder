@@ -24,6 +24,8 @@ function App() {
         loggedIn: true,
         isAdmin: data.Admin,
         isAuthorized: data.Autorisation,
+        isAcheteur: data.Acheteur,
+        isDemandeur: data.Demandeur,
       });
     } catch (error) {
       alert("Utilisateur ou mot de passe incorrect");
@@ -32,7 +34,13 @@ function App() {
 
   // Fonction de déconnexion
   const handleLogout = () => {
-    setUserState({ loggedIn: false, isAdmin: false, isAuthorized: false });
+    setUserState({
+      loggedIn: false,
+      isAdmin: false,
+      isAuthorized: false,
+      isAcheteur: false,
+      isDemandeur: false,
+    });
   };
 
   // Fonction d'inscription

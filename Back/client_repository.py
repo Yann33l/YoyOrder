@@ -20,7 +20,7 @@ def get_users():
         join_part = " ".join([f"LEFT JOIN secteurs secteur_{s_id} ON s.ID = secteur_{s_id}.ID" for s_id in range(
             1, len(secteur_labels) + 1)])
 
-        query = text(f"SELECT u.ID, Email, Admin, Autorisation, {select_part} "
+        query = text(f"SELECT u.ID, Email, Admin, Autorisation, Demandeur, Acheteur , {select_part} "
                      "FROM users u "
                      "LEFT JOIN r_user_secteur r_us ON r_us.user_id = u.ID "
                      "LEFT JOIN secteurs s ON s.ID = r_us.secteur_id "
@@ -79,3 +79,22 @@ def get_piece():
             "SELECT ID, libelle FROM piece")
         result = connection.execute(query)
         return result.fetchall()
+    
+def get_articles_by_secteur(piece_libelle):
+    with engine.connect() as connection:
+        query = text(
+            "SELECT a.ID, a.libelle, a.ref, f.libelle, lst.libelle, a.conditionnement \
+            FROM articles a \
+            LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID\
+            LEFT JOIN r_articles_lieux r_al on r_al.article_id = a.ID\
+            LEFT JOIN r_articles_pieces r_ap on r_ap.article_id = a.ID\
+            LEFT JOIN piece p on p.ID = r_ap.piece_id\
+            LEFT JOIN lieuxdestockage lst on lst.ID = r_al.lieuDeStockage_id\
+            LEFT JOIN r_articles_secteurs r_as ON r_as.article_id = a.ID \
+            LEFT JOIN secteurs s ON s.ID = r_as.secteur_id \
+            WHERE p.libelle = :piece_libelle")
+        result = connection.execute(
+            query, {"piece_libelle": piece_libelle})
+        return result.fetchall()
+
+    

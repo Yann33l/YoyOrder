@@ -10,6 +10,8 @@ class users(Base):
     ID = Column(Integer, primary_key=True, index=True)
     Email = Column(String(45))
     Admin = Column(Boolean)
+    Acheteur = Column(Boolean)
+    Demandeur = Column(Boolean)
     Password = Column(LargeBinary)
     Autorisation = Column(Boolean)
 
@@ -100,6 +102,13 @@ class r_articles_secteurs(Base):
     ID = Column(Integer, primary_key=True, index=True)
     article_id = Column(Integer)
     secteur_id = Column(Integer)
+
+class r_articles_pieces(Base):
+    __tablename__ = "r_articles_pieces"
+
+    ID = Column(Integer, primary_key=True, index=True)
+    article_id = Column(Integer)
+    piece_id = Column(Integer)
 
 
 class r_user_stock(Base):

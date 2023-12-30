@@ -27,15 +27,29 @@ class UserEditAdmin (BaseModel):
     Email: str
     Admin: bool
 
+class UserEditStatus (BaseModel):
+    Email: str
+    Status: bool
+
+
 
 class UserEditAutorisation (BaseModel):
     Email: str
     Autorisation: bool
 
+class UserEditAcheteur (BaseModel):
+    Email: str
+    Acheteur: bool
+
+class UserEditDemandeur (BaseModel):
+    Email: str
+    Demandeur: bool
 
 class UserBase(BaseModel):
     Email: str
     Admin: Optional[bool] = False
+    Acheteur: Optional[bool] = False
+    Demandeur: Optional[bool] = False
     Autorisation: Optional[bool] = False
 
     class Config:
@@ -125,6 +139,11 @@ class r_articles_lieux(BaseModel):
     ID: int
     article_id: int
     lieuxDeStockage_id: int
+
+class r_articles_pieces(BaseModel):
+    ID: int
+    article_id: int
+    piece_id: int
 
 
 class r_articles_pieces(BaseModel):
