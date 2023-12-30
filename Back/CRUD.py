@@ -255,7 +255,7 @@ def create_commande(db: Session, commande: schemas.Commandes):
         secteur_id=commande.secteur_id,
         dateCommande=commande.dateCommande,
         dateReception=commande.dateReception,
-        dateAchat=commande.dateDemande,
+        dateDemande=commande.dateDemande,
     )
     db.add(db_commande)
     db.commit()

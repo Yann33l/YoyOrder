@@ -233,27 +233,27 @@ def format_Commande_results(results):
         formatted_result.update(
             {f"{secteur_labels[i]}": row[i + 8] for i in range(len(secteur_labels))})
         formatted_results.append(formatted_result)
-    return formatted_results  # Correction du nom de la variable
+    return formatted_results 
 
 @router.get("/articlesDemande/{piece}")
 def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depends(get_current_active_user)):
-    if current_user.Autorisation is True:
+    if current_user.Demandeur is True:
         try:
             results = client_repository.get_articles_by_secteur(piece_libelle=piece)
-            formatted_results = format_Commande_results(results)  # Utilisation de la fonction correctement
+            formatted_results = format_Commande_results(results)
             return {"results": formatted_results}
              
         except Exception as e:
             return {"error": str(e)}
     else:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
 
 @app.get("/articlesCommande/")
 def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Autorisation is True:
         try:
             results = client_repository.get_articles_to_buy()
-            formatted_results = format_Commande_results(results)  # Utilisation de la fonction correctement
+            formatted_results = format_Commande_results(results) 
             return {"results": formatted_results}
              
         except Exception as e:
@@ -262,7 +262,7 @@ def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_curren
         raise HTTPException(status_code=400, detail="Inactive user")
 
 
-@app.put("/editDemande/")
+"""@app.put("/editDemande/")
 def uptdate_demande(edit_trace_demande: schemas.r_user_commande, edit_demande :schemas.Commandes,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Demandeur is True:
         try:           
@@ -279,7 +279,7 @@ def update_commande(edit_commande: schemas.r_user_commande, db: Session = Depend
             print(edit_commande)          
 
         except Exception as e:
-            print(f"Authentication error: {e}")
+            print(f"Authentication error: {e}")"""
 app.include_router(router)
 
     

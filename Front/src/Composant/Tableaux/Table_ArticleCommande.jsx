@@ -5,7 +5,7 @@ import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 
 const IGNORED_FIELDS = ["id", "a.ID"];
-const EDITABLE_COLUMNS = ["ref", "date Commande"];
+const EDITABLE_COLUMNS = ["date Commande"];
 
 const TableArticlesCommande = () => {
   const [data, setData] = useState([]);
