@@ -6,6 +6,8 @@ import { getAuthHeader } from "../API/token";
 
 import PropTypes from "prop-types";
 
+const IGNORED_FIELDS = ["id", "a.ID"];
+
 const TableArticles = ({ pieces }) => {
   const [data, setData] = useState([]);
   const authHeader = getAuthHeader();
@@ -31,14 +33,24 @@ const TableArticles = ({ pieces }) => {
     getArticles();
   }, [pieces, authHeader]);
 
-  const articlesColumns = [
-    { field: "a.ID", headerName: "article id", width: 10 },
-    { field: "a.libelle", headerName: "libelle", width: 150 },
-    { field: "a.ref", headerName: "ref", width: 150 },
-    { field: "conditionnement", headerName: "conditionnement", width: 150 },
-    { field: "fournisseur", headerName: "fournisseur", width: 150 },
-    { field: "lieux de stockage", headerName: "lieux de stockage", width: 150 },
-  ];
+  //generateColumns() permet de générer les colonnes du tableau en fonction des données reçues pour ne pas avoir à modifier à chaque changement de données reçues
+  const generateColumns = (data) => {
+    const userStatusAndSecteurs =
+      data && data.length > 0
+        ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
+        : [];
+
+    const articlesColumns = [
+      ...userStatusAndSecteurs.map((label) => ({
+        field: label,
+        headerName: label,
+        width: 150,
+        renderCell: (params) => (params.row[label] ? params.row[label] : ""),
+        //? correspond à if (params.row[label]) {params.row[label]} else {""}
+      })),
+    ];
+    return articlesColumns;
+  };
 
   const dataTableStyle = {
     height: 700,
@@ -54,13 +66,14 @@ const TableArticles = ({ pieces }) => {
   return (
     <DataGrid
       rows={data}
-      columns={articlesColumns}
+      columns={generateColumns(data)}
       sx={dataTableStyle}
       getRowId={(row) => row.id}
       slots={{ toolbar: GridToolbar }}
     />
   );
 };
+
 TableArticles.propTypes = {
   pieces: PropTypes.string.isRequired,
 };

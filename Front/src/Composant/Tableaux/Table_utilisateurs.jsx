@@ -1,33 +1,33 @@
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import { dataTableStyle } from "./TableStyle";
 
+const IGNORED_FIELDS = ["user_id", "Email", "id"];
+const STATUS_FIELDS = ["Admin", "Demandeur", "Acheteur", "Autorisation"];
+
 const TableUtilisateurs = () => {
-  const [responseData, setResponseData] = React.useState([]);
-  const [data, setData] = React.useState([]);
-  const authHeader = getAuthHeader();
+  const [data, setData] = useState([]);
+
+  const getUtilisateurs = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/users/`, getAuthHeader());
+      const data = response.data;
+      const dataWithIds = data.results.map((row, index) => ({
+        ...row,
+        id: index + 1,
+      }));
+      setData(dataWithIds);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
-    const getUtilisateurs = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/users/`, authHeader);
-        const responseData = response.data;
-        setResponseData(responseData);
-        const dataWithIds = responseData.results.map((row, index) => ({
-          ...row,
-          id: index + 1,
-        }));
-        setData(dataWithIds);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
     getUtilisateurs();
-  }, [authHeader]);
+  }, []);
 
   const handleCheckBoxChange = async (event, params) => {
     const newValue = event.target.checked;
@@ -40,50 +40,32 @@ const TableUtilisateurs = () => {
       }
       return row;
     });
-    const authHeader = getAuthHeader();
 
-    // Envoyer la mise à jour à la base de données via une requête HTTP
-    if (
-      params.field === "Admin" ||
-      params.field === "Demandeur" ||
-      params.field === "Acheteur" ||
-      params.field === "Autorisation"
-    ) {
-      try {
+    try {
+      if (STATUS_FIELDS.includes(params.field)) {
         const requestData = {
           Email: params.row.Email,
           Status: newValue,
         };
-        console.log(`${API_URL}/editUserStatus/${params.field}/`);
         await axios.put(
           `${API_URL}/editUserStatus/${params.field}/`,
           requestData,
-          authHeader
+          getAuthHeader()
         );
-        setData(updatedData);
-        console.log(requestData);
-      } catch (error) {
-        console.error("Erreur lors de la mise à jour : ", error);
-      }
-    }
-
-    if (
-      params.field !== "Email" &&
-      params.field !== "Admin" &&
-      params.field !== "Demandeur" &&
-      params.field !== "Acheteur" &&
-      params.field !== "Autorisation"
-    ) {
-      try {
+      } else if (!IGNORED_FIELDS.includes(params.field)) {
         const requestData = {
           user_id: params.row.user_id,
           secteur_libelle: params.field,
         };
-        await axios.put(`${API_URL}/editUserSecteur/`, requestData, authHeader);
-        setData(updatedData);
-      } catch (error) {
-        console.error("Erreur lors de la mise à jour : ", error);
+        await axios.put(
+          `${API_URL}/editUserSecteur/`,
+          requestData,
+          getAuthHeader()
+        );
       }
+      setData(updatedData);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour : ", error);
     }
   };
 
@@ -91,17 +73,15 @@ const TableUtilisateurs = () => {
     return (
       <input
         type="checkbox"
-        checked={params.value || false} // Provide a default value of false
+        checked={params.value || false}
         onChange={(event) => handleCheckBoxChange(event, params)}
       />
     );
   };
 
   const userStatusAndSecteurs =
-    responseData.results && responseData.results.length > 0
-      ? Object.keys(responseData.results[0]).filter(
-          (key) => key !== "user_id" && key !== "Email"
-        )
+    data && data.length > 0
+      ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
       : [];
 
   const dynamicColumns = [
