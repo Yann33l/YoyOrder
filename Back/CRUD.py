@@ -255,27 +255,27 @@ def create_commande(db: Session, commande: schemas.Commandes):
         secteur_id=commande.secteur_id,
         dateCommande=commande.dateCommande,
         dateReception=commande.dateReception,
-        dateAchat=commande.dateAchat,
+        dateAchat=commande.dateDemande,
     )
     db.add(db_commande)
     db.commit()
     return db_commande
 
 
-def edit_commande(db: Session, commande: schemas.Commandes):
+def get_commande_id(db: Session, article_id: int, quantite: int, secteur_id: int, dateDemande: date):
+    return db.query(models.commandes).filter(and_(models.commandes.article_id == article_id,
+                                                  models.commandes.quantite == quantite,
+                                                  models.commandes.secteur_id == secteur_id,
+                                                  models.commandes.dateDemande == dateDemande)).scalar()
+
+def edit_commande_dateDemande(db: Session, commande: schemas.Commandes):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.ID).scalar()
     if db_commande:
-        db_commande.article_id = commande.article_id
-        db_commande.quantite = commande.quantite
-        db_commande.secteur_id = commande.secteur_id
-        db_commande.dateCommande = commande.dateCommande
-        db_commande.dateReception = commande.dateReception
-        db_commande.dateAchat = commande.dateAchat
+        db_commande.dateDemande = commande.dateDemande
         db.commit()
         db.refresh(db_commande)
     return db_commande
-
 
 # Lieux de stockage
 

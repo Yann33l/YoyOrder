@@ -47,7 +47,7 @@ class commandes(Base):
     quantite = Column(Integer)
     secteur_id = Column(Integer)
     dateCommande = Column(DATE)
-    dateAchat = Column(DATE)
+    dateDemande = Column(DATE)
     dateReception = Column(DATE)
 
 

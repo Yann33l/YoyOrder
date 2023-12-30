@@ -136,10 +136,8 @@ async def read_user_info(current_user: schemas.UserBase = Depends(get_current_ac
 
 # endregion : Connexion par token
 
-# region : Connexion visualisation et création d'un utilisateur
+# region : visualisation et création d'un utilisateur
 # Creation d'un utilisateur
-
-
 @app.post("/create_user/", response_model=schemas.UserCreate)
 def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
     user_exists = CRUD.get_user_by_email(db, user.Email)
@@ -169,7 +167,6 @@ def format_user_results(results):
         formatted_results.append(formatted_result)
     return formatted_results
 
-
 @app.get("/users/")
 def read_users(current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Admin is True:
@@ -184,8 +181,6 @@ def read_users(current_user: schemas.UserBase = Depends(get_current_active_user)
         raise HTTPException(status_code=400, detail="Inactive user")
 
 # Récupération d'un utilisateur par son email
-
-
 @app.get("/userByEmail/", response_model=schemas.UserBase)
 def read_user_email(email: str, db: Session = Depends(get_db)):
     db_user = CRUD.get_user_by_email(db, email)
@@ -202,9 +197,7 @@ def update_user_status(status: str, edit_user: schemas.UserEditStatus, db: Sessi
         if update_function:
             return update_function
 
-# endregion : Connexion visualisation et création d'un utilisateur
-
-
+# Mise à jour du secteur d'un utilisateur
 @app.put("/editUserSecteur/")
 def create_r_user_secteur(user_secteur_edited: schemas.r_user_secteur, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Admin is True:
@@ -218,33 +211,75 @@ def create_r_user_secteur(user_secteur_edited: schemas.r_user_secteur, db: Sessi
             return {"results": formatted_results}
         except Exception as e:
             print(f"Authentication error: {e}")
+# endregion : Connexion visualisation et création d'un utilisateur
 
 
 # region : Visualisation et création d'un article
 # Récupération de la liste des articles
+def format_Commande_results(results):
+    secteur_labels = client_repository.get_secteur_labels()
+    formatted_results = []
+    for row in results:
+        formatted_result = {
+            "a.ID": row[0],
+            "nom article": row[1],
+            "ref": row[2],
+            "fournisseur": row[3],
+            "conditionnement": row[4],
+            "quantité": row[5],
+            "date Demande": row[6],
+            "date Commande": row[7],
+        }
+        formatted_result.update(
+            {f"{secteur_labels[i]}": row[i + 8] for i in range(len(secteur_labels))})
+        formatted_results.append(formatted_result)
+    return formatted_results  # Correction du nom de la variable
 
-@router.get("/articles/{piece}")
+@router.get("/articlesDemande/{piece}")
 def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Autorisation is True:
         try:
             results = client_repository.get_articles_by_secteur(piece_libelle=piece)
-            formatted_results = []
-            for row in results:
-                formatted_result = {
-                    "a.ID": row[0],
-                    "a.libelle": row[1],
-                    "a.ref": row[2],
-                    "fournisseur": row[3],
-                    "lieux de stockage": row[4],
-                    "conditionnement": row[5],
-        }
-                formatted_results.append(formatted_result)
+            formatted_results = format_Commande_results(results)  # Utilisation de la fonction correctement
             return {"results": formatted_results}
              
         except Exception as e:
             return {"error": str(e)}
     else:
         raise HTTPException(status_code=400, detail="Inactive user")
+
+@app.get("/articlesCommande/")
+def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        try:
+            results = client_repository.get_articles_to_buy()
+            formatted_results = format_Commande_results(results)  # Utilisation de la fonction correctement
+            return {"results": formatted_results}
+             
+        except Exception as e:
+            return {"error": str(e)}
+    else:
+        raise HTTPException(status_code=400, detail="Inactive user")
+
+
+@app.put("/editDemande/")
+def uptdate_demande(edit_trace_demande: schemas.r_user_commande, edit_demande :schemas.Commandes,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Demandeur is True:
+        try:           
+            CRUD.edit_commande(edit_demande)
+            CRUD.edit_trace_demande(db, edit_trace_demande)
+            return {"results": formatted_results}
+        except Exception as e:
+            print(f"Authentication error: {e}")
+
+@router.put("/editCommande/{date}")
+def update_commande(edit_commande: schemas.r_user_commande, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        try:
+            print(edit_commande)          
+
+        except Exception as e:
+            print(f"Authentication error: {e}")
 app.include_router(router)
 
     

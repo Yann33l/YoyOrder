@@ -95,8 +95,8 @@ class Commandes(BaseModel):
     article_id: int
     quantite: int
     secteur_id: int
-    dateCommande: date
-    dateAchat: Optional[date] = None
+    dateCommande: Optional[date] = None
+    dateDemande: date
     dateReception: Optional[date] = None
 
 

@@ -1,14 +1,13 @@
+import { useEffect, useState } from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
-import { useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 
-import PropTypes from "prop-types";
-
 const IGNORED_FIELDS = ["id", "a.ID"];
+const EDITABLE_COLUMNS = ["ref", "date Commande"];
 
-const TableArticles = ({ pieces }) => {
+const TableArticlesCommande = () => {
   const [data, setData] = useState([]);
   const authHeader = getAuthHeader();
 
@@ -16,36 +15,58 @@ const TableArticles = ({ pieces }) => {
     const getArticles = async () => {
       try {
         const response = await axios.get(
-          `${API_URL}/articles/${pieces}`,
+          `${API_URL}/articlesCommande/`,
           authHeader
         );
         const responseData = response.data;
-        const datawithIds = responseData.results.map((row, index) => ({
+        const dataWithIds = responseData.results.map((row, index) => ({
           ...row,
           id: index + 1,
         }));
-        setData(datawithIds);
+        setData(dataWithIds);
       } catch (error) {
         console.error(error);
       }
     };
 
     getArticles();
-  }, [pieces, authHeader]);
+  }, [authHeader]);
 
-  //generateColumns() permet de générer les colonnes du tableau en fonction des données reçues pour ne pas avoir à modifier à chaque changement de données reçues
+  const handleCellEditCommit = async (params) => {
+    console.log("params", params);
+    // Extract the updated value and other necessary information from params
+    const { id, value } = params;
+    const updatedData = [...data];
+    const rowIndex = updatedData.findIndex((row) => row.id === id);
+    updatedData[rowIndex] = { ...updatedData[rowIndex] };
+
+    // Send a PUT request to update the value in the backend
+    try {
+      console.log("field", value);
+      /* await axios.put(
+          `${API_URL}/updateArticleValue/${id}`,
+          { [field]: value },
+          authHeader
+        );*/
+    } catch (error) {
+      console.error("Error updating value:", error);
+    }
+  };
+
   const generateColumns = (data) => {
-    const userStatusAndSecteurs =
+    const columnsWithoutIgnoredFields =
       data && data.length > 0
         ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
         : [];
 
     const articlesColumns = [
-      ...userStatusAndSecteurs.map((label) => ({
+      ...columnsWithoutIgnoredFields.map((label) => ({
         field: label,
         headerName: label,
-        width: 150,
+        flex: 1,
         renderCell: (params) => (params.row[label] ? params.row[label] : ""),
+        editable: EDITABLE_COLUMNS.includes(label),
+
         //? correspond à if (params.row[label]) {params.row[label]} else {""}
       })),
     ];
@@ -70,11 +91,10 @@ const TableArticles = ({ pieces }) => {
       sx={dataTableStyle}
       getRowId={(row) => row.id}
       slots={{ toolbar: GridToolbar }}
+      processRowUpdate={handleCellEditCommit}
+      editMode="cell"
     />
   );
 };
 
-TableArticles.propTypes = {
-  pieces: PropTypes.string.isRequired,
-};
-export default TableArticles;
+export default TableArticlesCommande;
