@@ -4,7 +4,7 @@ import axios from "axios";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 
-const IGNORED_FIELDS = ["id", "a.ID"];
+const IGNORED_FIELDS = ["id", "c.ID"];
 const EDITABLE_COLUMNS = ["date Commande"];
 
 const TableArticlesCommande = () => {
@@ -46,7 +46,7 @@ const TableArticlesCommande = () => {
       /* await axios.put(
           `${API_URL}/updateArticleValue/${id}`,
           { [field]: value },
-          authHeader
+          getauthHeader
         );*/
     } catch (error) {
       console.error("Error updating value:", error);
@@ -66,7 +66,6 @@ const TableArticlesCommande = () => {
         flex: 1,
         renderCell: (params) => (params.row[label] ? params.row[label] : ""),
         editable: EDITABLE_COLUMNS.includes(label),
-
         //? correspond à if (params.row[label]) {params.row[label]} else {""}
       })),
     ];

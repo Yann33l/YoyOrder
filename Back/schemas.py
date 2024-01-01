@@ -22,28 +22,10 @@ class UserForm(BaseModel):
     Email: str
     Password: str
 
-
-class UserEditAdmin (BaseModel):
-    Email: str
-    Admin: bool
-
 class UserEditStatus (BaseModel):
     Email: str
     Status: bool
 
-
-
-class UserEditAutorisation (BaseModel):
-    Email: str
-    Autorisation: bool
-
-class UserEditAcheteur (BaseModel):
-    Email: str
-    Acheteur: bool
-
-class UserEditDemandeur (BaseModel):
-    Email: str
-    Demandeur: bool
 
 class UserBase(BaseModel):
     Email: str
@@ -94,16 +76,18 @@ class Commandes(BaseModel):
     ID: int
     article_id: int
     quantite: int
-    secteur_id: int
-    dateCommande: Optional[date] = None
     dateDemande: date
     dateReception: Optional[date] = None
-
 
 class Secteurs(BaseModel):
     ID: int
     libelle: str
 
+class R_Secteur_Commande(BaseModel):
+    ID: int
+    secteur_id: int
+    commande_id: int
+    quantite: int
 
 class Stocks(BaseModel):
     ID: int

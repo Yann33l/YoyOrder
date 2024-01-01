@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from . import CRUD, client_repository, models, schemas
 from .database import ENV, SessionLocal, engine
+from datetime import date
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -213,6 +214,9 @@ def create_r_user_secteur(user_secteur_edited: schemas.r_user_secteur, db: Sessi
             print(f"Authentication error: {e}")
 # endregion : Connexion visualisation et création d'un utilisateur
 
+@app.get("/commande_ID/")
+def read_commande_ID(article_id: int, quantite: int, secteur_id: int, dateDemande: date, db: Session = Depends(get_db)):
+    return CRUD.get_commande_ID(db, article_id, quantite, secteur_id, dateDemande)
 
 # region : Visualisation et création d'un article
 # Récupération de la liste des articles
@@ -221,7 +225,7 @@ def format_Commande_results(results):
     formatted_results = []
     for row in results:
         formatted_result = {
-            "a.ID": row[0],
+            "c.ID": row[0],
             "nom article": row[1],
             "ref": row[2],
             "fournisseur": row[3],
@@ -240,7 +244,9 @@ def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depend
     if current_user.Demandeur is True:
         try:
             results = client_repository.get_articles_by_secteur(piece_libelle=piece)
+            print(f"res {results}")
             formatted_results = format_Commande_results(results)
+            print(f"fot res {formatted_results}")
             return {"results": formatted_results}
              
         except Exception as e:
@@ -262,16 +268,16 @@ def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_curren
         raise HTTPException(status_code=400, detail="Inactive user")
 
 
-"""@app.put("/editDemande/")
-def uptdate_demande(edit_trace_demande: schemas.r_user_commande, edit_demande :schemas.Commandes,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+@app.put("/editDemande/")
+def uptdate_demande(edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Demandeur is True:
-        try:           
-            CRUD.edit_commande(edit_demande)
-            CRUD.edit_trace_demande(db, edit_trace_demande)
-            return {"results": formatted_results}
+        print(edit_demande)
+        try:
+            value= edit_demande
+            return {"results": value}
         except Exception as e:
             print(f"Authentication error: {e}")
-
+"""
 @router.put("/editCommande/{date}")
 def update_commande(edit_commande: schemas.r_user_commande, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Autorisation is True:

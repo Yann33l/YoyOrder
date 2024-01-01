@@ -6,19 +6,18 @@ import { getAuthHeader } from "../API/token";
 
 import PropTypes from "prop-types";
 
-const IGNORED_FIELDS = ["id", "a.ID"];
+const IGNORED_FIELDS = ["id", "c.ID"];
 const EDITABLE_COLUMNS = ["date Demande", "ACP", "PAM", "GEC", "RC"];
 
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
-  const authHeader = getAuthHeader();
 
   useEffect(() => {
     const getArticles = async () => {
       try {
         const response = await axios.get(
           `${API_URL}/articlesDemande/${pieces}`,
-          authHeader
+          getAuthHeader()
         );
         const responseData = response.data;
         const datawithIds = responseData.results.map((row, index) => ({
@@ -32,31 +31,43 @@ const TableArticlesDemande = ({ pieces }) => {
     };
 
     getArticles();
-  }, [pieces, authHeader]);
+  }, [pieces]);
 
   const handleCellEditCommit = async (params) => {
-    console.log("params", params);
     // Extract the updated value and other necessary information from params
-    const { field, id, value } = params;
+    const { id, value } = params;
     const updatedData = [...data];
     const rowIndex = updatedData.findIndex((row) => row.id === id);
-
-    if (EDITABLE_COLUMNS.includes(field)) {
-      updatedData[rowIndex] = { ...updatedData[rowIndex], [field]: value };
+    {
+      updatedData[rowIndex] = { ...updatedData[rowIndex], [params]: value };
       setData(updatedData);
-    }
+      console.log("params", params);
 
-    // Send a PUT request to update the value in the backend
-    try {
-      console.log("field", value);
-      /* await axios.put(
-        `${API_URL}/updateArticleValue/${id}`,
-        { [field]: value },
-        authHeader
-      );*/
-      setData(updatedData);
-    } catch (error) {
-      console.error("Error updating value:", error);
+      // Send a PUT request to update the value in the backend
+      try {
+        const requestData = {
+          date_Demande: params["date Demande"],
+          ACP: params.ACP,
+          PAM: params.PAM,
+          GEC: params.GEC,
+          RC: params.RC,
+          quantite: params.quantité,
+          article_id: params["a.ID"],
+        };
+        console.log("requestData", requestData);
+        await axios.get(`${API_URL}/`, requestData, getAuthHeader());
+
+        // Add your PUT request code here
+
+        await axios.put(
+          `${API_URL}/editDemande/`,
+          requestData,
+          getAuthHeader()
+        );
+        setData(updatedData);
+      } catch (error) {
+        console.error("Error updating value:", error);
+      }
     }
   };
 
