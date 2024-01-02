@@ -9,14 +9,13 @@ const EDITABLE_COLUMNS = ["date Commande"];
 
 const TableArticlesCommande = () => {
   const [data, setData] = useState([]);
-  const authHeader = getAuthHeader();
 
   useEffect(() => {
     const getArticles = async () => {
       try {
         const response = await axios.get(
           `${API_URL}/articlesCommande/`,
-          authHeader
+          getAuthHeader()
         );
         const responseData = response.data;
         const dataWithIds = responseData.results.map((row, index) => ({
@@ -30,24 +29,49 @@ const TableArticlesCommande = () => {
     };
 
     getArticles();
-  }, [authHeader]);
+  }, []);
 
   const handleCellEditCommit = async (params) => {
-    console.log("params", params);
-    // Extract the updated value and other necessary information from params
-    const { id, value } = params;
+    const { id } = params;
     const updatedData = [...data];
     const rowIndex = updatedData.findIndex((row) => row.id === id);
-    updatedData[rowIndex] = { ...updatedData[rowIndex] };
+    const updatedRow = { ...updatedData[rowIndex] };
+
+    for (const key in params) {
+      if (key !== "id") {
+        updatedRow[key] = params[key];
+      }
+    }
+    updatedData[rowIndex] = updatedRow;
+    setData(updatedData);
 
     // Send a PUT request to update the value in the backend
     try {
-      console.log("field", value);
-      /* await axios.put(
-          `${API_URL}/updateArticleValue/${id}`,
-          { [field]: value },
-          getauthHeader
-        );*/
+      const requestData = {
+        commandeID: updatedData[rowIndex]["c.ID"],
+      };
+      console.log("requestData", requestData);
+      try {
+        for (const key in updatedData[rowIndex]) {
+          if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+            console.log(
+              `changedDataOnly: clé ${key}, valeur ${updatedData[rowIndex][key]}`
+            );
+            requestData[key] = updatedData[rowIndex][key];
+          }
+        }
+        console.log("requestDataUp", requestData);
+      } catch (error) {
+        console.error(
+          "erreur sur fonction de comparaison ancien nouvelle valeurs:",
+          error
+        );
+      }
+      await axios.get(`${API_URL}/`, requestData, getAuthHeader());
+
+      // Add your PUT request code here
+
+      await axios.put(`${API_URL}/editDemande/`, requestData, getAuthHeader());
     } catch (error) {
       console.error("Error updating value:", error);
     }

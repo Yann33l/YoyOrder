@@ -7,7 +7,7 @@ import { getAuthHeader } from "../API/token";
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["id", "c.ID"];
-const EDITABLE_COLUMNS = ["date Demande", "ACP", "PAM", "GEC", "RC"];
+const EDITABLE_COLUMNS = ["date Demande", "ACP", "PAM", "GEC", "RC", "BIO"];
 
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
@@ -20,11 +20,11 @@ const TableArticlesDemande = ({ pieces }) => {
           getAuthHeader()
         );
         const responseData = response.data;
-        const datawithIds = responseData.results.map((row, index) => ({
+        const dataWithIds = responseData.results.map((row, index) => ({
           ...row,
           id: index + 1,
         }));
-        setData(datawithIds);
+        setData(dataWithIds);
       } catch (error) {
         console.error(error);
       }
@@ -34,40 +34,47 @@ const TableArticlesDemande = ({ pieces }) => {
   }, [pieces]);
 
   const handleCellEditCommit = async (params) => {
-    // Extract the updated value and other necessary information from params
-    const { id, value } = params;
+    const { id } = params;
     const updatedData = [...data];
     const rowIndex = updatedData.findIndex((row) => row.id === id);
-    {
-      updatedData[rowIndex] = { ...updatedData[rowIndex], [params]: value };
-      setData(updatedData);
-      console.log("params", params);
-
-      // Send a PUT request to update the value in the backend
-      try {
-        const requestData = {
-          date_Demande: params["date Demande"],
-          ACP: params.ACP,
-          PAM: params.PAM,
-          GEC: params.GEC,
-          RC: params.RC,
-          quantite: params.quantité,
-          article_id: params["a.ID"],
-        };
-        console.log("requestData", requestData);
-        await axios.get(`${API_URL}/`, requestData, getAuthHeader());
-
-        // Add your PUT request code here
-
-        await axios.put(
-          `${API_URL}/editDemande/`,
-          requestData,
-          getAuthHeader()
-        );
-        setData(updatedData);
-      } catch (error) {
-        console.error("Error updating value:", error);
+    const updatedRow = { ...updatedData[rowIndex] };
+    for (const key in params) {
+      if (key !== "id") {
+        updatedRow[key] = params[key];
       }
+    }
+    updatedData[rowIndex] = updatedRow;
+    setData(updatedData);
+
+    // Send a PUT request to update the value in the backend
+    try {
+      const requestData = {
+        commandeID: updatedData[rowIndex]["c.ID"],
+      };
+      console.log("requestData", requestData);
+      try {
+        for (const key in updatedData[rowIndex]) {
+          if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+            console.log(
+              `changedDataOnly: clé ${key}, valeur ${updatedData[rowIndex][key]}`
+            );
+            requestData[key] = updatedData[rowIndex][key];
+          }
+        }
+        console.log("requestDataUp", requestData);
+      } catch (error) {
+        console.error(
+          "erreur sur fonction de comparaison ancien nouvelle valeurs:",
+          error
+        );
+      }
+      await axios.get(`${API_URL}/`, requestData, getAuthHeader());
+
+      // Add your PUT request code here
+
+      await axios.put(`${API_URL}/editDemande/`, requestData, getAuthHeader());
+    } catch (error) {
+      console.error("Error updating value:", error);
     }
   };
 
