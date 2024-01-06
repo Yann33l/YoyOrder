@@ -2,6 +2,7 @@ from datetime import date
 from typing import Optional
 
 from pydantic import BaseModel
+from typing import Union
 
 
 # --------------------------------------------------------------------------------
@@ -75,7 +76,6 @@ class Fournisseurs(BaseModel):
 class Commandes(BaseModel):
     ID: int
     article_id: int
-    quantite: int
     dateDemande: date
     dateReception: Optional[date] = None
 
@@ -88,6 +88,14 @@ class R_Secteur_Commande(BaseModel):
     secteur_id: int
     commande_id: int
     quantite: int
+
+class edit_demande(BaseModel):
+    commandeID: int
+    editedValue: Optional[Union[int, date]] = None
+
+class edit_commande(BaseModel):
+    commande_id: int
+    editedValue: date
 
 class Stocks(BaseModel):
     ID: int

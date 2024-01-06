@@ -230,12 +230,12 @@ def format_Commande_results(results):
             "ref": row[2],
             "fournisseur": row[3],
             "conditionnement": row[4],
-            "quantité": row[5],
-            "date Demande": row[6],
-            "date Commande": row[7],
+            "quantité": row[5] if row[5] is not None else 0,
+            "date Demande": row[6].strftime('%d/%m/%Y') if row[6] is not None else None,
+            "date Commande": row[7].strftime('%d/%m/%Y') if row[7] is not None else None,
         }
         formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 8] for i in range(len(secteur_labels))})
+            {f"{secteur_labels[i]}": row[i + 8] if row[i + 8] is not None else 0 for i in range(len(secteur_labels))})
         formatted_results.append(formatted_result)
     return formatted_results 
 
@@ -244,7 +244,6 @@ def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depend
     if current_user.Demandeur is True:
         try:
             results = client_repository.get_articles_by_secteur(piece_libelle=piece)
-            print(f"res {results}")
             formatted_results = format_Commande_results(results)
             print(f"fot res {formatted_results}")
             return {"results": formatted_results}
@@ -266,26 +265,42 @@ def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_curren
             return {"error": str(e)}
     else:
         raise HTTPException(status_code=400, detail="Inactive user")
+    
+@router.put("/editUserStatus/{status}/", response_model=schemas.UserBase)
+def update_user_status(status: str, edit_user: schemas.UserEditStatus, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Admin is True:
+        update_function = None
+        update_function = CRUD.edit_user_status(db, edit_user.Email, **{status.lower(): edit_user.Status})
+        if update_function:
+            return update_function
+
+@router.put("/editDemande/{edited_row}")
+def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Demandeur is True:        
+        print(edited_row)
+        if isinstance(edit_demande.editedValue, int):
+            print(f"quantité : {edit_demande}")
+            # client_repository.edit_demande(db, edited_row, edited_value)
+        else:
+            print(f"date : {edit_demande}")
+            # client_repository.edit_date(db, edited_row, edited_value)
 
 
-@app.put("/editDemande/")
-def uptdate_demande(edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-    if current_user.Demandeur is True:
-        print(edit_demande)
+
         try:
             value= edit_demande
             return {"results": value}
         except Exception as e:
             print(f"Authentication error: {e}")
-"""
-@router.put("/editCommande/{date}")
+
+@app.put("/editCommande/")
 def update_commande(edit_commande: schemas.r_user_commande, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Autorisation is True:
         try:
             print(edit_commande)          
 
         except Exception as e:
-            print(f"Authentication error: {e}")"""
+            print(f"Authentication error: {e}")
 app.include_router(router)
 
     

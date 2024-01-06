@@ -11,7 +11,24 @@ const EDITABLE_COLUMNS = ["date Demande", "ACP", "PAM", "GEC", "RC", "BIO"];
 
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
+  const [gridKey, setGridKey] = useState(0);
 
+  const updateData = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/articlesDemande/${pieces}`,
+        getAuthHeader()
+      );
+      const responseData = response.data;
+      const dataWithIds = responseData.results.map((row, index) => ({
+        ...row,
+        id: index + 1,
+      }));
+      setData(dataWithIds);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   useEffect(() => {
     const getArticles = async () => {
       try {
@@ -33,6 +50,7 @@ const TableArticlesDemande = ({ pieces }) => {
     getArticles();
   }, [pieces]);
 
+  // handleCellEditCommit() permet de mettre à jour les données dans la base de données
   const handleCellEditCommit = async (params) => {
     const { id } = params;
     const updatedData = [...data];
@@ -46,35 +64,61 @@ const TableArticlesDemande = ({ pieces }) => {
     updatedData[rowIndex] = updatedRow;
     setData(updatedData);
 
-    // Send a PUT request to update the value in the backend
     try {
       const requestData = {
         commandeID: updatedData[rowIndex]["c.ID"],
+        editedValue: undefined,
       };
-      console.log("requestData", requestData);
-      try {
-        for (const key in updatedData[rowIndex]) {
-          if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
-            console.log(
-              `changedDataOnly: clé ${key}, valeur ${updatedData[rowIndex][key]}`
-            );
-            requestData[key] = updatedData[rowIndex][key];
+      let dataChanged = false;
+      let changedKey = null;
+
+      for (const key in updatedData[rowIndex]) {
+        if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+          console.log("requestData", requestData);
+          console.log(
+            `changedDataOnly: clé ${key}, valeur ${updatedData[rowIndex][key]}`
+          );
+
+          // Appliquer le formateur uniquement si la colonne est "date Demande"
+          if (key === "date Demande") {
+            /*  requestData.editedValue = new Date(
+              updatedData[rowIndex]["date Demande"]
+            ).toISOString();*/
+
+            const dateObj = new Date(updatedData[rowIndex][key]);
+            const formattedDate = `${dateObj
+              .getFullYear()
+              .toString()
+              .padStart(2, "0")}-${(dateObj.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}-${dateObj
+              .getDate()
+              .toString()
+              .padStart(2, "0")}`;
+            requestData.editedValue = formattedDate;
+          } else {
+            requestData.editedValue = updatedData[rowIndex][key];
           }
+
+          console.log("requestDataUp", requestData);
+
+          dataChanged = true;
+          changedKey = key;
         }
-        console.log("requestDataUp", requestData);
-      } catch (error) {
-        console.error(
-          "erreur sur fonction de comparaison ancien nouvelle valeurs:",
-          error
-        );
       }
-      await axios.get(`${API_URL}/`, requestData, getAuthHeader());
 
-      // Add your PUT request code here
+      if (dataChanged) {
+        await axios.put(
+          `${API_URL}/editDemande/${changedKey}`,
+          requestData,
+          getAuthHeader()
+        );
+        await updateData();
 
-      await axios.put(`${API_URL}/editDemande/`, requestData, getAuthHeader());
+        setGridKey((prev) => prev + 1); // Changez la clé pour créer une nouvelle instance
+      }
     } catch (error) {
-      console.error("Error updating value:", error);
+      console.error("erreur sur l'api lors de l'édition des valeurs:", error);
     }
   };
 
@@ -84,17 +128,37 @@ const TableArticlesDemande = ({ pieces }) => {
       data && data.length > 0
         ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
         : [];
-
-    const articlesColumns = [
-      ...columnsWithoutIgnoredFields.map((label) => ({
-        field: label,
-        headerName: label,
-        flex: 1,
-        renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        editable: EDITABLE_COLUMNS.includes(label),
-        //? correspond à if (params.row[label]) {params.row[label]} else {""}
-      })),
-    ];
+    const dateFormatter = (params) => {
+      if (params.value) {
+        const date = new Date(params.value);
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Les mois commencent à 0
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
+      return "";
+    };
+    const articlesColumns = columnsWithoutIgnoredFields.map((label) => {
+      if (label === "date Demande") {
+        return {
+          field: label,
+          headerName: label,
+          flex: 1,
+          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
+          editable: EDITABLE_COLUMNS.includes(label),
+          type: "date",
+          valueFormatter: dateFormatter,
+        };
+      } else {
+        return {
+          field: label,
+          headerName: label,
+          flex: 1,
+          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
+          editable: EDITABLE_COLUMNS.includes(label),
+        };
+      }
+    });
     return articlesColumns;
   };
 
@@ -110,15 +174,18 @@ const TableArticlesDemande = ({ pieces }) => {
   };
 
   return (
-    <DataGrid
-      rows={data}
-      columns={generateColumns(data)}
-      sx={dataTableStyle}
-      getRowId={(row) => row.id}
-      slots={{ toolbar: GridToolbar }}
-      processRowUpdate={handleCellEditCommit}
-      editMode="cell"
-    />
+    console.log("data", data),
+    (
+      <DataGrid
+        key={gridKey}
+        rows={data}
+        columns={generateColumns(data)}
+        sx={dataTableStyle}
+        getRowId={(row) => row.id}
+        slots={{ toolbar: GridToolbar }}
+        processRowUpdate={handleCellEditCommit}
+      />
+    )
   );
 };
 
