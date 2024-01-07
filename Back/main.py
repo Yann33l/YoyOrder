@@ -225,17 +225,18 @@ def format_Commande_results(results):
     formatted_results = []
     for row in results:
         formatted_result = {
-            "c.ID": row[0],
-            "nom article": row[1],
-            "ref": row[2],
-            "fournisseur": row[3],
-            "conditionnement": row[4],
-            "quantité": row[5] if row[5] is not None else 0,
-            "date Demande": row[6].strftime('%d/%m/%Y') if row[6] is not None else None,
-            "date Commande": row[7].strftime('%d/%m/%Y') if row[7] is not None else None,
+            "commande_id": row[0],
+            "article_id": row[1],
+            "nom article": row[2],
+            "ref": row[3],
+            "fournisseur": row[4],
+            "conditionnement": row[5],
+            "quantité": row[6] if row[6] is not None else 0,
+            "date Demande": row[7].strftime('%d/%m/%Y') if row[7] is not None else None,
+            "date Commande": row[8].strftime('%d/%m/%Y') if row[8] is not None else None,
         }
         formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 8] if row[i + 8] is not None else 0 for i in range(len(secteur_labels))})
+            {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else 0 for i in range(len(secteur_labels))})
         formatted_results.append(formatted_result)
     return formatted_results 
 
@@ -245,7 +246,6 @@ def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depend
         try:
             results = client_repository.get_articles_by_secteur(piece_libelle=piece)
             formatted_results = format_Commande_results(results)
-            print(f"fot res {formatted_results}")
             return {"results": formatted_results}
              
         except Exception as e:
@@ -280,11 +280,10 @@ def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session
         print(edited_row)
         if isinstance(edit_demande.editedValue, int):
             print(f"quantité : {edit_demande}")
-            # client_repository.edit_demande(db, edited_row, edited_value)
+            #CRUD.edit_commande_quantite(db, edit_demande)
         else:
             print(f"date : {edit_demande}")
-            # client_repository.edit_date(db, edited_row, edited_value)
-
+            CRUD.edit_commande_dateDemande(db, edit_demande)
 
 
         try:

@@ -90,7 +90,7 @@ def get_articles_by_secteur(piece_libelle):
         select_part = ", ".join(
             [f"SUM(CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS quantite_{libelle}" for libelle in secteur_labels])
 
-        query = text(f"SELECT c.ID, a.libelle AS 'nom article', a.ref, f.libelle AS fournisseur, a.conditionnement,  "
+        query = text(f"SELECT c.ID, a.ID, a.libelle AS 'nom article', a.ref, f.libelle AS fournisseur, a.conditionnement,  "
               f"SUM(r_sc.quantite) AS quantite, c.dateDemande AS dateDemande, c.dateCommande AS dateCommande, {select_part} "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
@@ -101,7 +101,7 @@ def get_articles_by_secteur(piece_libelle):
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
               "WHERE (p.libelle like :piece_libelle or :piece_libelle='%') "
               "AND (c.dateDemande IS NULL OR c.dateDemande = (SELECT MAX(c2.dateDemande) FROM commandes c2 WHERE c2.article_id = a.ID)) "
-              "GROUP BY c.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande ")
+              "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande ")
         result = connection.execute(
             query, {"piece_libelle": piece_libelle})
 
@@ -117,7 +117,7 @@ def get_articles_to_buy():
         select_part = ", ".join(
             [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS quantite_{libelle}" for libelle in secteur_labels])
 
-        query = text(f"SELECT DISTINCT c.ID, a.libelle AS 'nom article', a.ref, f.libelle AS fournisseur, a.conditionnement, "
+        query = text(f"SELECT DISTINCT c.ID, a.ID, a.libelle AS 'nom article', a.ref, f.libelle AS fournisseur, a.conditionnement, "
               f"(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID) AS quantite, "
               "c.dateDemande AS dateDemande, c.dateCommande AS dateCommande, "    
               f"{select_part} "
@@ -130,7 +130,7 @@ def get_articles_to_buy():
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
               "WHERE (c.dateDemande > c.dateCommande OR c.dateCommande IS NULL) "
               "AND c.dateDemande IS NOT NULL "
-              "GROUP BY c.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateDemande, c.dateCommande")
+              "GROUP BY c.ID,a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateDemande, c.dateCommande")
 
         result = connection.execute(query)
         return result.fetchall()

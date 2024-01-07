@@ -262,20 +262,34 @@ def create_commande(db: Session, commande: schemas.Commandes):
     return db_commande
 
 
-def get_commande_id(db: Session, article_id: int, quantite: int, secteur_id: int, dateDemande: date):
-    return db.query(models.commandes).filter(and_(models.commandes.article_id == article_id,
-                                                  models.commandes.quantite == quantite,
-                                                  models.commandes.secteur_id == secteur_id,
-                                                  models.commandes.dateDemande == dateDemande)).scalar()
-
-def edit_commande_dateDemande(db: Session, commande: schemas.Commandes):
+def edit_commande_dateDemande(db: Session, commande: schemas.edit_demande):
     db_commande = db.query(models.commandes).filter(
-        models.commandes.ID == commande.ID).scalar()
-    if db_commande:
-        db_commande.dateDemande = commande.dateDemande
-        db.commit()
-        db.refresh(db_commande)
-    return db_commande
+        models.commandes.ID == commande.commandeID).scalar()
+    
+    if db_commande is None :
+            db_commande = models.commandes(
+                dateDemande = commande.editedValue,
+                article_id = commande.articleID,)
+            db.add(db_commande)
+            db.commit()
+            return db_commande
+    
+    elif db_commande.dateCommande is None:
+            db_commande.dateDemande = commande.editedValue
+            db.commit()
+            db.refresh(db_commande)
+            return db_commande
+    
+    elif db_commande.dateCommande < commande.editedValue:
+            db_commande = models.commandes(
+                dateDemande = commande.editedValue,
+                article_id = commande.articleID,)
+            db.add(db_commande)
+            db.commit()
+            return db_commande
+
+
+
 
 # Lieux de stockage
 

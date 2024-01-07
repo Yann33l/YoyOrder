@@ -90,7 +90,8 @@ class R_Secteur_Commande(BaseModel):
     quantite: int
 
 class edit_demande(BaseModel):
-    commandeID: int
+    commandeID: Optional[int] = None
+    articleID: int
     editedValue: Optional[Union[int, date]] = None
 
 class edit_commande(BaseModel):
