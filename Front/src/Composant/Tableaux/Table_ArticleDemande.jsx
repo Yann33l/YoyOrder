@@ -6,7 +6,7 @@ import { getAuthHeader } from "../API/token";
 
 import PropTypes from "prop-types";
 
-const IGNORED_FIELDS = ["id", "c.ID"];
+const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
 const EDITABLE_COLUMNS = ["date Demande", "ACP", "PAM", "GEC", "RC", "BIO"];
 
 const TableArticlesDemande = ({ pieces }) => {
@@ -66,7 +66,8 @@ const TableArticlesDemande = ({ pieces }) => {
 
     try {
       const requestData = {
-        commandeID: updatedData[rowIndex]["c.ID"],
+        commandeID: updatedData[rowIndex]["commande_id"],
+        articleID: updatedData[rowIndex]["article_id"],
         editedValue: undefined,
       };
       let dataChanged = false;
