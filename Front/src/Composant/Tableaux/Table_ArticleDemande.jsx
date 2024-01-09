@@ -29,6 +29,7 @@ const TableArticlesDemande = ({ pieces }) => {
       console.error(error);
     }
   };
+
   useEffect(() => {
     const getArticles = async () => {
       try {
@@ -82,10 +83,6 @@ const TableArticlesDemande = ({ pieces }) => {
 
           // Appliquer le formateur uniquement si la colonne est "date Demande"
           if (key === "date Demande") {
-            /*  requestData.editedValue = new Date(
-              updatedData[rowIndex]["date Demande"]
-            ).toISOString();*/
-
             const dateObj = new Date(updatedData[rowIndex][key]);
             const formattedDate = `${dateObj
               .getFullYear()
@@ -97,11 +94,10 @@ const TableArticlesDemande = ({ pieces }) => {
               .toString()
               .padStart(2, "0")}`;
             requestData.editedValue = formattedDate;
-          } else {
-            requestData.editedValue = updatedData[rowIndex][key];
-          }
-
-          console.log("requestDataUp", requestData);
+          } else
+            updatedData[rowIndex][key] === ""
+              ? (requestData.editedValue = 0)
+              : (requestData.editedValue = updatedData[rowIndex][key]);
 
           dataChanged = true;
           changedKey = key;

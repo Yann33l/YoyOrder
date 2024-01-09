@@ -95,7 +95,7 @@ class edit_demande(BaseModel):
     editedValue: Optional[Union[int, date]] = None
 
 class edit_commande(BaseModel):
-    commande_id: int
+    commandeID: int
     editedValue: date
 
 class Stocks(BaseModel):

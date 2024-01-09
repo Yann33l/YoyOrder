@@ -255,7 +255,7 @@ def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depend
 
 @app.get("/articlesCommande/")
 def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_active_user)):
-    if current_user.Autorisation is True:
+    if current_user.Acheteur is True:
         try:
             results = client_repository.get_articles_to_buy()
             formatted_results = format_Commande_results(results) 
@@ -276,16 +276,13 @@ def update_user_status(status: str, edit_user: schemas.UserEditStatus, db: Sessi
 
 @router.put("/editDemande/{edited_row}")
 def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-    if current_user.Demandeur is True:        
-        print(edited_row)
+    if current_user.Demandeur is True:  
         if isinstance(edit_demande.editedValue, int):
             print(f"quantité : {edit_demande}")
-            #CRUD.edit_commande_quantite(db, edit_demande)
+            CRUD.edit_commande_quantite(db, edit_demande, edited_row)
         else:
             print(f"date : {edit_demande}")
             CRUD.edit_commande_dateDemande(db, edit_demande)
-
-
         try:
             value= edit_demande
             return {"results": value}
@@ -293,10 +290,13 @@ def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session
             print(f"Authentication error: {e}")
 
 @app.put("/editCommande/")
-def update_commande(edit_commande: schemas.r_user_commande, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-    if current_user.Autorisation is True:
+def update_commande(edit_commande: schemas.edit_commande, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Acheteur is True:
         try:
-            print(edit_commande)          
+            CRUD.edit_commande_dateCommande(db, edit_commande)
+            results = client_repository.get_articles_to_buy()
+            formatted_results = format_Commande_results(results)
+            return {"results": formatted_results}
 
         except Exception as e:
             print(f"Authentication error: {e}")
