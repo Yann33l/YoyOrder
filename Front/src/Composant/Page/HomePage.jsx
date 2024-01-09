@@ -5,6 +5,7 @@ import { GetPiece } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
 import mainSubContentDemande from "./Demande";
+import mainSubContentCreation from "./Creation";
 
 // eslint-disable-next-line react/prop-types
 function HomePage({ isAdmin, onLogout }) {
@@ -65,7 +66,32 @@ function HomePage({ isAdmin, onLogout }) {
       );
       break;
     case "Creation":
-      mainContent = <div></div>;
+      mainContent = (
+        <div>
+          <div>
+            <nav className="sous_menu-nav">
+              <ul>
+                <li className="bouton" onClick={() => setSubContent("Article")}>
+                  Article
+                </li>
+                <li
+                  className="bouton"
+                  onClick={() => setSubContent("Fournisseur")}
+                >
+                  Fournisseur
+                </li>
+                <li
+                  className="bouton"
+                  onClick={() => setSubContent("Lieu de stockage")}
+                >
+                  Lieu de stockage
+                </li>
+              </ul>
+            </nav>
+          </div>
+          <div>{mainSubContentCreation(subContent)}</div>
+        </div>
+      );
       break;
 
     case "Admin":
