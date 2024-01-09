@@ -98,7 +98,7 @@ const TableUtilisateurs = () => {
       return {
         ...column,
         renderCell: renderCheckCell,
-        width: 110,
+        flex: 1,
       };
     }
     return column;

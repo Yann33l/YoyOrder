@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
+import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
 import { GetPiece } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
@@ -31,6 +32,14 @@ function HomePage({ isAdmin, onLogout }) {
     case "acceuil":
     case "default":
       mainContent = AcceuilContent;
+      break;
+    case "Commande":
+      mainContent = (
+        <div>
+          <p>ici c&#39;est la commande</p>
+          <TableArticlesCommande />
+        </div>
+      );
       break;
 
     case "Demande":

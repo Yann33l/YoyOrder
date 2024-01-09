@@ -44,10 +44,8 @@ class commandes(Base):
 
     ID = Column(Integer, primary_key=True, index=True)
     article_id = Column(Integer)
-    quantite = Column(Integer)
-    secteur_id = Column(Integer)
     dateCommande = Column(DATE)
-    dateAchat = Column(DATE)
+    dateDemande = Column(DATE)
     dateReception = Column(DATE)
 
 
@@ -129,6 +127,13 @@ class r_user_commande(Base):
     commande_id = Column(Integer)
     dateUpdate = Column(DATE)
 
+class r_secteur_commande(Base):
+    __tablename__ = "r_secteur_commande"
+
+    ID = Column(Integer, primary_key=True, index=True)
+    secteur_id = Column(Integer)
+    commande_id = Column(Integer)
+    quantite = Column(Integer)
 
 class r_user_secteur(Base):
     __tablename__ = "r_user_secteur"

@@ -255,23 +255,71 @@ def create_commande(db: Session, commande: schemas.Commandes):
         secteur_id=commande.secteur_id,
         dateCommande=commande.dateCommande,
         dateReception=commande.dateReception,
-        dateAchat=commande.dateAchat,
+        dateDemande=commande.dateDemande,
     )
     db.add(db_commande)
     db.commit()
     return db_commande
 
 
-def edit_commande(db: Session, commande: schemas.Commandes):
+def edit_commande_dateDemande(db: Session, commande: schemas.edit_demande):
     db_commande = db.query(models.commandes).filter(
-        models.commandes.ID == commande.ID).scalar()
+        models.commandes.ID == commande.commandeID).scalar()
+    
+    if db_commande is None :
+            db_commande = models.commandes(
+                dateDemande = commande.editedValue,
+                article_id = commande.articleID,)
+            db.add(db_commande)
+            db.commit()
+            return db_commande
+    
+    elif db_commande.dateCommande is None:
+            db_commande.dateDemande = commande.editedValue
+            db.commit()
+            db.refresh(db_commande)
+            return db_commande
+    
+    elif db_commande.dateCommande < commande.editedValue:
+            db_commande = models.commandes(
+                dateDemande = commande.editedValue,
+                article_id = commande.articleID,)
+            db.add(db_commande)
+            db.commit()
+            return db_commande
+
+def get_secteurID_by_libelle(db: Session, secteur_libelle: str):
+    return db.query(models.secteurs).filter(models.secteurs.libelle == secteur_libelle).scalar().ID
+
+
+def edit_commande_quantite(db: Session, commande: schemas.edit_demande, secteur_libelle):
+    db_r_secteur_commande = db.query(models.r_secteur_commande).filter(
+        models.r_secteur_commande.commande_id == commande.commandeID,
+        models.r_secteur_commande.secteur_id == get_secteurID_by_libelle(db, secteur_libelle)).scalar()
+    try:
+        if db_r_secteur_commande is None:
+            db_r_secteur_commande = models.r_secteur_commande(
+                commande_id=commande.commandeID,
+                secteur_id=get_secteurID_by_libelle(db, secteur_libelle),
+                quantite=commande.editedValue,
+            )
+            db.add(db_r_secteur_commande)
+            db.commit()
+            db.refresh(db_r_secteur_commande)
+            return db_r_secteur_commande
+        else:
+            db_r_secteur_commande.quantite = commande.editedValue
+            db.commit()
+            db.refresh(db_r_secteur_commande)
+            return db_r_secteur_commande
+    except: 
+        raise HTTPException(status_code=404, detail="Secteur not found")
+    
+def edit_commande_dateCommande(db: Session, commande: schemas.edit_commande):
+    db_commande = db.query(models.commandes).filter(
+        models.commandes.ID == commande.commandeID).scalar()
     if db_commande:
-        db_commande.article_id = commande.article_id
-        db_commande.quantite = commande.quantite
-        db_commande.secteur_id = commande.secteur_id
-        db_commande.dateCommande = commande.dateCommande
-        db_commande.dateReception = commande.dateReception
-        db_commande.dateAchat = commande.dateAchat
+        db_commande.dateCommande = commande.editedValue
         db.commit()
         db.refresh(db_commande)
     return db_commande

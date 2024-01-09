@@ -14,6 +14,9 @@ let Headers = ({ setContent, isAdmin, onLogout }) => (
       <ul>
         <li className="bouton" onClick={() => setContent("acceuil")}>
           Acceuil
+        </li>{" "}
+        <li className="bouton" onClick={() => setContent("Commande")}>
+          Commande
         </li>
         <li className="bouton" onClick={() => setContent("Demande")}>
           Demande

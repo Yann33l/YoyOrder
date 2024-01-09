@@ -15,6 +15,7 @@ def get_users():
     with engine.connect() as connection:
         secteur_labels = connection.execute(
             text("SELECT DISTINCT libelle FROM secteurs;")).fetchall()
+
         select_part = ", ".join(
             [f"MAX(CASE WHEN s.ID = {s_id} THEN secteur_{s_id}.libelle ELSE NULL END) AS libelle{s_id}" for s_id in range(1, len(secteur_labels) + 1)])
         join_part = " ".join([f"LEFT JOIN secteurs secteur_{s_id} ON s.ID = secteur_{s_id}.ID" for s_id in range(
@@ -82,19 +83,54 @@ def get_piece():
     
 def get_articles_by_secteur(piece_libelle):
     with engine.connect() as connection:
-        query = text(
-            "SELECT a.ID, a.libelle, a.ref, f.libelle, lst.libelle, a.conditionnement \
-            FROM articles a \
-            LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID\
-            LEFT JOIN r_articles_lieux r_al on r_al.article_id = a.ID\
-            LEFT JOIN r_articles_pieces r_ap on r_ap.article_id = a.ID\
-            LEFT JOIN piece p on p.ID = r_ap.piece_id\
-            LEFT JOIN lieuxdestockage lst on lst.ID = r_al.lieuDeStockage_id\
-            LEFT JOIN r_articles_secteurs r_as ON r_as.article_id = a.ID \
-            LEFT JOIN secteurs s ON s.ID = r_as.secteur_id \
-            WHERE p.libelle = :piece_libelle")
+        secteur_labels = connection.execute(
+            text("SELECT DISTINCT libelle FROM secteurs;")).fetchall()
+        secteur_labels = [libelle[0] for libelle in secteur_labels]
+
+        select_part = ", ".join(
+            [f"SUM(CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS quantite_{libelle}" for libelle in secteur_labels])
+
+        query = text(f"SELECT c.ID, a.ID, a.libelle AS 'nom article', a.ref, f.libelle AS fournisseur, a.conditionnement,  "
+              f"SUM(r_sc.quantite) AS quantite, c.dateDemande AS dateDemande, c.dateCommande AS dateCommande, {select_part} "
+              "FROM articles a "
+              "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
+              "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
+              "LEFT JOIN piece p ON p.ID = r_ap.piece_id "
+              "LEFT JOIN commandes c ON c.article_id = a.ID "
+              "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
+              "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
+              "WHERE (p.libelle like :piece_libelle or :piece_libelle='%') "
+              "AND (c.dateDemande IS NULL OR c.dateDemande = (SELECT MAX(c2.dateDemande) FROM commandes c2 WHERE c2.article_id = a.ID)) "
+              "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande ")
         result = connection.execute(
             query, {"piece_libelle": piece_libelle})
+
         return result.fetchall()
 
-    
+        
+def get_articles_to_buy():
+    with engine.connect() as connection:
+        secteur_labels = connection.execute(
+            text("SELECT DISTINCT libelle FROM secteurs;")).fetchall()
+        secteur_labels = [libelle[0] for libelle in secteur_labels]
+
+        select_part = ", ".join(
+            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS quantite_{libelle}" for libelle in secteur_labels])
+
+        query = text(f"SELECT DISTINCT c.ID, a.ID, a.libelle AS 'nom article', a.ref, f.libelle AS fournisseur, a.conditionnement, "
+              f"(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID) AS quantite, "
+              "c.dateDemande AS dateDemande, c.dateCommande AS dateCommande, "    
+              f"{select_part} "
+              "FROM articles a "
+              "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
+              "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
+              "LEFT JOIN piece p ON p.ID = r_ap.piece_id "
+              "LEFT JOIN commandes c ON c.article_id = a.ID "
+              "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
+              "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
+              "WHERE (c.dateDemande > c.dateCommande OR c.dateCommande IS NULL) "
+              "AND c.dateDemande IS NOT NULL "
+              "GROUP BY c.ID,a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateDemande, c.dateCommande")
+
+        result = connection.execute(query)
+        return result.fetchall()
