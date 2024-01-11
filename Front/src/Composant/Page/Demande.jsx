@@ -1,4 +1,5 @@
 import TableArticlesDemande from "../Tableaux/Table_ArticleDemande";
+import TableArticlesDemandeTous from "../Tableaux/Table_ArticleDemandeTousArticles";
 
 const mainSubContentDemande = (subContent, pieces) => {
   const selectedPiece = pieces.find((piece) => piece.libelle === subContent);
@@ -11,7 +12,12 @@ const mainSubContentDemande = (subContent, pieces) => {
       </div>
     );
   } else {
-    return null;
+    return (
+      <div>
+        <p>ici c&#39;est Tout</p>
+        <TableArticlesDemandeTous />
+      </div>
+    );
   }
 };
 

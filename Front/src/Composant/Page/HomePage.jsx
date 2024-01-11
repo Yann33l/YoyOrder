@@ -49,6 +49,10 @@ function HomePage({ isAdmin, onLogout }) {
           <div>
             <nav className="sous_menu-nav">
               <ul>
+                <li className="bouton" onClick={() => setSubContent("Tout")}>
+                  {" "}
+                  Tout{" "}
+                </li>
                 {pieces.map((piece) => (
                   <li
                     key={piece.ID}

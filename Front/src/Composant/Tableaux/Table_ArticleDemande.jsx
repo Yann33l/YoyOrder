@@ -1,8 +1,9 @@
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
+import dayjs from "dayjs";
 
 import PropTypes from "prop-types";
 
@@ -13,7 +14,7 @@ const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
   const [gridKey, setGridKey] = useState(0);
 
-  const updateData = async () => {
+  const updateData = useCallback(async () => {
     try {
       const response = await axios.get(
         `${API_URL}/articlesDemande/${pieces}`,
@@ -28,28 +29,11 @@ const TableArticlesDemande = ({ pieces }) => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [pieces]);
 
   useEffect(() => {
-    const getArticles = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/articlesDemande/${pieces}`,
-          getAuthHeader()
-        );
-        const responseData = response.data;
-        const dataWithIds = responseData.results.map((row, index) => ({
-          ...row,
-          id: index + 1,
-        }));
-        setData(dataWithIds);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    getArticles();
-  }, [pieces]);
+    updateData();
+  }, [pieces, updateData]);
 
   // handleCellEditCommit() permet de mettre à jour les données dans la base de données
   const handleCellEditCommit = async (params) => {
@@ -76,6 +60,8 @@ const TableArticlesDemande = ({ pieces }) => {
 
       for (const key in updatedData[rowIndex]) {
         if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+          ////////   Appliquer le formateur avant la comparaison
+          // A modifier car meme dates donne changedDataOnly: clé date Demande, valeur initale :2024-01-11  valeur modif Thu Jan 11 2024 01:00:00 GMT+0100 (heure normale d’Europe centrale)
           console.log("requestData", requestData);
           console.log(
             `changedDataOnly: clé ${key}, valeur ${updatedData[rowIndex][key]}`
@@ -84,15 +70,7 @@ const TableArticlesDemande = ({ pieces }) => {
           // Appliquer le formateur uniquement si la colonne est "date Demande"
           if (key === "date Demande") {
             const dateObj = new Date(updatedData[rowIndex][key]);
-            const formattedDate = `${dateObj
-              .getFullYear()
-              .toString()
-              .padStart(2, "0")}-${(dateObj.getMonth() + 1)
-              .toString()
-              .padStart(2, "0")}-${dateObj
-              .getDate()
-              .toString()
-              .padStart(2, "0")}`;
+            const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             requestData.editedValue = formattedDate;
           } else
             updatedData[rowIndex][key] === ""
@@ -125,26 +103,24 @@ const TableArticlesDemande = ({ pieces }) => {
       data && data.length > 0
         ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
         : [];
-    const dateFormatter = (params) => {
-      if (params.value) {
-        const date = new Date(params.value);
-        const day = date.getDate().toString().padStart(2, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Les mois commencent à 0
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-      }
-      return "";
-    };
+
     const articlesColumns = columnsWithoutIgnoredFields.map((label) => {
       if (label === "date Demande") {
         return {
           field: label,
           headerName: label,
           flex: 1,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
           editable: EDITABLE_COLUMNS.includes(label),
+          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
-          valueFormatter: dateFormatter,
+        };
+      } else if (label === "date Commande") {
+        return {
+          field: label,
+          headerName: label,
+          flex: 1,
+          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
+          type: "date",
         };
       } else {
         return {

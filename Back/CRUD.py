@@ -287,6 +287,12 @@ def edit_commande_dateDemande(db: Session, commande: schemas.edit_demande):
             db.add(db_commande)
             db.commit()
             return db_commande
+    
+    elif db_commande.dateCommande > commande.editedValue:
+            db_commande.dateDemande = commande.editedValue
+            db.commit()
+            db.refresh(db_commande)
+            return db_commande
 
 def get_secteurID_by_libelle(db: Session, secteur_libelle: str):
     return db.query(models.secteurs).filter(models.secteurs.libelle == secteur_libelle).scalar().ID
