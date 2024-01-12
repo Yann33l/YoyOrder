@@ -77,15 +77,7 @@ const TableArticlesCommande = () => {
 
           if (key === "date Commande") {
             const dateObj = new Date(updatedData[rowIndex][key]);
-            const formattedDate = `${dateObj
-              .getFullYear()
-              .toString()
-              .padStart(2, "0")}-${(dateObj.getMonth() + 1)
-              .toString()
-              .padStart(2, "0")}-${dateObj
-              .getDate()
-              .toString()
-              .padStart(2, "0")}`;
+            const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             requestData.editedValue = formattedDate;
           } else
             updatedData[rowIndex][key] === ""

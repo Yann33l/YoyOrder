@@ -237,10 +237,6 @@ def format_Commande_results(results):
         print(formatted_result)
     return formatted_results 
 
-    # Récupération de l'ID des commandes
-# @app.get("/commande_ID/")
-# def read_commande_ID(article_id: int, quantite: int, secteur_id: int, dateDemande: date, db: Session = Depends(get_db)):
-#     return CRUD.get_commande_ID(db, article_id, quantite, secteur_id, dateDemande)
 
 @app.get("/articlesCommande/")
 def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_active_user)):
@@ -267,8 +263,6 @@ def update_commande(edit_commande: schemas.edit_commande, db: Session = Depends(
 
         except Exception as e:
             print(f"Authentication error: {e}")
-
-    
 # endregion : Visualisation création et modification d'une commande
 
 # region : Visualisation modification et création d'une demande

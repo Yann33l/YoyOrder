@@ -59,26 +59,26 @@ const TableArticlesDemande = ({ pieces }) => {
       let changedKey = null;
 
       for (const key in updatedData[rowIndex]) {
-        if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
-          ////////   Appliquer le formateur avant la comparaison
-          // A modifier car meme dates donne changedDataOnly: clé date Demande, valeur initale :2024-01-11  valeur modif Thu Jan 11 2024 01:00:00 GMT+0100 (heure normale d’Europe centrale)
-          console.log("requestData", requestData);
-          console.log(
-            `changedDataOnly: clé ${key}, valeur ${updatedData[rowIndex][key]}`
-          );
-
-          // Appliquer le formateur uniquement si la colonne est "date Demande"
-          if (key === "date Demande") {
-            const dateObj = new Date(updatedData[rowIndex][key]);
-            const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
+        if (key === "date Demande") {
+          const dateObj = new Date(updatedData[rowIndex][key]);
+          const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
+          console.log(formattedDate !== data[rowIndex][key]);
+          if (formattedDate !== data[rowIndex][key]) {
+            console.log(
+              `changedDataOnly: clé ${key}, valeur ${updatedData[rowIndex][key]}`
+            );
             requestData.editedValue = formattedDate;
-          } else
+            dataChanged = true;
+            changedKey = key;
+          }
+        } else {
+          if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
             updatedData[rowIndex][key] === ""
               ? (requestData.editedValue = 0)
               : (requestData.editedValue = updatedData[rowIndex][key]);
-
-          dataChanged = true;
-          changedKey = key;
+            dataChanged = true;
+            changedKey = key;
+          }
         }
       }
 
@@ -90,7 +90,7 @@ const TableArticlesDemande = ({ pieces }) => {
         );
         await updateData();
 
-        setGridKey((prev) => prev + 1); // Changez la clé pour créer une nouvelle instance
+        setGridKey((prev) => prev + 1); // Change la clé pour créer une nouvelle instance
       }
     } catch (error) {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
