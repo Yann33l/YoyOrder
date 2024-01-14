@@ -266,27 +266,19 @@ def edit_commande_dateDemande(db: Session, commande: schemas.edit_demande):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
     
-    if db_commande is None :
-            db_commande = models.commandes(
-                dateDemande = commande.editedValue,
-                article_id = commande.articleID,)
-            db.add(db_commande)
-            db.commit()
-            return db_commande
+    if db_commande is None or (db_commande.dateCommande is not None and db_commande.dateCommande < commande.editedValue):
+        db_commande = models.commandes(
+            dateDemande = commande.editedValue,
+            article_id = commande.articleID,)
+        db.add(db_commande)
+        db.commit()
     
-    elif db_commande.dateCommande is None:
-            db_commande.dateDemande = commande.editedValue
-            db.commit()
-            db.refresh(db_commande)
-            return db_commande
-    
-    elif db_commande.dateCommande < commande.editedValue:
-            db_commande = models.commandes(
-                dateDemande = commande.editedValue,
-                article_id = commande.articleID,)
-            db.add(db_commande)
-            db.commit()
-            return db_commande
+    elif db_commande.dateCommande is None or db_commande.dateCommande > commande.editedValue:
+        db_commande.dateDemande = commande.editedValue
+        db.commit()
+        db.refresh(db_commande)
+
+    return db_commande
 
 def get_secteurID_by_libelle(db: Session, secteur_libelle: str):
     return db.query(models.secteurs).filter(models.secteurs.libelle == secteur_libelle).scalar().ID
@@ -315,15 +307,21 @@ def edit_commande_quantite(db: Session, commande: schemas.edit_demande, secteur_
     except: 
         raise HTTPException(status_code=404, detail="Secteur not found")
     
+
 def edit_commande_dateCommande(db: Session, commande: schemas.edit_commande):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
     if db_commande:
         db_commande.dateCommande = commande.editedValue
         db.commit()
+        if commande.editedValue >= db_commande.dateDemande:
+            db_commande.dateCommande = commande.editedValue
+            db_commande = models.commandes(
+                article_id = db_commande.article_id,)
+            db.add(db_commande)
+        db.commit()
         db.refresh(db_commande)
     return db_commande
-
 
 # Lieux de stockage
 

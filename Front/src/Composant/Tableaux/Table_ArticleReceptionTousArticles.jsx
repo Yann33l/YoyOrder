@@ -1,6 +1,6 @@
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
@@ -8,16 +8,16 @@ import dayjs from "dayjs";
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
-const EDITABLE_COLUMNS = ["date Demande", "ACP", "PAM", "GEC", "RC", "BIO"];
+const EDITABLE_COLUMNS = ["Date Reception"];
 
-const TableArticlesDemande = ({ pieces }) => {
+const TableArticlesReceptionTous = () => {
   const [data, setData] = useState([]);
   const [gridKey, setGridKey] = useState(0);
 
-  const updateData = useCallback(async () => {
+  const updateData = async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/articlesDemande/${pieces}`,
+        `${API_URL}/articlesReception/`,
         getAuthHeader()
       );
       const responseData = response.data;
@@ -25,15 +25,16 @@ const TableArticlesDemande = ({ pieces }) => {
         ...row,
         id: index + 1,
       }));
+      console.log("dataWithIds", dataWithIds);
       setData(dataWithIds);
     } catch (error) {
       console.error(error);
     }
-  }, [pieces]);
+  };
 
   useEffect(() => {
     updateData();
-  }, [pieces, updateData]);
+  }, []);
 
   // handleCellEditCommit() permet de mettre à jour les données dans la base de données
   const handleCellEditCommit = async (params) => {
@@ -52,14 +53,13 @@ const TableArticlesDemande = ({ pieces }) => {
     try {
       const requestData = {
         commandeID: updatedData[rowIndex]["commande_id"],
-        articleID: updatedData[rowIndex]["article_id"],
         editedValue: undefined,
       };
       let dataChanged = false;
       let changedKey = null;
 
       for (const key in updatedData[rowIndex]) {
-        if (key === "date Demande") {
+        if (key === "date Reception") {
           const dateObj = new Date(updatedData[rowIndex][key]);
           const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
           console.log(formattedDate !== data[rowIndex][key]);
@@ -84,7 +84,7 @@ const TableArticlesDemande = ({ pieces }) => {
 
       if (dataChanged) {
         await axios.put(
-          `${API_URL}/editDemande/${changedKey}`,
+          `${API_URL}/articlesReception/${changedKey}`,
           requestData,
           getAuthHeader()
         );
@@ -105,21 +105,22 @@ const TableArticlesDemande = ({ pieces }) => {
         : [];
 
     const articlesColumns = columnsWithoutIgnoredFields.map((label) => {
-      if (label === "date Demande") {
+      if (label === "date Reception") {
         return {
           field: label,
           headerName: label,
           flex: 1,
-          editable: EDITABLE_COLUMNS.includes(label),
+          editable: true,
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
         };
-      } else if (label === "date Commande") {
+      } else if (label === "date Commande" || label === "date Demande") {
         return {
           field: label,
           headerName: label,
           flex: 1,
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
+
           type: "date",
         };
       } else {
@@ -136,7 +137,6 @@ const TableArticlesDemande = ({ pieces }) => {
   };
 
   const dataTableStyle = {
-    height: 700,
     width: "90%",
     margin: "auto",
     backgroundColor: "#ffffff",
@@ -147,25 +147,22 @@ const TableArticlesDemande = ({ pieces }) => {
   };
 
   return (
-    console.log("data", data),
-    (
-      <DataGrid
-        autoHeight
-        {...data}
-        key={gridKey}
-        rows={data}
-        rowHeight={35}
-        columns={generateColumns(data)}
-        sx={dataTableStyle}
-        getRowId={(row) => row.id}
-        slots={{ toolbar: GridToolbar }}
-        processRowUpdate={handleCellEditCommit}
-      />
-    )
+    <DataGrid
+      autoHeight
+      {...data}
+      key={gridKey}
+      rows={data}
+      columns={generateColumns(data)}
+      sx={dataTableStyle}
+      rowHeight={35}
+      getRowId={(row) => row.id}
+      slots={{ toolbar: GridToolbar }}
+      processRowUpdate={handleCellEditCommit}
+    />
   );
 };
 
-TableArticlesDemande.propTypes = {
+TableArticlesReceptionTous.propTypes = {
   pieces: PropTypes.string.isRequired,
 };
-export default TableArticlesDemande;
+export default TableArticlesReceptionTous;

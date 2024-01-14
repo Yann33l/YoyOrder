@@ -3,6 +3,7 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
+import dayjs from "dayjs";
 
 const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
 const EDITABLE_COLUMNS = ["date Commande"];
@@ -76,15 +77,7 @@ const TableArticlesCommande = () => {
 
           if (key === "date Commande") {
             const dateObj = new Date(updatedData[rowIndex][key]);
-            const formattedDate = `${dateObj
-              .getFullYear()
-              .toString()
-              .padStart(2, "0")}-${(dateObj.getMonth() + 1)
-              .toString()
-              .padStart(2, "0")}-${dateObj
-              .getDate()
-              .toString()
-              .padStart(2, "0")}`;
+            const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             requestData.editedValue = formattedDate;
           } else
             updatedData[rowIndex][key] === ""
@@ -108,16 +101,7 @@ const TableArticlesCommande = () => {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
     }
   };
-  const dateFormatter = (params) => {
-    if (params.value) {
-      const date = new Date(params.value);
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Les mois commencent à 0
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    }
-    return "";
-  };
+
   const generateColumns = (data) => {
     const columnsWithoutIgnoredFields =
       data && data.length > 0
@@ -130,10 +114,19 @@ const TableArticlesCommande = () => {
           field: label,
           headerName: label,
           flex: 1,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
           editable: EDITABLE_COLUMNS.includes(label),
+          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
-          valueFormatter: dateFormatter,
+        };
+      } else if (label === "date Demande") {
+        return {
+          field: label,
+          headerName: label,
+          flex: 1,
+          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
+          valueFormatter: (params) =>
+            params.value ? dayjs(params.value).format("DD/MM/YYYY") : "",
+          type: "date",
         };
       } else {
         return {
@@ -145,7 +138,6 @@ const TableArticlesCommande = () => {
         };
       }
     });
-
     return articlesColumns;
   };
 
@@ -162,14 +154,16 @@ const TableArticlesCommande = () => {
 
   return (
     <DataGrid
+      autoHeight
+      {...data}
       key={gridKey}
       rows={data}
+      rowHeight={35}
       columns={generateColumns(data)}
       sx={dataTableStyle}
       getRowId={(row) => row.id}
       slots={{ toolbar: GridToolbar }}
       processRowUpdate={handleCellEditCommit}
-      editMode="cell"
     />
   );
 };
