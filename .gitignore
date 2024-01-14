@@ -26,3 +26,4 @@ Brand files/
 *.sln
 *.sw?
 Front/.eslintrc.cjs
+.env

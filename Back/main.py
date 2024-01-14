@@ -1,7 +1,7 @@
 " Main file of the API."
 import os
 from datetime import datetime, timedelta
-
+from dotenv import load_dotenv
 import bcrypt
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,20 +10,16 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from . import CRUD, client_repository, models, schemas
-from .database import ENV, SessionLocal, engine
+from .database import  SessionLocal, engine
 from datetime import date
 
 models.Base.metadata.create_all(bind=engine)
 
-
-if ENV == "local":
-    SECRET_KEY = "B4AB1DBD6953186D3ABF5C8D5625CF06"
-    ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES = 180
-else:
-    SECRET_KEY = str(os.getenv("SECRET_KEY"))
-    ALGORITHM = str(os.getenv("ALGORITHM"))
-    ACCESS_TOKEN_EXPIRE_MINUTES = int(
+load_dotenv()
+Env = os.getenv("Env")
+SECRET_KEY = str(os.getenv("SECRET_KEY"))
+ALGORITHM = str(os.getenv("ALGORITHM"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or 60)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -32,7 +28,7 @@ app = FastAPI()
 router = APIRouter()
 
 
-if ENV == "local":
+if Env == "dev":
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
