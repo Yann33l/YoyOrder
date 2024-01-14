@@ -8,16 +8,16 @@ import dayjs from "dayjs";
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
-const EDITABLE_COLUMNS = ["date Demande", "ACP", "PAM", "GEC", "RC", "BIO"];
+const EDITABLE_COLUMNS = ["Date Reception"];
 
-const TableArticlesDemandeTous = () => {
+const TableArticlesReceptionTous = () => {
   const [data, setData] = useState([]);
   const [gridKey, setGridKey] = useState(0);
 
   const updateData = async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/articlesDemande/`,
+        `${API_URL}/articlesReception/`,
         getAuthHeader()
       );
       const responseData = response.data;
@@ -53,14 +53,13 @@ const TableArticlesDemandeTous = () => {
     try {
       const requestData = {
         commandeID: updatedData[rowIndex]["commande_id"],
-        articleID: updatedData[rowIndex]["article_id"],
         editedValue: undefined,
       };
       let dataChanged = false;
       let changedKey = null;
 
       for (const key in updatedData[rowIndex]) {
-        if (key === "date Demande") {
+        if (key === "date Reception") {
           const dateObj = new Date(updatedData[rowIndex][key]);
           const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
           console.log(formattedDate !== data[rowIndex][key]);
@@ -85,7 +84,7 @@ const TableArticlesDemandeTous = () => {
 
       if (dataChanged) {
         await axios.put(
-          `${API_URL}/editDemande/${changedKey}`,
+          `${API_URL}/articlesReception/${changedKey}`,
           requestData,
           getAuthHeader()
         );
@@ -106,16 +105,16 @@ const TableArticlesDemandeTous = () => {
         : [];
 
     const articlesColumns = columnsWithoutIgnoredFields.map((label) => {
-      if (label === "date Demande") {
+      if (label === "date Reception") {
         return {
           field: label,
           headerName: label,
           flex: 1,
-          editable: EDITABLE_COLUMNS.includes(label),
+          editable: true,
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
         };
-      } else if (label === "date Commande") {
+      } else if (label === "date Commande" || label === "date Demande") {
         return {
           field: label,
           headerName: label,
@@ -138,7 +137,6 @@ const TableArticlesDemandeTous = () => {
   };
 
   const dataTableStyle = {
-    height: 700,
     width: "90%",
     margin: "auto",
     backgroundColor: "#ffffff",
@@ -164,7 +162,7 @@ const TableArticlesDemandeTous = () => {
   );
 };
 
-TableArticlesDemandeTous.propTypes = {
+TableArticlesReceptionTous.propTypes = {
   pieces: PropTypes.string.isRequired,
 };
-export default TableArticlesDemandeTous;
+export default TableArticlesReceptionTous;

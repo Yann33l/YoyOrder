@@ -292,7 +292,41 @@ def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_curren
             return {"error": str(e)}
     else:
         raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
+        
+def format_Reception_results(results):
+    secteur_labels = client_repository.get_secteur_labels()
+    formatted_results = []
+    for row in results:
+        formatted_result = {
+            "commande_id": row[0],
+            "article_id": row[1],
+            "nom article": row[2],
+            "ref": row[3],
+            "fournisseur": row[4],
+            "conditionnement": row[5],
+            "quantité": row[6] if row[6] is not None else 0,
+            "date Demande": row[7] if row[7] is not None else None,
+            "date Commande": row[8] if row[8] is not None else None,
+            "date Reception": row[9] if row[9] is not None else None,
+        }
+        formatted_result.update(
+            {f"{secteur_labels[i]}": row[i + 10] if row[i + 10] is not None else 0 for i in range(len(secteur_labels))})
+        formatted_results.append(formatted_result)
+        print(formatted_result)
+    return formatted_results 
 
+@app.get("/articlesReception/")
+def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Demandeur is True:
+        try:
+            results = client_repository.get_articles_to_receve(piece_libelle="%")
+            formatted_results = format_Reception_results(results)
+            return {"results": formatted_results}
+             
+        except Exception as e:
+            return {"error": str(e)}
+    else:
+        raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
     # Edition d'une demande
 @router.put("/editDemande/{edited_row}")
 def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):

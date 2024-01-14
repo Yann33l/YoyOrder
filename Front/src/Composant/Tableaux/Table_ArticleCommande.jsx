@@ -154,14 +154,16 @@ const TableArticlesCommande = () => {
 
   return (
     <DataGrid
+      autoHeight
+      {...data}
       key={gridKey}
       rows={data}
+      rowHeight={35}
       columns={generateColumns(data)}
       sx={dataTableStyle}
       getRowId={(row) => row.id}
       slots={{ toolbar: GridToolbar }}
       processRowUpdate={handleCellEditCommit}
-      editMode="cell"
     />
   );
 };

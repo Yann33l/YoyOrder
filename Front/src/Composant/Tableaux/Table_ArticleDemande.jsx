@@ -150,8 +150,11 @@ const TableArticlesDemande = ({ pieces }) => {
     console.log("data", data),
     (
       <DataGrid
+        autoHeight
+        {...data}
         key={gridKey}
         rows={data}
+        rowHeight={35}
         columns={generateColumns(data)}
         sx={dataTableStyle}
         getRowId={(row) => row.id}
