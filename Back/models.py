@@ -47,6 +47,7 @@ class commandes(Base):
     dateCommande = Column(DATE)
     dateDemande = Column(DATE)
     dateReception = Column(DATE)
+    enTotalite = Column(Boolean)
 
 
 class secteurs(Base):

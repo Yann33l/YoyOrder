@@ -4,16 +4,31 @@ import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
+import { dataTableStyle } from "./TableStyle";
 
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
-const EDITABLE_COLUMNS = ["date Demande", "ACP", "PAM", "GEC", "RC", "BIO"];
 
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
   const [gridKey, setGridKey] = useState(0);
+  const [editableColumns, setEditableColumns] = useState([]);
 
+  useEffect(() => {
+    const fetchEditableColumns = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/secteur_labels/`);
+        const responseData = response.data;
+        setEditableColumns(responseData);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchEditableColumns();
+  }, []);
+
+  const EDITABLE_COLUMNS = ["date Demande", ...editableColumns];
   const updateData = useCallback(async () => {
     try {
       const response = await axios.get(
@@ -62,11 +77,7 @@ const TableArticlesDemande = ({ pieces }) => {
         if (key === "date Demande") {
           const dateObj = new Date(updatedData[rowIndex][key]);
           const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
-          console.log(formattedDate !== data[rowIndex][key]);
           if (formattedDate !== data[rowIndex][key]) {
-            console.log(
-              `changedDataOnly: clé ${key}, valeur ${updatedData[rowIndex][key]}`
-            );
             requestData.editedValue = formattedDate;
             dataChanged = true;
             changedKey = key;
@@ -135,33 +146,19 @@ const TableArticlesDemande = ({ pieces }) => {
     return articlesColumns;
   };
 
-  const dataTableStyle = {
-    height: 700,
-    width: "90%",
-    margin: "auto",
-    backgroundColor: "#ffffff",
-    color: "#000000",
-    border: "none",
-    borderRadius: "5px",
-    boxShadow: "0px 0px 5px 0px rgba(0,0,0,0.75)",
-  };
-
   return (
-    console.log("data", data),
-    (
-      <DataGrid
-        autoHeight
-        {...data}
-        key={gridKey}
-        rows={data}
-        rowHeight={35}
-        columns={generateColumns(data)}
-        sx={dataTableStyle}
-        getRowId={(row) => row.id}
-        slots={{ toolbar: GridToolbar }}
-        processRowUpdate={handleCellEditCommit}
-      />
-    )
+    <DataGrid
+      autoHeight
+      {...data}
+      key={gridKey}
+      rows={data}
+      rowHeight={35}
+      columns={generateColumns(data)}
+      sx={dataTableStyle}
+      getRowId={(row) => row.id}
+      slots={{ toolbar: GridToolbar }}
+      processRowUpdate={handleCellEditCommit}
+    />
   );
 };
 

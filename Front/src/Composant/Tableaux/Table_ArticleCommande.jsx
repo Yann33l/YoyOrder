@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
+import { dataTableStyle } from "./TableStyle";
 
 const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
 const EDITABLE_COLUMNS = ["date Commande"];
@@ -139,17 +140,6 @@ const TableArticlesCommande = () => {
       }
     });
     return articlesColumns;
-  };
-
-  const dataTableStyle = {
-    height: 700,
-    width: "90%",
-    margin: "auto",
-    backgroundColor: "#ffffff",
-    color: "#000000",
-    border: "none",
-    borderRadius: "5px",
-    boxShadow: "0px 0px 5px 0px rgba(0,0,0,0.75)",
   };
 
   return (

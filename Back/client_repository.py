@@ -131,8 +131,8 @@ def get_articles_to_receve(piece_libelle):
               "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
               "WHERE (p.libelle like :piece_libelle or :piece_libelle='%') "
-              "AND (c.dateDemande IS NOT NULL) "
-              "AND (c.dateReception IS NULL) "
+              "AND ((c.dateDemande and c.dateCommande) IS NOT NULL) "
+              "AND ((c.enTotalite and c.dateReception ) IS NULL) "
               "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande, c.dateReception "
               "ORDER BY a.ID DESC ")
 

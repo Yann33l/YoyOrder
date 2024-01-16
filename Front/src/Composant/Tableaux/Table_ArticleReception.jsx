@@ -1,23 +1,24 @@
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
+import { dataTableStyle } from "./TableStyle";
 
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
-const EDITABLE_COLUMNS = ["date Demande", "ACP", "PAM", "GEC", "RC", "BIO"];
+const EDITABLE_COLUMNS = ["Date Reception"];
 
-const TableArticlesDemandeTous = () => {
+const TableArticlesReception = ({ pieces }) => {
   const [data, setData] = useState([]);
   const [gridKey, setGridKey] = useState(0);
 
-  const updateData = async () => {
+  const updateData = useCallback(async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/articlesDemande/`,
+        `${API_URL}/articlesReception/${pieces}`,
         getAuthHeader()
       );
       const responseData = response.data;
@@ -25,16 +26,15 @@ const TableArticlesDemandeTous = () => {
         ...row,
         id: index + 1,
       }));
-      console.log("dataWithIds", dataWithIds);
       setData(dataWithIds);
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [pieces]);
 
   useEffect(() => {
     updateData();
-  }, []);
+  }, [pieces, updateData]);
 
   // handleCellEditCommit() permet de mettre à jour les données dans la base de données
   const handleCellEditCommit = async (params) => {
@@ -53,24 +53,17 @@ const TableArticlesDemandeTous = () => {
     try {
       const requestData = {
         commandeID: updatedData[rowIndex]["commande_id"],
-        articleID: updatedData[rowIndex]["article_id"],
         editedValue: undefined,
       };
       let dataChanged = false;
-      let changedKey = null;
 
       for (const key in updatedData[rowIndex]) {
-        if (key === "date Demande") {
+        if (key === "date Reception") {
           const dateObj = new Date(updatedData[rowIndex][key]);
           const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
-          console.log(formattedDate !== data[rowIndex][key]);
           if (formattedDate !== data[rowIndex][key]) {
-            console.log(
-              `changedDataOnly: clé ${key}, valeur ${updatedData[rowIndex][key]}`
-            );
             requestData.editedValue = formattedDate;
             dataChanged = true;
-            changedKey = key;
           }
         } else {
           if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
@@ -78,14 +71,13 @@ const TableArticlesDemandeTous = () => {
               ? (requestData.editedValue = 0)
               : (requestData.editedValue = updatedData[rowIndex][key]);
             dataChanged = true;
-            changedKey = key;
           }
         }
       }
 
       if (dataChanged) {
         await axios.put(
-          `${API_URL}/editDemande/${changedKey}`,
+          `${API_URL}/editReception/`,
           requestData,
           getAuthHeader()
         );
@@ -106,16 +98,27 @@ const TableArticlesDemandeTous = () => {
         : [];
 
     const articlesColumns = columnsWithoutIgnoredFields.map((label) => {
-      if (label === "date Demande") {
-        return {
-          field: label,
-          headerName: label,
-          flex: 1,
-          editable: EDITABLE_COLUMNS.includes(label),
-          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
-          type: "date",
-        };
-      } else if (label === "date Commande") {
+      if (label === "date Reception") {
+        return [
+          {
+            field: label,
+            headerName: label,
+            flex: 1,
+            editable: true,
+            valueGetter: (params) =>
+              params.value ? new Date(params.value) : "",
+            type: "date",
+          },
+          {
+            field: "En totalité ?",
+            headerName: "En totalité ?",
+            flex: 1,
+            renderCell: (params) =>
+              params.row.partielle ? params.row.partielle : "",
+            editable: true, // ou false, selon votre besoin
+          },
+        ];
+      } else if (label === "date Commande" || label === "date Demande") {
         return {
           field: label,
           headerName: label,
@@ -134,18 +137,9 @@ const TableArticlesDemandeTous = () => {
         };
       }
     });
-    return articlesColumns;
-  };
-
-  const dataTableStyle = {
-    height: 700,
-    width: "90%",
-    margin: "auto",
-    backgroundColor: "#ffffff",
-    color: "#000000",
-    border: "none",
-    borderRadius: "5px",
-    boxShadow: "0px 0px 5px 0px rgba(0,0,0,0.75)",
+    // flatten() permet de transformer un tableau de tableaux en un tableau unidimensionnel
+    const flattenedColumns = articlesColumns.flat();
+    return flattenedColumns;
   };
 
   return (
@@ -164,7 +158,7 @@ const TableArticlesDemandeTous = () => {
   );
 };
 
-TableArticlesDemandeTous.propTypes = {
+TableArticlesReception.propTypes = {
   pieces: PropTypes.string.isRequired,
 };
-export default TableArticlesDemandeTous;
+export default TableArticlesReception;
