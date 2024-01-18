@@ -1,4 +1,3 @@
-" Ce fichier permet de se connecter à la base de données et de créer une session pour les requêtes "
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine

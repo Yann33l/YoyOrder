@@ -1,8 +1,9 @@
 " Main file of the API."
 import os
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
 import bcrypt
+
+from datetime import datetime, timedelta, date
+from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -11,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from . import CRUD, client_repository, models, schemas
 from .database import  SessionLocal, engine
-from datetime import date
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -208,6 +209,10 @@ def create_r_user_secteur(user_secteur_edited: schemas.r_user_secteur, db: Sessi
         except Exception as e:
             print(f"Authentication error: {e}")
 # endregion : visualisation, création et modification d'un utilisateur
+            
+@app.get("/secteur_labels/")
+def get_secteur_labels():
+    return client_repository.get_secteur_labels()
 
 # region : Visualisation création et modification d'une commande
 
@@ -230,7 +235,6 @@ def format_Commande_results(results):
         formatted_result.update(
             {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else 0 for i in range(len(secteur_labels))})
         formatted_results.append(formatted_result)
-        print(formatted_result)
     return formatted_results 
 
 
@@ -267,27 +271,20 @@ def update_commande(edit_commande: schemas.edit_commande, db: Session = Depends(
 def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Demandeur is True:
         try:
-            results = client_repository.get_articles_by_secteur(piece_libelle=piece)
-            formatted_results = format_Commande_results(results)
-            return {"results": formatted_results}
+            if piece != "Tous":
+                results = client_repository.get_articles_by_secteur(piece_libelle=piece)
+                formatted_results = format_Commande_results(results)
+                return {"results": formatted_results}
+            else:
+                results = client_repository.get_articles_by_secteur(piece_libelle="%")
+                formatted_results = format_Commande_results(results)
+                return {"results": formatted_results}
              
         except Exception as e:
             return {"error": str(e)}
     else:
         raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
-    
-@app.get("/articlesDemande/")
-def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_active_user)):
-    if current_user.Demandeur is True:
-        try:
-            results = client_repository.get_articles_by_secteur(piece_libelle="%")
-            formatted_results = format_Commande_results(results)
-            return {"results": formatted_results}
-             
-        except Exception as e:
-            return {"error": str(e)}
-    else:
-        raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
+
         
 def format_Reception_results(results):
     secteur_labels = client_repository.get_secteur_labels()
@@ -304,34 +301,39 @@ def format_Reception_results(results):
             "date Demande": row[7] if row[7] is not None else None,
             "date Commande": row[8] if row[8] is not None else None,
             "date Reception": row[9] if row[9] is not None else None,
+            "En totalité ?": row[10] if row[10] is not None else None,
         }
         formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 10] if row[i + 10] is not None else 0 for i in range(len(secteur_labels))})
+            {f"{secteur_labels[i]}": row[i + 11] if row[i + 11] is not None else 0 for i in range(len(secteur_labels))})
         formatted_results.append(formatted_result)
-        print(formatted_result)
+
     return formatted_results 
 
-@app.get("/articlesReception/")
-def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_active_user)):
+@router.get("/articlesReception/{piece}")
+def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Demandeur is True:
         try:
-            results = client_repository.get_articles_to_receve(piece_libelle="%")
-            formatted_results = format_Reception_results(results)
-            return {"results": formatted_results}
-             
+            if piece != "Tous":
+                results = client_repository.get_articles_to_receve(piece_libelle=piece)
+                formatted_results = format_Reception_results(results)
+                return {"results": formatted_results}
+            else:
+                results = client_repository.get_articles_to_receve(piece_libelle="%")
+                formatted_results = format_Reception_results(results)
+                return {"results": formatted_results}   
         except Exception as e:
             return {"error": str(e)}
     else:
         raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
-    # Edition d'une demande
+    
+
+    # Edition d'une demande 
 @router.put("/editDemande/{edited_row}")
 def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Demandeur is True:  
         if isinstance(edit_demande.editedValue, int):
-            print(f"quantité : {edit_demande}")
             CRUD.edit_commande_quantite(db, edit_demande, edited_row)
         else:
-            print(f"date : {edit_demande}")
             CRUD.edit_commande_dateDemande(db, edit_demande)
         try:
             value= edit_demande
@@ -339,6 +341,25 @@ def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session
         except Exception as e:
             print(f"Authentication error: {e}")
 
+@app.put("/editReception/")
+def uptdate_reception(edit_reception: schemas.edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Demandeur is True:
+        try:
+            if isinstance(edit_reception.editedValue, date):
+                CRUD.edit_commande_dateReception(db, edit_reception)
+                results = client_repository.get_articles_to_receve("%")
+                formatted_results = format_Reception_results(results)
+                print(formatted_results)
+                return {"results": formatted_results}        
+            else:
+                CRUD.edit_commande_ReceptionEnTotalite(db, edit_reception)
+                results = client_repository.get_articles_to_receve("%")
+                formatted_results = format_Reception_results(results)
+                print(formatted_results)
+
+                return {"results": formatted_results}        
+        except Exception as e:
+            print(f"error: {e}")
     
 @app.get("/articles/", response_model=list[schemas.Articles])
 def read_articles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
