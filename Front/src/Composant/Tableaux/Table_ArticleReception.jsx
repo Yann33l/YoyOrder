@@ -9,11 +9,47 @@ import { dataTableStyle } from "./TableStyle";
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
-const EDITABLE_COLUMNS = ["Date Reception"];
+const EDITABLE_COLUMNS = ["Date Reception", "En totalité ?"];
 
 const TableArticlesReception = ({ pieces }) => {
   const [data, setData] = useState([]);
   const [gridKey, setGridKey] = useState(0);
+
+  const handleCheckBoxChange = async (params) => {
+    const { id } = params;
+    const updatedData = [...data];
+    const rowIndex = updatedData.findIndex((row) => row.id === id);
+    const newValue = !params.row["En totalité ?"]; // Invert the value
+    const updatedRow = { ...updatedData[rowIndex], "En totalité ?": newValue };
+    updatedData[rowIndex] = updatedRow;
+    setData(updatedData);
+
+    try {
+      let dataChanged = false;
+      if (
+        params.field === "En totalité ?" &&
+        newValue !== data[rowIndex]["En totalité ?"]
+      ) {
+        dataChanged = true;
+      }
+      if (dataChanged) {
+        const requestData = {
+          commandeID: params.row.commande_id,
+          editedValue: newValue,
+        };
+        console.log(requestData);
+        await axios.put(
+          `${API_URL}/editReception/`,
+          requestData,
+          getAuthHeader()
+        );
+        await updateData();
+        setGridKey((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour : ", error);
+    }
+  };
 
   const updateData = useCallback(async () => {
     try {
@@ -32,6 +68,16 @@ const TableArticlesReception = ({ pieces }) => {
     }
   }, [pieces]);
 
+  const renderCheckCell = (params) => {
+    console.log(params);
+    return (
+      <input
+        type="checkbox"
+        checked={params.row["En totalité ?"] || false}
+        onChange={() => handleCheckBoxChange(params)}
+      />
+    );
+  };
   useEffect(() => {
     updateData();
   }, [pieces, updateData]);
@@ -99,25 +145,14 @@ const TableArticlesReception = ({ pieces }) => {
 
     const articlesColumns = columnsWithoutIgnoredFields.map((label) => {
       if (label === "date Reception") {
-        return [
-          {
-            field: label,
-            headerName: label,
-            flex: 1,
-            editable: true,
-            valueGetter: (params) =>
-              params.value ? new Date(params.value) : "",
-            type: "date",
-          },
-          {
-            field: "En totalité ?",
-            headerName: "En totalité ?",
-            flex: 1,
-            renderCell: (params) =>
-              params.row.partielle ? params.row.partielle : "",
-            editable: true, // ou false, selon votre besoin
-          },
-        ];
+        return {
+          field: label,
+          headerName: label,
+          flex: 1,
+          editable: true,
+          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
+          type: "date",
+        };
       } else if (label === "date Commande" || label === "date Demande") {
         return {
           field: label,
@@ -126,6 +161,14 @@ const TableArticlesReception = ({ pieces }) => {
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
 
           type: "date",
+        };
+      } else if (label === "En totalité ?") {
+        return {
+          field: label,
+          headerName: label,
+          flex: 1,
+          renderCell: renderCheckCell,
+          editable: true,
         };
       } else {
         return {

@@ -301,10 +301,12 @@ def format_Reception_results(results):
             "date Demande": row[7] if row[7] is not None else None,
             "date Commande": row[8] if row[8] is not None else None,
             "date Reception": row[9] if row[9] is not None else None,
+            "En totalité ?": row[10] if row[10] is not None else None,
         }
         formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 10] if row[i + 10] is not None else 0 for i in range(len(secteur_labels))})
+            {f"{secteur_labels[i]}": row[i + 11] if row[i + 11] is not None else 0 for i in range(len(secteur_labels))})
         formatted_results.append(formatted_result)
+
     return formatted_results 
 
 @router.get("/articlesReception/{piece}")
@@ -341,15 +343,23 @@ def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session
 
 @app.put("/editReception/")
 def uptdate_reception(edit_reception: schemas.edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-    if current_user.Demandeur is True:  
+    if current_user.Demandeur is True:
         try:
-            CRUD.edit_commande_dateReception(db, edit_reception)
-            results = client_repository.get_articles_to_buy()
-            formatted_results = format_Reception_results(results)
-            return {"results": formatted_results}
+            if isinstance(edit_reception.editedValue, date):
+                CRUD.edit_commande_dateReception(db, edit_reception)
+                results = client_repository.get_articles_to_receve("%")
+                formatted_results = format_Reception_results(results)
+                print(formatted_results)
+                return {"results": formatted_results}        
+            else:
+                CRUD.edit_commande_ReceptionEnTotalite(db, edit_reception)
+                results = client_repository.get_articles_to_receve("%")
+                formatted_results = format_Reception_results(results)
+                print(formatted_results)
 
+                return {"results": formatted_results}        
         except Exception as e:
-            print(f"Authentication error: {e}")
+            print(f"error: {e}")
     
 @app.get("/articles/", response_model=list[schemas.Articles])
 def read_articles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):

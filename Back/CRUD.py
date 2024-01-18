@@ -323,11 +323,20 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_commande):
         db.refresh(db_commande)
     return db_commande
 
-def edit_commande_dateReception(db: Session, commande: schemas.edit_commande):
+def edit_commande_dateReception(db: Session, commande: schemas.edit_demande):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
     if db_commande:
         db_commande.dateReception = commande.editedValue
+        db.commit()
+        db.refresh(db_commande)
+    return db_commande
+
+def edit_commande_ReceptionEnTotalite(db: Session, commande: schemas.edit_demande):
+    db_commande = db.query(models.commandes).filter(
+        models.commandes.ID == commande.commandeID).scalar()
+    if db_commande:
+        db_commande.enTotalite = commande.editedValue
         db.commit()
         db.refresh(db_commande)
     return db_commande
