@@ -122,8 +122,7 @@ function App() {
           <br />
           <button type="submit"> Connexion </button>
         </form>
-        <br />
-        <p style={{ color: "#D4AF37", margin: 0 }}>
+        <p>
           Besoin d&#39;un compte?
           <br />
           <button style={{ width: "25%" }} onClick={handleRegisterClick}>
@@ -139,7 +138,7 @@ function App() {
     return (
       <main className="Connexion centered-element">
         <h1>Inscription</h1>
-        <p style={{ color: "#D4AF37" }}>
+        <p>
           Apres inscription votre compte doit etre activé par un administrateur
         </p>
         <form onSubmit={handleInscription}>

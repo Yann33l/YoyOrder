@@ -49,9 +49,8 @@ function HomePage({ isAdmin, onLogout }) {
           <div>
             <nav className="sous_menu-nav">
               <ul>
-                <li className="bouton" onClick={() => setSubContent("Tout")}>
-                  {" "}
-                  Tout{" "}
+                <li className="bouton" onClick={() => setSubContent("Tous")}>
+                  Tous
                 </li>
                 {pieces.map((piece) => (
                   <li
@@ -101,7 +100,7 @@ function HomePage({ isAdmin, onLogout }) {
     case "Admin":
       mainContent = (
         <div>
-          <h1 style={{ color: "white" }}>Gestion des utilisateurs </h1>
+          <h1>Gestion des utilisateurs </h1>
           <TableUtilisateurs />
         </div>
       );
@@ -109,7 +108,7 @@ function HomePage({ isAdmin, onLogout }) {
   }
 
   return (
-    <div>
+    <div className="page">
       <Headers {...{ isAdmin, setContent, onLogout }} />
 
       <main className="ZoneTravail">{mainContent}</main>

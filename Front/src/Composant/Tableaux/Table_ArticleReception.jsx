@@ -9,7 +9,6 @@ import { dataTableStyle } from "./TableStyle";
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
-const EDITABLE_COLUMNS = ["Date Reception", "En totalité ?"];
 
 const TableArticlesReception = ({ pieces }) => {
   const [data, setData] = useState([]);
@@ -148,7 +147,7 @@ const TableArticlesReception = ({ pieces }) => {
         return {
           field: label,
           headerName: label,
-          flex: 1,
+          flex: 0.3,
           editable: true,
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
@@ -157,32 +156,43 @@ const TableArticlesReception = ({ pieces }) => {
         return {
           field: label,
           headerName: label,
-          flex: 1,
+          flex: 0.3,
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
-
           type: "date",
         };
       } else if (label === "En totalité ?") {
         return {
           field: label,
           headerName: label,
-          flex: 1,
+          flex: 0.2,
           renderCell: renderCheckCell,
           editable: true,
         };
-      } else {
+      } else if (label === "nom article") {
         return {
           field: label,
           headerName: label,
           flex: 1,
           renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-          editable: EDITABLE_COLUMNS.includes(label),
+        };
+      } else if (label === "fournisseur") {
+        return {
+          field: label,
+          headerName: label,
+          flex: 0.2,
+          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
+        };
+      } else {
+        return {
+          field: label,
+          headerName: label,
+          flex: 0.2,
+          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
         };
       }
     });
-    // flatten() permet de transformer un tableau de tableaux en un tableau unidimensionnel
-    const flattenedColumns = articlesColumns.flat();
-    return flattenedColumns;
+
+    return articlesColumns;
   };
 
   return (
@@ -193,7 +203,7 @@ const TableArticlesReception = ({ pieces }) => {
       rows={data}
       columns={generateColumns(data)}
       sx={dataTableStyle}
-      rowHeight={35}
+      rowHeight={30}
       getRowId={(row) => row.id}
       slots={{ toolbar: GridToolbar }}
       processRowUpdate={handleCellEditCommit}

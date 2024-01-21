@@ -1,5 +1,4 @@
 const dataTableStyle = {
-  width: "90%",
   margin: "auto",
   backgroundColor: "#ffffff",
   color: "#000000",
