@@ -36,7 +36,6 @@ const TableArticlesReception = ({ pieces }) => {
           commandeID: params.row.commande_id,
           editedValue: newValue,
         };
-        console.log(requestData);
         await axios.put(
           `${API_URL}/editReception/`,
           requestData,
@@ -68,7 +67,6 @@ const TableArticlesReception = ({ pieces }) => {
   }, [pieces]);
 
   const renderCheckCell = (params) => {
-    console.log(params);
     return (
       <input
         type="checkbox"
