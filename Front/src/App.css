@@ -30,7 +30,7 @@ body {
   border: solid 2px;
   border-radius: 30px;
   text-align: center;
-  height: 350px;
+  height: 400px;
   width: 500px;
   margin: 15vh auto;
   border-color: var(--thirdary);
@@ -67,8 +67,6 @@ body main form {
 header {
   color: var(--text);
   background-color: var(--background);
-  margin: 0;
-  padding: 0;
   border-bottom: solid 2px var(--thirdary);
   text-align: center;
   vertical-align: top;
@@ -103,13 +101,16 @@ nav.menu-nav ul li.bouton:hover {
 
 nav.sous_menu-nav {
   text-align: center;
-  vertical-align: top;
+}
+
+nav.sous_menu-nav ul {
+  padding: 0;
 }
 
 nav.sous_menu-nav ul li {
   display: inline-block;
   width: auto;
-  padding: 3px 10px 3px 7px;
+  padding: 0 10px 3px 5px;
   border-right: solid 2px var(--background);
   border-bottom: solid 2px var(--secondary);
   font-size: 18px;
@@ -117,7 +118,7 @@ nav.sous_menu-nav ul li {
 nav.sous_menu-nav ul li.bouton {
   color: var(--text);
   text-decoration: none;
-  margin: 1vh;
+  margin: 12px;
 }
 nav.sous_menu-nav ul li.bouton:hover {
   border-radius: 0 0 15px 0;
@@ -135,4 +136,37 @@ footer {
 /* ZoneTravail */
 .ZoneTravail {
   margin: 0 30px 10px 30px;
+}
+
+.creation {
+  border: 2px solid var(--thirdary);
+  border-radius: 7px;
+  color: var(--text);
+  width: 100%;
+  padding: 0 0 16px 0;
+}
+.creation p {
+  margin: 16px;
+}
+.submit,
+.custom-select,
+.custom-input {
+  text-align: center;
+  border-radius: 7px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px;
+  margin: 0 33%;
+  border: 1px solid var(--thirdary);
+  width: 33%;
+}
+.submit {
+  font-weight: bold;
+}
+.submit:hover {
+  border: 1px solid var(--thirdary);
+  border-radius: 7px;
+  background-color: var(--background);
+  color: var(--backgroundLight);
+  font-weight: bold;
 }

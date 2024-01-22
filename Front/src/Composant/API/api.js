@@ -78,8 +78,22 @@ export const GetPiece = async () => {
   try {
     const response = await axios.get(`${API_URL}/get_pieces/`);
     const pieces = response.data;
-    console.log(pieces);
     return pieces;
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des pièces depuis l'API :",
+      error
+    );
+    throw error;
+  }
+};
+
+export const GetFournisseurs = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/fournisseurs/`);
+    const Fournisseurs = response.data;
+    console.log(Fournisseurs);
+    return Fournisseurs;
   } catch (error) {
     console.error(
       "Erreur lors de la récupération des pièces depuis l'API :",

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
 import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
-import { GetPiece } from "../API/api";
+import { GetPiece, GetFournisseurs } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
 import mainSubContentDemande from "./Demande";
@@ -12,10 +12,11 @@ function HomePage({ isAdmin, onLogout }) {
   const [content, setContent] = useState("default");
   const [pieces, setPieces] = useState([]);
   const [subContent, setSubContent] = useState("default");
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, reset } = useForm();
+  const [fournisseurs, setFournisseurs] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPieces = async () => {
       try {
         const piecesData = await GetPiece();
         setPieces(piecesData);
@@ -24,41 +25,137 @@ function HomePage({ isAdmin, onLogout }) {
       }
     };
 
-    fetchData();
+    fetchPieces();
   }, []);
+  useEffect(() => {
+    // Effacer le formulaire chaque fois que subContent change
+    reset();
+  }, [subContent, reset]);
 
+  useEffect(() => {
+    const fetchFournisseurs = async () => {
+      try {
+        const fournisseursData = await GetFournisseurs(); // Remplacez GetFournisseurs par votre fonction d'API
+        setFournisseurs(fournisseursData);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des fournisseurs :",
+          error
+        );
+      }
+    };
+
+    fetchFournisseurs();
+  }, []);
   const mainSubContentCreation = (subContent) => {
     const onSubmit = (data) => console.log(data);
 
-    let mainSubContent; // Déclarer ici avec let
-
+    let mainSubContent;
     switch (subContent) {
       case "Article":
+      case "default":
         mainSubContent = (
-          <div>
+          <div className="creation">
             <p>ici c&#39;est la création {subContent}</p>
             <form onSubmit={handleSubmit(onSubmit)}>
               <input
+                className="custom-input"
                 type="text"
                 placeholder="Nom de l'article "
-                {...register("Nom_article ", {
+                {...register("Article", {
                   required: true,
-                  maxLength: 80,
+                  maxLength: 255,
                 })}
               />
-              <input type="submit" />
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Réference"
+                {...register("Réference", { required: true, maxLength: 255 })}
+              />
+              <br />
+              <select
+                className="custom-select"
+                {...register("Fournisseur", { required: true })}
+              >
+                {fournisseurs.map((fournisseur) => (
+                  <option key={fournisseur.ID} value={fournisseur.libelle}>
+                    {fournisseur.libelle}
+                  </option>
+                ))}
+              </select>
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Conditionnement"
+                {...register("Conditionnement", {
+                  required: true,
+                  maxLength: 255,
+                })}
+              />
+              <br />
+              <br />
+
+              <input className="submit" type="submit" value="Valider" />
             </form>
           </div>
         );
         break;
-      default:
-        mainSubContent = null; // Gérer les autres cas si nécessaire
+
+      case "Fournisseur":
+        mainSubContent = (
+          <div className="creation">
+            <p>ici c&#39;est la création {subContent}</p>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Nom du fournisseur "
+                {...register("newFournisseur", {
+                  required: true,
+                  maxLength: 255,
+                })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Telephone"
+                {...register("Telephone", { required: false, maxLength: 20 })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="Email"
+                placeholder="Email"
+                {...register("Email", { required: false, maxLength: 255 })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Site Web"
+                {...register("Web", { required: false, maxLength: 255 })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Page récupération COA"
+                {...register("COA", { required: false, maxLength: 255 })}
+              />
+              <br /> <br />
+              <input className="submit" type="submit" value="Valider" />
+            </form>
+          </div>
+        );
         break;
     }
 
-    return mainSubContent; // Retourner la valeur
+    return mainSubContent;
   };
-  // Contenu du main basé sur l'état
 
   let mainContent;
   switch (content) {
