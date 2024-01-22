@@ -8,7 +8,7 @@ import { dataTableStyle } from "./TableStyle";
 
 import PropTypes from "prop-types";
 
-const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
+const IGNORED_FIELDS = ["id", "commande_id", "article_id", "date Commande"];
 
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
@@ -120,7 +120,7 @@ const TableArticlesDemande = ({ pieces }) => {
         return {
           field: label,
           headerName: label,
-          flex: 1,
+          flex: 0.3,
           editable: EDITABLE_COLUMNS.includes(label),
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
@@ -129,15 +129,29 @@ const TableArticlesDemande = ({ pieces }) => {
         return {
           field: label,
           headerName: label,
-          flex: 1,
+          flex: 0.3,
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
+        };
+      } else if (label === "nom article") {
+        return {
+          field: label,
+          headerName: label,
+          flex: 1,
+          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
+        };
+      } else if (label === "fournisseur") {
+        return {
+          field: label,
+          headerName: label,
+          flex: 0.2,
+          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
         };
       } else {
         return {
           field: label,
           headerName: label,
-          flex: 1,
+          flex: 0.2,
           renderCell: (params) => (params.row[label] ? params.row[label] : ""),
           editable: EDITABLE_COLUMNS.includes(label),
         };

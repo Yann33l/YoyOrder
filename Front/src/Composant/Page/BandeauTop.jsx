@@ -1,20 +1,20 @@
 import PropTypes from "prop-types";
 
 let Headers = ({ setContent, isAdmin, onLogout }) => (
-  <header>
-    <div id="logoheader">
-      <img
-        id="logo"
-        alt="logo"
-        src="/Brand_files/svg/logo-no-background.svg"
-        height="120"
-      />
-    </div>
+  <header className="BandeauTop">
     <nav className="menu-nav">
+      <div id="logoheader">
+        <img
+          id="logo"
+          alt="logo"
+          src="/Brand_files/png/logo_yoyorder.png"
+          height="120"
+        />
+      </div>
       <ul>
         <li className="bouton" onClick={() => setContent("acceuil")}>
           Acceuil
-        </li>{" "}
+        </li>
         <li className="bouton" onClick={() => setContent("Commande")}>
           Commande
         </li>

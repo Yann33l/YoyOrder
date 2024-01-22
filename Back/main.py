@@ -382,8 +382,7 @@ def create_article(article: schemas.ArticlesCreate, db: Session = Depends(get_db
 
 
 @app.get("/fournisseurs/", response_model=list[schemas.Fournisseurs])
-def read_fournisseurs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-    if current_user.Autorisation is True:
+def read_fournisseurs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
         fournisseurs = CRUD.get_fournisseurs(db, skip=skip, limit=limit)
         return fournisseurs
 

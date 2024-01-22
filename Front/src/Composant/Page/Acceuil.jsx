@@ -1,9 +1,8 @@
 let AcceuilContent = (
-  <div style={{ marginLeft: 30, color: "white" }}>
+  <div>
     <h1>Présentation de l&#39;application</h1>
     <h3>Lien vers le code source de l&#39;application</h3>
     <a
-      style={{ color: "#D4AF37" }}
       href="https://github.com/Yann33l/YoyOrder"
       target="_blank"
       rel="bookmark noreferrer"

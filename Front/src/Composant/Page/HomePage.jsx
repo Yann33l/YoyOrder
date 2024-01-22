@@ -1,20 +1,22 @@
 import { useState, useEffect } from "react";
 import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
 import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
-import { GetPiece } from "../API/api";
+import { GetPiece, GetFournisseurs } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
 import mainSubContentDemande from "./Demande";
-import mainSubContentCreation from "./Creation";
+import { useForm } from "react-hook-form";
 
 // eslint-disable-next-line react/prop-types
 function HomePage({ isAdmin, onLogout }) {
   const [content, setContent] = useState("default");
   const [pieces, setPieces] = useState([]);
   const [subContent, setSubContent] = useState("default");
+  const { register, handleSubmit, reset } = useForm();
+  const [fournisseurs, setFournisseurs] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPieces = async () => {
       try {
         const piecesData = await GetPiece();
         setPieces(piecesData);
@@ -23,10 +25,137 @@ function HomePage({ isAdmin, onLogout }) {
       }
     };
 
-    fetchData();
+    fetchPieces();
   }, []);
+  useEffect(() => {
+    // Effacer le formulaire chaque fois que subContent change
+    reset();
+  }, [subContent, reset]);
 
-  // Contenu du main basé sur l'état
+  useEffect(() => {
+    const fetchFournisseurs = async () => {
+      try {
+        const fournisseursData = await GetFournisseurs(); // Remplacez GetFournisseurs par votre fonction d'API
+        setFournisseurs(fournisseursData);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des fournisseurs :",
+          error
+        );
+      }
+    };
+
+    fetchFournisseurs();
+  }, []);
+  const mainSubContentCreation = (subContent) => {
+    const onSubmit = (data) => console.log(data);
+
+    let mainSubContent;
+    switch (subContent) {
+      case "Article":
+      case "default":
+        mainSubContent = (
+          <div className="creation">
+            <p>ici c&#39;est la création {subContent}</p>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Nom de l'article "
+                {...register("Article", {
+                  required: true,
+                  maxLength: 255,
+                })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Réference"
+                {...register("Réference", { required: true, maxLength: 255 })}
+              />
+              <br />
+              <select
+                className="custom-select"
+                {...register("Fournisseur", { required: true })}
+              >
+                {fournisseurs.map((fournisseur) => (
+                  <option key={fournisseur.ID} value={fournisseur.libelle}>
+                    {fournisseur.libelle}
+                  </option>
+                ))}
+              </select>
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Conditionnement"
+                {...register("Conditionnement", {
+                  required: true,
+                  maxLength: 255,
+                })}
+              />
+              <br />
+              <br />
+
+              <input className="submit" type="submit" value="Valider" />
+            </form>
+          </div>
+        );
+        break;
+
+      case "Fournisseur":
+        mainSubContent = (
+          <div className="creation">
+            <p>ici c&#39;est la création {subContent}</p>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Nom du fournisseur "
+                {...register("newFournisseur", {
+                  required: true,
+                  maxLength: 255,
+                })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Telephone"
+                {...register("Telephone", { required: false, maxLength: 20 })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="Email"
+                placeholder="Email"
+                {...register("Email", { required: false, maxLength: 255 })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Site Web"
+                {...register("Web", { required: false, maxLength: 255 })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Page récupération COA"
+                {...register("COA", { required: false, maxLength: 255 })}
+              />
+              <br /> <br />
+              <input className="submit" type="submit" value="Valider" />
+            </form>
+          </div>
+        );
+        break;
+    }
+
+    return mainSubContent;
+  };
 
   let mainContent;
   switch (content) {
@@ -49,9 +178,8 @@ function HomePage({ isAdmin, onLogout }) {
           <div>
             <nav className="sous_menu-nav">
               <ul>
-                <li className="bouton" onClick={() => setSubContent("Tout")}>
-                  {" "}
-                  Tout{" "}
+                <li className="bouton" onClick={() => setSubContent("Tous")}>
+                  Tous
                 </li>
                 {pieces.map((piece) => (
                   <li
@@ -90,6 +218,9 @@ function HomePage({ isAdmin, onLogout }) {
                 >
                   Lieu de stockage
                 </li>
+                <li className="bouton" onClick={() => setSubContent("Unité")}>
+                  Unité
+                </li>
               </ul>
             </nav>
           </div>
@@ -101,7 +232,7 @@ function HomePage({ isAdmin, onLogout }) {
     case "Admin":
       mainContent = (
         <div>
-          <h1 style={{ color: "white" }}>Gestion des utilisateurs </h1>
+          <h1>Gestion des utilisateurs </h1>
           <TableUtilisateurs />
         </div>
       );
@@ -109,7 +240,7 @@ function HomePage({ isAdmin, onLogout }) {
   }
 
   return (
-    <div>
+    <div className="page">
       <Headers {...{ isAdmin, setContent, onLogout }} />
 
       <main className="ZoneTravail">{mainContent}</main>

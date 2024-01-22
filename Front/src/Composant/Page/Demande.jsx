@@ -7,19 +7,21 @@ const mainSubContentDemande = (subContent, pieces) => {
   if (selectedPiece) {
     return (
       <div>
-        <p>ici c&#39;est la {selectedPiece.libelle}</p>
+        <h2>{selectedPiece.libelle}</h2>
+        <p>Articles à commander</p>
         <TableArticlesDemande pieces={selectedPiece.libelle} />
-        <p>ici c&#39;est la réception </p>
+        <p>Articles à réceptionner </p>
         <TableArticlesReception pieces={selectedPiece.libelle} />
       </div>
     );
   } else {
     return (
       <div>
-        <p>ici c&#39;est Tout</p>
+        <h2>Tous</h2>
+        <p>Articles à commander</p>
         <TableArticlesDemande pieces={"Tous"} />
         <br />
-        <p>ici c&#39;est la réception de Tout</p>
+        <p>Articles à réceptionner </p>
         <TableArticlesReception pieces={"Tous"} />
       </div>
     );

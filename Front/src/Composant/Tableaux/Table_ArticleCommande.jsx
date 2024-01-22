@@ -74,8 +74,6 @@ const TableArticlesCommande = () => {
 
       for (const key in updatedData[rowIndex]) {
         if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
-          console.log("requestData", requestData);
-
           if (key === "date Commande") {
             const dateObj = new Date(updatedData[rowIndex][key]);
             const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
