@@ -27,15 +27,15 @@ function HomePage({ isAdmin, onLogout }) {
 
     fetchPieces();
   }, []);
+
   useEffect(() => {
-    // Effacer le formulaire chaque fois que subContent change
     reset();
   }, [subContent, reset]);
 
   useEffect(() => {
     const fetchFournisseurs = async () => {
       try {
-        const fournisseursData = await GetFournisseurs(); // Remplacez GetFournisseurs par votre fonction d'API
+        const fournisseursData = await GetFournisseurs();
         setFournisseurs(fournisseursData);
       } catch (error) {
         console.error(
@@ -47,6 +47,7 @@ function HomePage({ isAdmin, onLogout }) {
 
     fetchFournisseurs();
   }, []);
+
   const mainSubContentCreation = (subContent) => {
     const onSubmit = (data) => console.log(data);
 
@@ -96,8 +97,24 @@ function HomePage({ isAdmin, onLogout }) {
                 })}
               />
               <br />
-              <br />
+              <div className="secteur-input">
+                <p>Visibilité</p>
+                {pieces.map((piece) => (
+                  <label key={piece.ID} className="custom-checkbox">
+                    <input
+                      className="custom-checkbox-case"
+                      type="checkbox"
+                      placeholder={piece.libelle}
+                      {...register(piece.libelle, {
+                        maxLength: 255,
+                      })}
+                    />
+                    {piece.libelle}
+                  </label>
+                ))}
+              </div>
 
+              <br />
               <input className="submit" type="submit" value="Valider" />
             </form>
           </div>

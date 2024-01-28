@@ -146,19 +146,42 @@ footer {
   padding: 0 0 16px 0;
 }
 .creation p {
-  margin: 16px;
+  text-align: center;
+  font-size: 15px;
 }
+
+.custom-checkbox {
+  font-size: 13px;
+  display: flex;
+  flex-direction: row;
+  padding: 0 0 0 40%;
+}
+.custom-checkbox-case {
+  margin: 0 5px 0 0;
+}
+.secteur-input {
+  margin: 0 33%;
+  width: 33%;
+  border: 1px solid var(--thirdary);
+  border-radius: 7px;
+  box-sizing: border-box;
+  margin-top: 2px;
+}
+.secteur-input p {
+  margin: 5px 0 5px 0;
+}
+
 .submit,
 .custom-select,
 .custom-input {
   text-align: center;
   border-radius: 7px;
   box-sizing: border-box;
-  width: 100%;
   padding: 5px;
   margin: 0 33%;
   border: 1px solid var(--thirdary);
   width: 33%;
+  margin-top: 2px;
 }
 .submit {
   font-weight: bold;
