@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -46,22 +46,21 @@ class UserCreate(UserBase):
 
 
 class Articles(BaseModel):
-    ID: int
     libelle: str
     ref: str
     fournisseur_id: int
     conditionnement: Optional[str] = None
-    dateDebutValidite: date
-    dateFinValidite: date
+    dateDebutValidite: Optional[date] = datetime.now().date()
+    dateFinValidite: Optional[date] = 3000-12-31
 
     class Config:
         orm_mode = True
 
 
 class ArticlesCreate(Articles):
-    temperature: int
-    lieuxDeStockage: str
-    secteur_liste: list
+    temperature: Optional[int] = None
+    lieuxDeStockage: Optional[str] = None
+    piece_liste: dict[int, bool] = {}
 
 
 class Fournisseurs(BaseModel):
@@ -113,8 +112,8 @@ class GestionDesCouts(BaseModel):
     ID: int
     article_id: int
     prixUnitaire: Optional[float] = None
-    dateDebutValidite: date
-    dateFinValidite: date
+    dateDebutValidite: Optional[date] = None
+    dateFinValidite: Optional[date] = 31-12-3000
 
 
 class LieuxDeStockage(BaseModel):

@@ -114,6 +114,21 @@ def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list
         db.refresh(db_r_article_secteur)
     return db_r_article_secteur
 
+def liaison_article_piece(db: Session, article: schemas.ArticlesCreate):
+    article_id = client_repository.get_articleID_by_data(
+        article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
+    for piece_id, value in article.piece_liste.items():
+        print(piece_id, value)
+        db_r_article_piece = models.r_articles_pieces(
+            article_id=article_id,
+            piece_id=piece_id)
+        db.add(db_r_article_piece)
+        db.commit()
+        db.refresh(db_r_article_piece)
+    return db_r_article_piece
+
+
+
 
 def create_article(db: Session, article: schemas.ArticlesCreate):
     db_article = models.articles(
@@ -127,10 +142,8 @@ def create_article(db: Session, article: schemas.ArticlesCreate):
     db.commit()
     db.refresh(db_article)
     liaison_article_lieuxdestockage(db, article)
-    liaison_article_to_secteur(db, db_article.ID, article.secteur_liste)
-    db_article.secteur_liste = article.secteur_liste
-    db_article.temperature = article.temperature
-    db_article.lieuxDeStockage = article.lieuxDeStockage
+    liaison_article_piece(db, article)
+
     return db_article
 
 
@@ -290,11 +303,26 @@ def edit_commande_quantite(db: Session, commande: schemas.edit_demande, secteur_
         models.r_secteur_commande.secteur_id == get_secteurID_by_libelle(db, secteur_libelle)).scalar()
     try:
         if db_r_secteur_commande is None:
-            db_r_secteur_commande = models.r_secteur_commande(
-                commande_id=commande.commandeID,
-                secteur_id=get_secteurID_by_libelle(db, secteur_libelle),
-                quantite=commande.editedValue,
-            )
+            db_commande = db.query(models.commandes).filter(
+                models.commandes.ID == commande.commandeID).scalar()
+            print(db_commande)
+            if db_commande is None:
+                db_commande = models.commandes(
+                    dateDemande=None,
+                    article_id=commande.articleID,
+                )
+                db.add(db_commande)
+                db.commit()
+                commande.commandeID = db_commande.ID
+                db_r_secteur_commande = models.r_secteur_commande(
+                    commande_id=commande.commandeID,
+                    secteur_id=get_secteurID_by_libelle(db, secteur_libelle),
+                    quantite=commande.editedValue,)
+            else:
+                db_r_secteur_commande = models.r_secteur_commande(
+                    commande_id=commande.commandeID,
+                    secteur_id=get_secteurID_by_libelle(db, secteur_libelle),
+                    quantite=commande.editedValue,)
             db.add(db_r_secteur_commande)
             db.commit()
             db.refresh(db_r_secteur_commande)

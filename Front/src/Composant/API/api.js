@@ -1,5 +1,5 @@
 import axios from "axios";
-import { setAuthHeader } from "./token";
+import { setAuthHeader, getAuthHeader } from "./token";
 
 export let API_URL;
 
@@ -99,6 +99,21 @@ export const GetFournisseurs = async () => {
       "Erreur lors de la récupération des pièces depuis l'API :",
       error
     );
+    throw error;
+  }
+};
+
+export const createArticle = async (newArticleData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/create_article/`,
+      newArticleData,
+      getAuthHeader()
+    );
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error(error);
     throw error;
   }
 };

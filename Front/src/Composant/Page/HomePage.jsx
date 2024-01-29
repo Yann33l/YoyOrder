@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
 import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
-import { GetPiece, GetFournisseurs } from "../API/api";
+import { GetPiece, GetFournisseurs, createArticle } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
 import mainSubContentDemande from "./Demande";
@@ -49,7 +49,25 @@ function HomePage({ isAdmin, onLogout }) {
   }, []);
 
   const mainSubContentCreation = (subContent) => {
-    const onSubmit = (data) => console.log(data);
+    const onSubmit = (data) => {
+      let filteredPieceListe;
+      switch (subContent) {
+        case "Article":
+        case "default":
+          filteredPieceListe = Object.fromEntries(
+            Object.entries(data.piece_liste).filter(
+              ([, value]) => value === true
+            )
+          );
+          data.piece_liste = filteredPieceListe;
+          console.log(data);
+          createArticle(data);
+          break;
+        case "Fournisseur":
+          console.log(data);
+          break;
+      }
+    };
 
     let mainSubContent;
     switch (subContent) {
@@ -63,7 +81,7 @@ function HomePage({ isAdmin, onLogout }) {
                 className="custom-input"
                 type="text"
                 placeholder="Nom de l'article "
-                {...register("Article", {
+                {...register("libelle", {
                   required: true,
                   maxLength: 255,
                 })}
@@ -73,15 +91,15 @@ function HomePage({ isAdmin, onLogout }) {
                 className="custom-input"
                 type="text"
                 placeholder="Réference"
-                {...register("Réference", { required: true, maxLength: 255 })}
+                {...register("ref", { required: true, maxLength: 255 })}
               />
               <br />
               <select
                 className="custom-select"
-                {...register("Fournisseur", { required: true })}
+                {...register("fournisseur_id", { required: true })}
               >
                 {fournisseurs.map((fournisseur) => (
-                  <option key={fournisseur.ID} value={fournisseur.libelle}>
+                  <option key={fournisseur.ID} value={fournisseur.ID}>
                     {fournisseur.libelle}
                   </option>
                 ))}
@@ -91,7 +109,7 @@ function HomePage({ isAdmin, onLogout }) {
                 className="custom-input"
                 type="text"
                 placeholder="Conditionnement"
-                {...register("Conditionnement", {
+                {...register("conditionnement", {
                   required: true,
                   maxLength: 255,
                 })}
@@ -105,7 +123,7 @@ function HomePage({ isAdmin, onLogout }) {
                       className="custom-checkbox-case"
                       type="checkbox"
                       placeholder={piece.libelle}
-                      {...register(piece.libelle, {
+                      {...register(`piece_liste.${piece.ID}`, {
                         maxLength: 255,
                       })}
                     />
