@@ -1,5 +1,5 @@
 import axios from "axios";
-import { setAuthHeader } from "./token";
+import { setAuthHeader, getAuthHeader } from "./token";
 
 export let API_URL;
 
@@ -88,6 +88,21 @@ export const GetPiece = async () => {
   }
 };
 
+export const createPiece = async (newPieceData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/create_piece/`,
+      newPieceData,
+      getAuthHeader()
+    );
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const GetFournisseurs = async () => {
   try {
     const response = await axios.get(`${API_URL}/fournisseurs/`);
@@ -99,6 +114,36 @@ export const GetFournisseurs = async () => {
       "Erreur lors de la récupération des pièces depuis l'API :",
       error
     );
+    throw error;
+  }
+};
+
+export const createFournisseur = async (newFournisseurData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/create_fournisseur/`,
+      newFournisseurData,
+      getAuthHeader()
+    );
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const createArticle = async (newArticleData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/create_article/`,
+      newArticleData,
+      getAuthHeader()
+    );
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error(error);
     throw error;
   }
 };
