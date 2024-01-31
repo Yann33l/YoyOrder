@@ -39,7 +39,7 @@ if Env == "dev":
 else:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["https://study-bloc3.vercel.app"],
+        allow_origins=["https://yoy-order.vercel.app/"],
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT"],
         allow_headers=["*"],)
@@ -387,11 +387,16 @@ def read_fournisseurs(skip: int = 0, limit: int = 100, db: Session = Depends(get
         return fournisseurs
 
 
-@app.post("/create_fournisseur/", response_model=schemas.Fournisseurs)
-def create_fournisseur(fournisseur: schemas.Fournisseurs, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+@app.post("/create_fournisseur/", response_model=schemas.CreationFournisseurs)
+def create_fournisseur(fournisseur: schemas.CreationFournisseurs, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
     if current_user.Autorisation is True:
         return CRUD.create_fournisseur(db, fournisseur)
 
+@app.post("/create_piece/", response_model=schemas.Piece)
+def create_fournisseur(piece: schemas.Piece, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
+    if current_user.Autorisation is True:
+        return CRUD.create_piece(db, piece)
+    
 
 @app.get("/commandes/", response_model=list[schemas.Commandes])
 def read_commandes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):

@@ -118,7 +118,6 @@ def liaison_article_piece(db: Session, article: schemas.ArticlesCreate):
     article_id = client_repository.get_articleID_by_data(
         article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
     for piece_id, value in article.piece_liste.items():
-        print(piece_id, value)
         db_r_article_piece = models.r_articles_pieces(
             article_id=article_id,
             piece_id=piece_id)
@@ -305,7 +304,6 @@ def edit_commande_quantite(db: Session, commande: schemas.edit_demande, secteur_
         if db_r_secteur_commande is None:
             db_commande = db.query(models.commandes).filter(
                 models.commandes.ID == commande.commandeID).scalar()
-            print(db_commande)
             if db_commande is None:
                 db_commande = models.commandes(
                     dateDemande=None,
@@ -400,3 +398,11 @@ def create_userdate(db: Session, userdate: schemas.usersdates):
 
 def get_pieces(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.pieces).offset(skip).limit(limit).all()
+
+def create_piece(db: Session, piece: schemas.Piece):
+    db_piece = models.pieces(
+        libelle=piece.libelle,
+    )
+    db.add(db_piece)
+    db.commit()
+    return db_piece

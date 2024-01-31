@@ -63,14 +63,17 @@ class ArticlesCreate(Articles):
     piece_liste: dict[int, bool] = {}
 
 
-class Fournisseurs(BaseModel):
-    ID: int
+class CreationFournisseurs(BaseModel):
     libelle: str
     telephone: Optional[str] = None
     email: Optional[str] = None
     siteWeb: Optional[str] = None
     getCertificatAnalyse: Optional[str] = None
+    class Config:
+        orm_mode = True
 
+class Fournisseurs(CreationFournisseurs):
+    ID: int
 
 class Commandes(BaseModel):
     ID: int
@@ -123,7 +126,7 @@ class LieuxDeStockage(BaseModel):
 
 
 class Piece(BaseModel):
-    ID: int
+    ID: Optional[int] = None
     libelle: str
 
 
