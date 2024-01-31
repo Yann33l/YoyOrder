@@ -27,3 +27,4 @@ Brand files/
 *.sw?
 Front/.eslintrc.cjs
 .env
+process.env
