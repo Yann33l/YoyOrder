@@ -1,18 +1,14 @@
 import axios from "axios";
 import { setAuthHeader, getAuthHeader } from "./token";
-import process from "process";
 
 export let API_URL;
-try {
-  if (process.env.appIsOnline === "True") {
-    // Environnement en ligne
-    API_URL = "https://yoyorder.osc-fr1.scalingo.io";
-  } else {
-    // Environnement local
-    API_URL = "http://127.0.0.1:8000";
-  }
-} catch (error) {
+
+if (window.location.hostname === "127.0.0.1") {
+  // Environnement local
   API_URL = "http://127.0.0.1:8000";
+} else {
+  // Environnement en ligne
+  API_URL = "https://yoyorder.osc-fr1.scalingo.io";
 }
 
 export const checkUser = async (Email) => {
