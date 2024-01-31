@@ -3,7 +3,10 @@ import { setAuthHeader, getAuthHeader } from "./token";
 
 export let API_URL;
 
-if (window.location.hostname === "127.0.0.1") {
+if (
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+) {
   // Environnement local
   API_URL = "http://127.0.0.1:8000";
 } else {
