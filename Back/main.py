@@ -39,7 +39,7 @@ if Env == "dev":
 else:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["https://yoy-order.vercel.app/"],
+        allow_origins=["https://yoy-order.vercel.app"],
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT"],
         allow_headers=["*"],)
