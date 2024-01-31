@@ -11,7 +11,7 @@ if (
   API_URL = "http://127.0.0.1:8000";
 } else {
   // Environnement en ligne
-  API_URL = "https://goldenline.osc-fr1.scalingo.io";
+  API_URL = "https://yoyorder.osc-fr1.scalingo.io";
 }
 
 export const checkUser = async (Email) => {
