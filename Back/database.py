@@ -16,7 +16,6 @@ Env = os.getenv("Env")
 
 # scalingo
 SCALINGO_MYSQL_URL = f"mysql://{Login}:{Password}@{Server_Host}:{Port}/{Database}"
-
 # Local
 SQLALCHEMY_DATABASE_URL = f"mysql+mysqlconnector://{Login}:{Password}@{Server_Host}:{Port}/{Database}"
 
