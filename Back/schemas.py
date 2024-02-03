@@ -33,6 +33,7 @@ class UserBase(BaseModel):
     Admin: Optional[bool] = False
     Acheteur: Optional[bool] = False
     Demandeur: Optional[bool] = False
+    Editeur: Optional[bool] = False
     Autorisation: Optional[bool] = False
 
     class Config:
@@ -82,7 +83,7 @@ class Commandes(BaseModel):
     dateReception: Optional[date] = None
 
 class Secteurs(BaseModel):
-    ID: int
+    ID: Optional[int] = None
     libelle: str
 
 class R_Secteur_Commande(BaseModel):

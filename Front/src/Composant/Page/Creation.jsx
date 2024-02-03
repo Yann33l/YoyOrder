@@ -3,6 +3,7 @@ import {
   createFournisseur,
   GetFournisseurs,
   createPiece,
+  createSecteur,
 } from "../API/api";
 import { GetPiece } from "../API/api";
 import { useState, useEffect } from "react";
@@ -69,6 +70,9 @@ const Creation = () => {
 
           await createPiece(data);
           await fetchPieces();
+          break;
+        case "Secteur":
+          await createSecteur(data);
           break;
       }
     };
@@ -196,15 +200,15 @@ const Creation = () => {
         );
         break;
       case "Piece":
+      case "Secteur":
         mainSubContent = (
           <div className="creation">
-            {" "}
             <p>ici c&#39;est la création {subContent}</p>
             <form onSubmit={handleSubmit(onSubmit)}>
               <input
                 className="custom-input"
                 type="text"
-                placeholder="Piece"
+                placeholder={subContent}
                 {...register("libelle", {
                   required: true,
                   maxLength: 255,
@@ -240,6 +244,9 @@ const Creation = () => {
             </li>
             <li className="bouton" onClick={() => setSubContent("Piece")}>
               Piece
+            </li>{" "}
+            <li className="bouton" onClick={() => setSubContent("Secteur")}>
+              Secteur
             </li>
           </ul>
         </nav>

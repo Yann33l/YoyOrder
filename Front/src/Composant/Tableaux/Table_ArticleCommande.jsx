@@ -6,7 +6,7 @@ import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import { dataTableStyle } from "./TableStyle";
 
-const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
+const IGNORED_FIELDS = ["commande_id", "article_id"];
 const EDITABLE_COLUMNS = ["date Commande"];
 
 const TableArticlesCommande = () => {
@@ -20,41 +20,22 @@ const TableArticlesCommande = () => {
         getAuthHeader()
       );
       const responseData = response.data;
-      const dataWithIds = responseData.results.map((row, index) => ({
-        ...row,
-        id: index + 1,
-      }));
-      setData(dataWithIds);
+      setData(responseData.results);
     } catch (error) {
       console.error(error);
     }
   };
 
   useEffect(() => {
-    const getArticles = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/articlesCommande/`,
-          getAuthHeader()
-        );
-        const responseData = response.data;
-        const dataWithIds = responseData.results.map((row, index) => ({
-          ...row,
-          id: index + 1,
-        }));
-        setData(dataWithIds);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    getArticles();
+    updateData();
   }, []);
 
   const handleCellEditCommit = async (params) => {
-    const { id } = params;
+    const { commande_id } = params;
     const updatedData = [...data];
-    const rowIndex = updatedData.findIndex((row) => row.id === id);
+    const rowIndex = updatedData.findIndex(
+      (row) => row.commande_id === commande_id
+    );
     const updatedRow = { ...updatedData[rowIndex] };
 
     for (const key in params) {
@@ -149,7 +130,7 @@ const TableArticlesCommande = () => {
       rowHeight={35}
       columns={generateColumns(data)}
       sx={dataTableStyle}
-      getRowId={(row) => row.id}
+      getRowId={(row) => row.commande_id}
       slots={{ toolbar: GridToolbar }}
       processRowUpdate={handleCellEditCommit}
     />

@@ -21,7 +21,7 @@ def get_users():
         join_part = " ".join([f"LEFT JOIN secteurs secteur_{s_id} ON s.ID = secteur_{s_id}.ID" for s_id in range(
             1, len(secteur_labels) + 1)])
 
-        query = text(f"SELECT u.ID, Email, Admin, Autorisation, Demandeur, Acheteur , {select_part} "
+        query = text(f"SELECT u.ID, Email, Admin, Autorisation, Demandeur, Acheteur , Editeur, {select_part} "
                      "FROM users u "
                      "LEFT JOIN r_user_secteur r_us ON r_us.user_id = u.ID "
                      "LEFT JOIN secteurs s ON s.ID = r_us.secteur_id "
@@ -81,7 +81,6 @@ def get_piece():
         result = connection.execute(query)
         return result.fetchall()
     
-# Dupliquer la requête en modifiant pour ne faire apparaitre que les commandes commandées mais sans dates de réception + ajout de la date de réception
 def get_articles_by_secteur(piece_libelle):
     with engine.connect() as connection:
         secteur_labels = connection.execute(
@@ -89,7 +88,7 @@ def get_articles_by_secteur(piece_libelle):
         secteur_labels = [libelle[0] for libelle in secteur_labels]
 
         select_part = ", ".join(
-            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS quantite_{libelle}" for libelle in secteur_labels])
+            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
 
         query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
@@ -103,6 +102,7 @@ def get_articles_by_secteur(piece_libelle):
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
               "WHERE (p.libelle like :piece_libelle or :piece_libelle='%') "
               "AND (c.dateDemande IS NULL OR (c.dateDemande IS NOT NULL AND c.dateCommande IS NULL) OR (c.dateDemande IS NOT NULL AND c.dateCommande < c.dateDemande)) "
+              "AND a.dateFinValidite > NOW() "
               "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande "
               "ORDER BY a.ID DESC ")
 
@@ -118,7 +118,7 @@ def get_articles_to_receve(piece_libelle):
         secteur_labels = [libelle[0] for libelle in secteur_labels]
 
         select_part = ", ".join(
-            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS quantite_{libelle}" for libelle in secteur_labels])
+            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
 
         query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
@@ -149,7 +149,7 @@ def get_articles_to_buy():
         secteur_labels = [libelle[0] for libelle in secteur_labels]
 
         select_part = ", ".join(
-            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS quantite_{libelle}" for libelle in secteur_labels])
+            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
 
         query = text(f"SELECT DISTINCT c.ID, a.ID, a.libelle , a.ref, f.libelle, a.conditionnement, "
               f"(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "

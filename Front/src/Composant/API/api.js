@@ -147,3 +147,18 @@ export const createArticle = async (newArticleData) => {
     throw error;
   }
 };
+
+export const createSecteur = async (newSecteurData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/create_secteur/`,
+      newSecteurData,
+      getAuthHeader()
+    );
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};

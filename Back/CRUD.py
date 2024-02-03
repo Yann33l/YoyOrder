@@ -28,12 +28,13 @@ def create_user(db: Session, user: schemas.UserCreate):
         Autorisation=False,
         Acheteur=False,
         Demandeur=False,
+        Editeur=False,
     )
     db.add(db_user)
     db.commit()
     return db_user
 
-def edit_user_status(db: Session, email: str, admin: bool = None, autorisation: bool = None, acheteur: bool = None, demandeur: bool = None):
+def edit_user_status(db: Session, email: str, admin: bool = None, autorisation: bool = None, acheteur: bool = None, demandeur: bool = None, editeur: bool = None):
     db_user = db.query(models.users).filter(
         models.users.Email == email).scalar()
 
@@ -46,6 +47,8 @@ def edit_user_status(db: Session, email: str, admin: bool = None, autorisation: 
             db_user.Acheteur = acheteur
         elif demandeur is not None:
             db_user.Demandeur = demandeur
+        elif editeur is not None:
+            db_user.Editeur = editeur
 
         db.commit()
         db.refresh(db_user)
@@ -165,8 +168,6 @@ def create_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
     db.commit()
     return db_fournisseur
 
-# Voir pour ne changer que les champs modifiés idem sur les autres edits
-
 
 def edit_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
     db_fournisseur = db.query(models.fournisseurs).filter(
@@ -190,7 +191,6 @@ def get_secteurs(db: Session, skip: int = 0, limit: int = 100):
 
 def create_secteur(db: Session, secteur: schemas.Secteurs):
     db_secteur = models.secteurs(
-        ID=secteur.ID,
         libelle=secteur.libelle,
     )
     db.add(db_secteur)
@@ -198,60 +198,60 @@ def create_secteur(db: Session, secteur: schemas.Secteurs):
     return db_secteur
 
 
-# Stocks
+# # Stocks
 
 
-def get_stocks(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.stocks).offset(skip).limit(limit).all()
+# def get_stocks(db: Session, skip: int = 0, limit: int = 100):
+#     return db.query(models.stocks).offset(skip).limit(limit).all()
 
 
-def create_stock(db: Session, stock: schemas.Stocks):
-    db_stock = models.stocks(
-        ID=stock.ID,
-        article_id=stock.article_id,
-        quantiteInitiale=stock.quantiteInitiale,
-        quantiteRestante=stock.quantiteRestante,
-        lot=stock.lot,
-        datePeremption=stock.datePeremption,
-        COA=stock.COA,
-    )
-    db.add(db_stock)
-    db.commit()
-    return db_stock
+# def create_stock(db: Session, stock: schemas.Stocks):
+#     db_stock = models.stocks(
+#         ID=stock.ID,
+#         article_id=stock.article_id,
+#         quantiteInitiale=stock.quantiteInitiale,
+#         quantiteRestante=stock.quantiteRestante,
+#         lot=stock.lot,
+#         datePeremption=stock.datePeremption,
+#         COA=stock.COA,
+#     )
+#     db.add(db_stock)
+#     db.commit()
+#     return db_stock
 
 
-def edit_stock(db: Session, stock: schemas.Stocks):
-    db_stock = db.query(models.stocks).filter(
-        models.stocks.ID == stock.ID).scalar()
-    if db_stock:
-        db_stock.article_id = stock.article_id
-        db_stock.quantiteInitiale = stock.quantiteInitiale
-        db_stock.quantiteRestante = stock.quantiteRestante
-        db_stock.lot = stock.lot
-        db_stock.datePeremption = stock.datePeremption
-        db_stock.COA = stock.COA
-        db.commit()
-        db.refresh(db_stock)
-    return db_stock
+# def edit_stock(db: Session, stock: schemas.Stocks):
+#     db_stock = db.query(models.stocks).filter(
+#         models.stocks.ID == stock.ID).scalar()
+#     if db_stock:
+#         db_stock.article_id = stock.article_id
+#         db_stock.quantiteInitiale = stock.quantiteInitiale
+#         db_stock.quantiteRestante = stock.quantiteRestante
+#         db_stock.lot = stock.lot
+#         db_stock.datePeremption = stock.datePeremption
+#         db_stock.COA = stock.COA
+#         db.commit()
+#         db.refresh(db_stock)
+#     return db_stock
 
-# Gestion des couts
-
-
-def get_gestiondescouts(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.gestiondescouts).offset(skip).limit(limit).all()
+# # Gestion des couts
 
 
-def create_gestiondescout(db: Session, gestiondescout: schemas.GestionDesCouts):
-    db_gestiondescout = models.gestiondescouts(
-        ID=gestiondescout.ID,
-        article_id=gestiondescout.article_id,
-        prixUnitaire=gestiondescout.prixUnitaire,
-        dateDebutValidite=gestiondescout.dateDebutValidite,
-        dateFinValidite=gestiondescout.dateFinValidite,
-    )
-    db.add(db_gestiondescout)
-    db.commit()
-    return db_gestiondescout
+# def get_gestiondescouts(db: Session, skip: int = 0, limit: int = 100):
+#     return db.query(models.gestiondescouts).offset(skip).limit(limit).all()
+
+
+# def create_gestiondescout(db: Session, gestiondescout: schemas.GestionDesCouts):
+#     db_gestiondescout = models.gestiondescouts(
+#         ID=gestiondescout.ID,
+#         article_id=gestiondescout.article_id,
+#         prixUnitaire=gestiondescout.prixUnitaire,
+#         dateDebutValidite=gestiondescout.dateDebutValidite,
+#         dateFinValidite=gestiondescout.dateFinValidite,
+#     )
+#     db.add(db_gestiondescout)
+#     db.commit()
+#     return db_gestiondescout
 
 
 # Commandes
@@ -366,35 +366,37 @@ def edit_commande_ReceptionEnTotalite(db: Session, commande: schemas.edit_demand
         db.commit()
         db.refresh(db_commande)
     return db_commande
-# Lieux de stockage
 
-def get_lieuxdestockage(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.lieuxdestockage).offset(skip).limit(limit).all()
+# # Lieux de stockage
 
-
-def create_lieuxdestockage(db: Session, lieuxdestockage: schemas.LieuxDeStockage):
-    db_lieuxdestockage = models.lieuxdestockage(
-        libelle=lieuxdestockage.libelle,
-        temperature=lieuxdestockage.temperature,
-    )
-    db.add(db_lieuxdestockage)
-    db.commit()
-    return db_lieuxdestockage
+# def get_lieuxdestockage(db: Session, skip: int = 0, limit: int = 100):
+#     return db.query(models.lieuxdestockage).offset(skip).limit(limit).all()
 
 
-# gestion des dates
-def get_usersdates(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.usersdates).offset(skip).limit(limit).all()
+# def create_lieuxdestockage(db: Session, lieuxdestockage: schemas.LieuxDeStockage):
+#     db_lieuxdestockage = models.lieuxdestockage(
+#         libelle=lieuxdestockage.libelle,
+#         temperature=lieuxdestockage.temperature,
+#     )
+#     db.add(db_lieuxdestockage)
+#     db.commit()
+#     return db_lieuxdestockage
 
 
-def create_userdate(db: Session, userdate: schemas.usersdates):
-    db_userdate = models.usersdates(
-        user_id=userdate.user_id,
-        date=userdate.date,
-    )
-    db.add(db_userdate)
-    db.commit()
-    return db_userdate
+# # gestion des dates
+# def get_usersdates(db: Session, skip: int = 0, limit: int = 100):
+#     return db.query(models.usersdates).offset(skip).limit(limit).all()
+
+
+# def create_userdate(db: Session, userdate: schemas.usersdates):
+#     db_userdate = models.usersdates(
+#         user_id=userdate.user_id,
+#         date=userdate.date,
+#     )
+#     db.add(db_userdate)
+#     db.commit()
+#     return db_userdate
+
 
 def get_pieces(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.pieces).offset(skip).limit(limit).all()

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
 import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
+import Edition from "./Edition";
 import { GetPiece } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
@@ -68,7 +69,9 @@ function HomePage({ isAdmin, onLogout }) {
     case "Creation":
       mainContent = <Creation />;
       break;
-
+    case "Edition":
+      mainContent = <Edition />;
+      break;
     case "Admin":
       mainContent = (
         <div>

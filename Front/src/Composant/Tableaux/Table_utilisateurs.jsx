@@ -6,7 +6,13 @@ import { getAuthHeader } from "../API/token";
 import { dataTableStyle } from "./TableStyle";
 
 const IGNORED_FIELDS = ["user_id", "Email", "id"];
-const STATUS_FIELDS = ["Admin", "Demandeur", "Acheteur", "Autorisation"];
+const STATUS_FIELDS = [
+  "Admin",
+  "Demandeur",
+  "Acheteur",
+  "Autorisation",
+  "Editeur",
+];
 
 const TableUtilisateurs = () => {
   const [data, setData] = useState([]);
@@ -15,6 +21,7 @@ const TableUtilisateurs = () => {
     try {
       const response = await axios.get(`${API_URL}/users/`, getAuthHeader());
       const data = response.data;
+      console.log(data);
       const dataWithIds = data.results.map((row, index) => ({
         ...row,
         id: index + 1,
