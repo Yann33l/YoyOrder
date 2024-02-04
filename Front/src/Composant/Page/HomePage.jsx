@@ -9,7 +9,7 @@ import mainSubContentDemande from "./Demande";
 import PropTypes from "prop-types";
 import Creation from "./Creation";
 
-function HomePage({ isAdmin, onLogout }) {
+function HomePage({ onLogout }) {
   const [content, setContent] = useState("default");
   const [pieces, setPieces] = useState([]);
   const [subContent, setSubContent] = useState("default");
@@ -22,6 +22,7 @@ function HomePage({ isAdmin, onLogout }) {
     }
   };
   const isDemandeContent = content === "Demande";
+
   useEffect(() => {
     fetchPieces();
   }, [isDemandeContent]);
@@ -84,7 +85,7 @@ function HomePage({ isAdmin, onLogout }) {
 
   return (
     <div className="page">
-      <Headers {...{ isAdmin, setContent, onLogout }} />
+      <Headers {...{ setContent, onLogout }} />
 
       <main className="ZoneTravail">{mainContent}</main>
 
@@ -98,6 +99,5 @@ function HomePage({ isAdmin, onLogout }) {
 export default HomePage;
 
 HomePage.propTypes = {
-  isAdmin: PropTypes.bool.isRequired,
   onLogout: PropTypes.func.isRequired,
 };

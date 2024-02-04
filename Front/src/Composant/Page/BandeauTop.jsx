@@ -75,7 +75,6 @@ const Headers = ({ setContent, onLogout }) => {
 };
 Headers.propTypes = {
   setContent: PropTypes.func.isRequired,
-  isAdmin: PropTypes.bool.isRequired,
   onLogout: PropTypes.func.isRequired,
 };
 
