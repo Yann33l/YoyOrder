@@ -8,7 +8,7 @@ import { dataTableStyle } from "./TableStyle";
 
 import PropTypes from "prop-types";
 
-const IGNORED_FIELDS = ["id", "commande_id", "article_id", "date Commande"];
+const IGNORED_FIELDS = ["commande_id", "article_id", "date Commande"];
 
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
@@ -36,11 +36,7 @@ const TableArticlesDemande = ({ pieces }) => {
         getAuthHeader()
       );
       const responseData = response.data;
-      const dataWithIds = responseData.results.map((row, index) => ({
-        ...row,
-        id: index + 1,
-      }));
-      setData(dataWithIds);
+      setData(responseData.results);
     } catch (error) {
       console.error(error);
     }
@@ -52,14 +48,15 @@ const TableArticlesDemande = ({ pieces }) => {
 
   // handleCellEditCommit() permet de mettre à jour les données dans la base de données
   const handleCellEditCommit = async (params) => {
-    const { id } = params;
+    const { article_id } = params;
     const updatedData = [...data];
-    const rowIndex = updatedData.findIndex((row) => row.id === id);
+    const rowIndex = updatedData.findIndex(
+      (row) => row.article_id === article_id
+    );
+
     const updatedRow = { ...updatedData[rowIndex] };
     for (const key in params) {
-      if (key !== "id") {
-        updatedRow[key] = params[key];
-      }
+      updatedRow[key] = params[key];
     }
     updatedData[rowIndex] = updatedRow;
     setData(updatedData);
@@ -169,7 +166,7 @@ const TableArticlesDemande = ({ pieces }) => {
       rowHeight={35}
       columns={generateColumns(data)}
       sx={dataTableStyle}
-      getRowId={(row) => row.id}
+      getRowId={(row) => row.article_id}
       slots={{ toolbar: GridToolbar }}
       processRowUpdate={handleCellEditCommit}
     />

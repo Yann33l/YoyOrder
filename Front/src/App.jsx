@@ -5,7 +5,6 @@ import HomePage from "./Composant/Page/HomePage";
 function App() {
   const [userState, setUserState] = useState({
     loggedIn: false,
-    isAdmin: false,
     isAuthorized: false,
   });
 
@@ -22,10 +21,7 @@ function App() {
       const data = await checkCredentials(Email, Password);
       setUserState({
         loggedIn: true,
-        isAdmin: data.Admin,
         isAuthorized: data.Autorisation,
-        isAcheteur: data.Acheteur,
-        isDemandeur: data.Demandeur,
       });
     } catch (error) {
       alert("Utilisateur ou mot de passe incorrect");
@@ -36,10 +32,7 @@ function App() {
   const handleLogout = () => {
     setUserState({
       loggedIn: false,
-      isAdmin: false,
       isAuthorized: false,
-      isAcheteur: false,
-      isDemandeur: false,
     });
   };
 
@@ -179,17 +172,11 @@ function App() {
     );
   }
 
-  if (userState.loggedIn && userState.isAdmin && userState.isAuthorized) {
-    return <HomePage isAdmin={true} onLogout={handleLogout} />;
-  } else if (
-    userState.loggedIn &&
-    !userState.isAdmin &&
-    userState.isAuthorized
-  ) {
-    return <HomePage isAdmin={false} onLogout={handleLogout} />;
+  if (userState.loggedIn && userState.isAuthorized) {
+    return <HomePage onLogout={handleLogout} />;
   } else if (userState.loggedIn && !userState.isAuthorized) {
     alert("Votre compte n'est pas encore activé par un administrateur");
-    setUserState({ loggedIn: false, isAdmin: false, isAuthorized: false });
+    setUserState({ loggedIn: false, isAuthorized: false });
     return handleConnexion();
   } else {
     return handleConnexion();

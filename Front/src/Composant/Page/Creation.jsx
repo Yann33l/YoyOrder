@@ -3,6 +3,7 @@ import {
   createFournisseur,
   GetFournisseurs,
   createPiece,
+  createSecteur,
 } from "../API/api";
 import { GetPiece } from "../API/api";
 import { useState, useEffect } from "react";
@@ -13,6 +14,7 @@ const Creation = () => {
   const [subContent, setSubContent] = useState("default");
   const { register, handleSubmit, reset } = useForm();
   const [fournisseurs, setFournisseurs] = useState([]);
+  const [donneesPrisesEnCompte, setDonneesPrisesEnCompte] = useState(false);
 
   const fetchPieces = async () => {
     try {
@@ -55,22 +57,24 @@ const Creation = () => {
             )
           );
           data.piece_liste = filteredPieceListe;
-          console.log(data);
           createArticle(data);
           break;
         case "Fournisseur":
-          console.log(data);
-
           await createFournisseur(data);
           await fetchFournisseurs();
           break;
         case "Piece":
-          console.log(data);
-
           await createPiece(data);
           await fetchPieces();
           break;
+        case "Secteur":
+          await createSecteur(data);
+          break;
       }
+      setDonneesPrisesEnCompte(true);
+      setTimeout(() => {
+        setDonneesPrisesEnCompte(false);
+      }, 700);
     };
 
     let mainSubContent;
@@ -78,7 +82,11 @@ const Creation = () => {
       case "Article":
       case "default":
         mainSubContent = (
-          <div className="creation">
+          <div
+            className={`creation ${
+              donneesPrisesEnCompte ? "created" : "creation"
+            }`}
+          >
             <p>ici c&#39;est la création {subContent}</p>
             <form onSubmit={handleSubmit(onSubmit)}>
               <input
@@ -137,7 +145,13 @@ const Creation = () => {
               </div>
 
               <br />
-              <input className="submit" type="submit" value="Valider" />
+              <input
+                className={`submit ${
+                  donneesPrisesEnCompte ? "submited" : "submit"
+                }`}
+                type="submit"
+                value={`${donneesPrisesEnCompte ? "Ajouté !" : "Valider"}`}
+              />
             </form>
           </div>
         );
@@ -145,8 +159,11 @@ const Creation = () => {
 
       case "Fournisseur":
         mainSubContent = (
-          <div className="creation">
-            {" "}
+          <div
+            className={`creation ${
+              donneesPrisesEnCompte ? "created" : "creation"
+            }`}
+          >
             <p>ici c&#39;est la création {subContent}</p>
             <form onSubmit={handleSubmit(onSubmit)}>
               <input
@@ -190,28 +207,44 @@ const Creation = () => {
                 })}
               />
               <br /> <br />
-              <input className="submit" type="submit" value="Valider" />
+              <input
+                className={`submit ${
+                  donneesPrisesEnCompte ? "submited" : "submit"
+                }`}
+                type="submit"
+                value={`${donneesPrisesEnCompte ? "Ajouté !" : "Valider"}`}
+              />
             </form>
           </div>
         );
         break;
       case "Piece":
+      case "Secteur":
         mainSubContent = (
-          <div className="creation">
-            {" "}
+          <div
+            className={`creation ${
+              donneesPrisesEnCompte ? "created" : "creation"
+            }`}
+          >
             <p>ici c&#39;est la création {subContent}</p>
             <form onSubmit={handleSubmit(onSubmit)}>
               <input
                 className="custom-input"
                 type="text"
-                placeholder="Piece"
+                placeholder={subContent}
                 {...register("libelle", {
                   required: true,
                   maxLength: 255,
                 })}
               />
               <br /> <br />
-              <input className="submit" type="submit" value="Valider" />
+              <input
+                className={`submit ${
+                  donneesPrisesEnCompte ? "submited" : "submit"
+                }`}
+                type="submit"
+                value={`${donneesPrisesEnCompte ? "Ajouté !" : "Valider"}`}
+              />
             </form>
           </div>
         );
@@ -240,6 +273,9 @@ const Creation = () => {
             </li>
             <li className="bouton" onClick={() => setSubContent("Piece")}>
               Piece
+            </li>{" "}
+            <li className="bouton" onClick={() => setSubContent("Secteur")}>
+              Secteur
             </li>
           </ul>
         </nav>

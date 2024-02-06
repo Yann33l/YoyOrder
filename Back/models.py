@@ -12,6 +12,7 @@ class users(Base):
     Admin = Column(Boolean)
     Acheteur = Column(Boolean)
     Demandeur = Column(Boolean)
+    Editeur = Column(Boolean)
     Password = Column(LargeBinary)
     Autorisation = Column(Boolean)
 
