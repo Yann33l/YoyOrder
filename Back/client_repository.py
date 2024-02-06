@@ -9,6 +9,11 @@ def get_secteur_labels():
             text("SELECT DISTINCT libelle FROM secteurs;"))
         return [row.libelle for row in result.fetchall()]
 
+def get_piece_labels():
+    with engine.connect() as connection:
+        result = connection.execute(
+            text("SELECT DISTINCT libelle FROM piece;"))
+        return [row.libelle for row in result.fetchall()]
 
 def get_users():
 
@@ -165,6 +170,28 @@ def get_articles_to_buy():
               "WHERE (c.dateDemande > c.dateCommande OR c.dateCommande IS NULL) "
               "AND c.dateDemande IS NOT NULL "
               "GROUP BY c.ID,a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateDemande, c.dateCommande "
+              "ORDER BY a.ID DESC ")
+        
+
+        result = connection.execute(query)
+        return result.fetchall()
+
+def get_articles_to_edit():
+    with engine.connect() as connection:
+        piece_labels = connection.execute(
+            text("SELECT DISTINCT libelle FROM piece; ")).fetchall()
+        piece_labels = [libelle[0] for libelle in piece_labels]
+
+        select_part = ", ".join(
+            [f"SUM(DISTINCT CASE WHEN p.libelle = '{libelle}' THEN 1 ELSE 0 END) AS 'piece_{libelle}'" for libelle in piece_labels])
+
+        query = text(f"SELECT DISTINCT a.ID, a.libelle , a.ref, f.libelle, a.conditionnement, a.dateDebutValidite, a.dateFinValidite, "
+              f"{select_part} "
+              "FROM articles a "
+              "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
+              "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
+              "LEFT JOIN piece p ON p.ID = r_ap.piece_id "            
+              "GROUP BY a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, a.dateDebutValidite, a.dateFinValidite "
               "ORDER BY a.ID DESC ")
         
 

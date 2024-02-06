@@ -369,6 +369,33 @@ def uptdate_reception(edit_reception: schemas.edit_demande,  db: Session = Depen
                 return {"results": formatted_results}        
         except Exception as e:
             print(f"error: {e}")
+
+
+def format_Article_For_Edit_results(results):
+    piece_labels = client_repository.get_secteur_labels()
+    formatted_results = []
+    for row in results:
+        formatted_result = {
+            "article_id": row[0],
+            "nom article": row[1],
+            "ref": row[2],
+            "fournisseur": row[3],
+            "conditionnement": row[4],
+            "date debut validite": row[5],
+            "date fin validite": row[6] if row[6] is not None else 0,
+        }
+        formatted_result.update(
+            {f"{piece_labels[i]}": row[i + 7] if row[i + 7] is not None else 0 for i in range(len(piece_labels))})
+        formatted_results.append(formatted_result)
+
+    return formatted_results 
+
+@app.get("/getArticleForEdit/")
+def update_article(db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Editeur is True:
+        results = client_repository.get_articles_to_edit()
+        formatted_results = format_Article_For_Edit_results(results)
+        return {"results": formatted_results}
     
 @app.get("/articles/", response_model=list[schemas.Articles])
 def read_articles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
