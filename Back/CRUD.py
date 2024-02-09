@@ -120,7 +120,7 @@ def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list
 def liaison_article_piece(db: Session, article: schemas.ArticlesCreate):
     article_id = client_repository.get_articleID_by_data(
         article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
-    for piece_id, value in article.piece_liste.items():
+    for piece_id in article.piece_liste.items():
         db_r_article_piece = models.r_articles_pieces(
             article_id=article_id,
             piece_id=piece_id)
@@ -148,6 +148,19 @@ def create_article(db: Session, article: schemas.ArticlesCreate):
 
     return db_article
 
+def edit_article(db: Session, article: schemas.ArticlesCreate):
+    db_article = db.query(models.articles).filter(
+        models.articles.ID == article.articleID).scalar()
+    if db_article:
+        if article.secteurEdited is not None and article.newSecteurValue is not None:
+            liaison_article_to_secteur(db, article.articleID, article.newSecteurValue)
+        else : 
+            for key, value in article.model_dump().items():
+                if value is not None and key != "ID" and key != "secteurEdited" and key != "newSecteurValue":
+                    setattr(db_article, key, value)
+                    db.commit()
+                    db.refresh(db_article)
+    return db_article
 
 # Fournisseurs
 

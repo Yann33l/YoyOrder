@@ -63,6 +63,16 @@ class ArticlesCreate(Articles):
     lieuxDeStockage: Optional[str] = None
     piece_liste: dict[int, bool] = {}
 
+class ArticlesEdit(BaseModel):
+    articleID: int
+    libelle: Optional[str] = None
+    ref: Optional[str] = None
+    fournisseur_id: Optional[int] = None
+    conditionnement: Optional[str] = None
+    dateDebutValidite: Optional[date] = None
+    dateFinValidite: Optional[date] = None
+    secteurEdited: Optional[str]  = None
+    newSecteurValue: Optional[bool]  = None
 
 class CreationFournisseurs(BaseModel):
     libelle: str

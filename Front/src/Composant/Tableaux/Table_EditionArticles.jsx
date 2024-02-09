@@ -1,5 +1,7 @@
 import { dataTableStyle } from "./TableStyle";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { MenuItem, Select } from "@mui/material";
+
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../API/api";
@@ -17,9 +19,49 @@ const TableEditionArticles = () => {
       <input
         type="checkbox"
         checked={params.value || false}
-        onChange={(event) => handleCellEditCommit(event, params)}
+        onChange={() => handleCheckBoxChange(params)}
       />
     );
+  };
+
+  const handleCheckBoxChange = async (params) => {
+    const article_id = params.row.article_id;
+    const updatedData = [...articles];
+    const rowIndex = updatedData.findIndex(
+      (row) => row.article_id === article_id
+    );
+    const newValue = !params.row[params.field];
+    const updatedRow = { ...updatedData[rowIndex], [params.field]: newValue };
+    updatedData[rowIndex] = updatedRow;
+    setArticles(updatedData);
+
+    try {
+      let dataChanged = false;
+      if (articles[rowIndex] ?? undefined) {
+        dataChanged = true;
+      } else if (newValue !== articles[rowIndex][params.field]) {
+        dataChanged = true;
+      }
+      if (dataChanged) {
+        const requestData = {
+          articleID: params.row.article_id,
+          secteurEdited: params.field,
+          newSecteurValue: newValue,
+        };
+        console.log("dataCheckbox", requestData);
+        await axios.put(
+          `${API_URL}/editArticle/`,
+          requestData,
+          getAuthHeader()
+        );
+        await updateData();
+        setGridKey((prev) => prev + 1);
+      } else {
+        console.log("Aucune modification");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour : ", error);
+    }
   };
 
   const updateData = useCallback(async () => {
@@ -39,13 +81,30 @@ const TableEditionArticles = () => {
     updateData();
   }, [updateData]);
 
+  const renderDropdownCell = (params) => (
+    <Select
+      value={params.value}
+      onChange={(event) => {
+        params.api.setEditCellValue({
+          id: params.id,
+          field: params.field,
+          value: event.target.value,
+        });
+      }}
+    >
+      <MenuItem value="option1">Option 1</MenuItem>
+      <MenuItem value="option2">Option 2</MenuItem>
+      <MenuItem value="option3">Option 3</MenuItem>
+    </Select>
+  );
+
   const generateColumns = (data) => {
     const columnsWithoutIgnoredFields =
       data && data.length > 0
         ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
         : [];
     const columns = columnsWithoutIgnoredFields.map((key) => {
-      if (key === "date debut validite" || key === "date fin validite") {
+      if (key === "dateDebutValidite" || key === "dateFinValidite") {
         return {
           field: key,
           headerName: key,
@@ -54,23 +113,27 @@ const TableEditionArticles = () => {
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
         };
-      } else if (key === "nom article") {
+      } else if (key === "libelle") {
         return {
           field: key,
-          headerName: key,
+          headerName: "nom article",
           flex: 1,
           editable: true,
         };
-      } else if (
-        key === "ref" ||
-        key === "fournisseur" ||
-        key === "conditionnement"
-      ) {
+      } else if (key === "ref" || key === "conditionnement") {
         return {
           field: key,
           headerName: key,
           flex: 0.3,
           editable: true,
+        };
+      } else if (key === "fournisseur") {
+        return {
+          field: key,
+          headerName: key,
+          flex: 0.3,
+          editable: true,
+          renderEditCell: renderDropdownCell,
         };
       } else {
         return {
@@ -106,7 +169,7 @@ const TableEditionArticles = () => {
       let dataChanged = false;
 
       for (const key in updatedData[rowIndex]) {
-        if (key === "date debut validite" || key === "date fin validite") {
+        if (key === "dateDebutValidite" || key === "dateFinValidite") {
           const dateObj = new Date(updatedData[rowIndex][key]);
           const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
           if (formattedDate !== articles[rowIndex][key]) {
@@ -125,11 +188,11 @@ const TableEditionArticles = () => {
 
       if (dataChanged) {
         console.log("requestData", requestData);
-        // await axios.put(
-        //   `${API_URL}/editDemande/${changedKey}`,
-        //   requestData,
-        //   getAuthHeader()
-        // );
+        await axios.put(
+          `${API_URL}/editArticle/`,
+          requestData,
+          getAuthHeader()
+        );
         await updateData();
 
         setGridKey((prev) => prev + 1); // Change la clé pour créer une nouvelle instance
