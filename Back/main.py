@@ -372,7 +372,7 @@ def uptdate_reception(edit_reception: schemas.edit_demande,  db: Session = Depen
 
 
 def format_Article_For_Edit_results(results):
-    piece_labels = client_repository.get_secteur_labels()
+    piece_labels = client_repository.get_piece_labels()
     formatted_results = []
     for row in results:
         formatted_result = {
@@ -418,7 +418,11 @@ def create_article(article: schemas.ArticlesCreate, db: Session = Depends(get_db
 @app.put("/editArticle/", response_model=schemas.ArticlesEdit)
 def update_article(article: schemas.ArticlesEdit, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):   
     if current_user.Editeur is True:
-            print (article)
+        if article.pieceEdited is not None and article.newPieceValue is not None:
+            piece_id = CRUD.get_pieceID_by_libelle(piece_libelle=article.pieceEdited, db=db)
+            CRUD.edit_article_piece(db, article_id=article.articleID, piece_id=piece_id)
+            return CRUD.edit_article(db, article)
+        else:
             return CRUD.edit_article(db, article)
 
 # endregion : Visualisation et création d'un article

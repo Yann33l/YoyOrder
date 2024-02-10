@@ -108,7 +108,7 @@ def liaison_article_lieuxdestockage(db: Session, article: schemas.ArticlesCreate
 
 def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list):
     for secteur in secteur_liste:
-        secteur_id = client_repository.get_secteurID_by_libelle(secteur)
+        secteur_id = get_secteurID_by_libelle(secteur)
         db_r_article_secteur = models.r_articles_secteurs(
             article_id=article_id,
             secteur_id=secteur_id)
@@ -120,7 +120,7 @@ def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list
 def liaison_article_piece(db: Session, article: schemas.ArticlesCreate):
     article_id = client_repository.get_articleID_by_data(
         article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
-    for piece_id in article.piece_liste.items():
+    for piece_id in article.piece_liste:
         db_r_article_piece = models.r_articles_pieces(
             article_id=article_id,
             piece_id=piece_id)
@@ -148,22 +148,43 @@ def create_article(db: Session, article: schemas.ArticlesCreate):
 
     return db_article
 
-def edit_article(db: Session, article: schemas.ArticlesCreate):
+def get_pieceID_by_libelle(db: Session, piece_libelle: str):
+    piece = db.query(models.pieces).filter(models.pieces.libelle == piece_libelle).scalar()
+    return piece.ID
+
+
+def edit_article(db: Session, article: schemas.ArticlesEdit):
     db_article = db.query(models.articles).filter(
         models.articles.ID == article.articleID).scalar()
     if db_article:
-        if article.secteurEdited is not None and article.newSecteurValue is not None:
-            liaison_article_to_secteur(db, article.articleID, article.newSecteurValue)
-        else : 
-            for key, value in article.model_dump().items():
-                if value is not None and key != "ID" and key != "secteurEdited" and key != "newSecteurValue":
-                    setattr(db_article, key, value)
-                    db.commit()
-                    db.refresh(db_article)
+        for key, value in article.model_dump().items():
+            if value is not None and key != "ID" and key != "secteurEdited" and key != "newSecteurValue":
+                setattr(db_article, key, value)
+                db.commit()
+                db.refresh(db_article)
     return db_article
 
-# Fournisseurs
-
+def edit_article_piece(db: Session, piece_id: int, article_id: int):
+    db_article = db.query(models.articles).filter(
+        models.articles.ID == article_id).scalar()
+    r_article_piece = db.query(models.r_articles_pieces).filter(
+        models.r_articles_pieces.article_id == article_id,
+        models.r_articles_pieces.piece_id == piece_id).scalar()
+    if db_article and r_article_piece:
+        db.delete(r_article_piece)
+        db.commit()
+        db.refresh(db_article)
+        return db_article
+    else:
+        r_article_piece = models.r_articles_pieces(
+            article_id=article_id,
+            piece_id=piece_id,
+        )
+        db.add(r_article_piece)
+        db.commit()
+        db.refresh(db_article)
+        return db_article
+ 
 
 def get_fournisseurs(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.fournisseurs).offset(skip).limit(limit).all()
@@ -210,61 +231,6 @@ def create_secteur(db: Session, secteur: schemas.Secteurs):
     db.commit()
     return db_secteur
 
-
-# # Stocks
-
-
-# def get_stocks(db: Session, skip: int = 0, limit: int = 100):
-#     return db.query(models.stocks).offset(skip).limit(limit).all()
-
-
-# def create_stock(db: Session, stock: schemas.Stocks):
-#     db_stock = models.stocks(
-#         ID=stock.ID,
-#         article_id=stock.article_id,
-#         quantiteInitiale=stock.quantiteInitiale,
-#         quantiteRestante=stock.quantiteRestante,
-#         lot=stock.lot,
-#         datePeremption=stock.datePeremption,
-#         COA=stock.COA,
-#     )
-#     db.add(db_stock)
-#     db.commit()
-#     return db_stock
-
-
-# def edit_stock(db: Session, stock: schemas.Stocks):
-#     db_stock = db.query(models.stocks).filter(
-#         models.stocks.ID == stock.ID).scalar()
-#     if db_stock:
-#         db_stock.article_id = stock.article_id
-#         db_stock.quantiteInitiale = stock.quantiteInitiale
-#         db_stock.quantiteRestante = stock.quantiteRestante
-#         db_stock.lot = stock.lot
-#         db_stock.datePeremption = stock.datePeremption
-#         db_stock.COA = stock.COA
-#         db.commit()
-#         db.refresh(db_stock)
-#     return db_stock
-
-# # Gestion des couts
-
-
-# def get_gestiondescouts(db: Session, skip: int = 0, limit: int = 100):
-#     return db.query(models.gestiondescouts).offset(skip).limit(limit).all()
-
-
-# def create_gestiondescout(db: Session, gestiondescout: schemas.GestionDesCouts):
-#     db_gestiondescout = models.gestiondescouts(
-#         ID=gestiondescout.ID,
-#         article_id=gestiondescout.article_id,
-#         prixUnitaire=gestiondescout.prixUnitaire,
-#         dateDebutValidite=gestiondescout.dateDebutValidite,
-#         dateFinValidite=gestiondescout.dateFinValidite,
-#     )
-#     db.add(db_gestiondescout)
-#     db.commit()
-#     return db_gestiondescout
 
 
 # Commandes
@@ -379,36 +345,6 @@ def edit_commande_ReceptionEnTotalite(db: Session, commande: schemas.edit_demand
         db.commit()
         db.refresh(db_commande)
     return db_commande
-
-# # Lieux de stockage
-
-# def get_lieuxdestockage(db: Session, skip: int = 0, limit: int = 100):
-#     return db.query(models.lieuxdestockage).offset(skip).limit(limit).all()
-
-
-# def create_lieuxdestockage(db: Session, lieuxdestockage: schemas.LieuxDeStockage):
-#     db_lieuxdestockage = models.lieuxdestockage(
-#         libelle=lieuxdestockage.libelle,
-#         temperature=lieuxdestockage.temperature,
-#     )
-#     db.add(db_lieuxdestockage)
-#     db.commit()
-#     return db_lieuxdestockage
-
-
-# # gestion des dates
-# def get_usersdates(db: Session, skip: int = 0, limit: int = 100):
-#     return db.query(models.usersdates).offset(skip).limit(limit).all()
-
-
-# def create_userdate(db: Session, userdate: schemas.usersdates):
-#     db_userdate = models.usersdates(
-#         user_id=userdate.user_id,
-#         date=userdate.date,
-#     )
-#     db.add(db_userdate)
-#     db.commit()
-#     return db_userdate
 
 
 def get_pieces(db: Session, skip: int = 0, limit: int = 100):

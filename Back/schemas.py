@@ -71,8 +71,8 @@ class ArticlesEdit(BaseModel):
     conditionnement: Optional[str] = None
     dateDebutValidite: Optional[date] = None
     dateFinValidite: Optional[date] = None
-    secteurEdited: Optional[str]  = None
-    newSecteurValue: Optional[bool]  = None
+    pieceEdited: Optional[str]  = None
+    newPieceValue: Optional[int]  = None
 
 class CreationFournisseurs(BaseModel):
     libelle: str

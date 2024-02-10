@@ -4,7 +4,7 @@ import { MenuItem, Select } from "@mui/material";
 
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
-import { API_URL } from "../API/api";
+import { API_URL, GetFournisseurs } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 
@@ -13,6 +13,7 @@ const IGNORED_FIELDS = ["article_id"];
 const TableEditionArticles = () => {
   const [articles, setArticles] = useState([]);
   const [gridKey, setGridKey] = useState(0);
+  const [fournisseurs, setFournisseurs] = useState([]);
 
   const renderCheckCell = (params) => {
     return (
@@ -23,6 +24,19 @@ const TableEditionArticles = () => {
       />
     );
   };
+
+  const fetchFournisseurs = async () => {
+    try {
+      const fournisseursData = await GetFournisseurs();
+      setFournisseurs(fournisseursData);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des fournisseurs :", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFournisseurs();
+  }, []);
 
   const handleCheckBoxChange = async (params) => {
     const article_id = params.row.article_id;
@@ -45,10 +59,9 @@ const TableEditionArticles = () => {
       if (dataChanged) {
         const requestData = {
           articleID: params.row.article_id,
-          secteurEdited: params.field,
-          newSecteurValue: newValue,
+          pieceEdited: params.field,
+          newPieceValue: newValue,
         };
-        console.log("dataCheckbox", requestData);
         await axios.put(
           `${API_URL}/editArticle/`,
           requestData,
@@ -92,9 +105,11 @@ const TableEditionArticles = () => {
         });
       }}
     >
-      <MenuItem value="option1">Option 1</MenuItem>
-      <MenuItem value="option2">Option 2</MenuItem>
-      <MenuItem value="option3">Option 3</MenuItem>
+      {fournisseurs.map((fournisseur) => (
+        <MenuItem key={fournisseur.ID} value={fournisseur.libelle}>
+          {fournisseur.libelle}
+        </MenuItem>
+      ))}
     </Select>
   );
 
@@ -174,6 +189,16 @@ const TableEditionArticles = () => {
           const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
           if (formattedDate !== articles[rowIndex][key]) {
             requestData[key] = formattedDate;
+            dataChanged = true;
+          }
+        } else if (key === "fournisseur") {
+          if (updatedData[rowIndex][key] !== articles[rowIndex][key]) {
+            const fournisseurLabelChanged = updatedData[rowIndex][key];
+            for (const fournisseur of fournisseurs) {
+              if (fournisseur.libelle === fournisseurLabelChanged) {
+                requestData["fournisseur_id"] = fournisseur.ID;
+              }
+            }
             dataChanged = true;
           }
         } else {

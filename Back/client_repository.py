@@ -37,19 +37,6 @@ def get_users():
         return result.fetchall()
 
 
-def get_secteurID_by_libelle(secteur_libelle):
-    with engine.connect() as connection:
-        query = text(
-            "SELECT ID FROM secteurs WHERE libelle = :secteur_libelle")
-        result = connection.execute(
-            query, {"secteur_libelle": secteur_libelle})
-        row = result.fetchone()
-        if row:
-            return row.ID
-        else:
-            return None
-
-
 def get_stockageID_by_emplacement_and_temperature(stockage_libelle, temperature):
     with engine.connect() as connection:
         query = text(
