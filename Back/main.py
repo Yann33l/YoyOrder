@@ -128,16 +128,6 @@ async def read_user_info(current_user: schemas.UserBase = Depends(get_current_us
         Acheteur=current_user.Acheteur,
         Editeur=current_user.Editeur,
     )
-@app.get("/user/info/", response_model=schemas.UserBase)
-async def read_user_info(current_user: schemas.UserBase = Depends(get_current_user)):
-    return schemas.UserBase(
-        Email=current_user.Email,
-        Admin=current_user.Admin,
-        Autorisation=current_user.Autorisation,
-        Demandeur=current_user.Demandeur,
-        Acheteur=current_user.Acheteur,
-        Editeur=current_user.Editeur,
-    )
 # endregion : Connexion par token
 
 # region : visualisation, création et modification d'un utilisateur
@@ -372,17 +362,17 @@ def uptdate_reception(edit_reception: schemas.edit_demande,  db: Session = Depen
 
 
 def format_Article_For_Edit_results(results):
-    piece_labels = client_repository.get_secteur_labels()
+    piece_labels = client_repository.get_piece_labels()
     formatted_results = []
     for row in results:
         formatted_result = {
             "article_id": row[0],
-            "nom article": row[1],
+            "libelle": row[1],
             "ref": row[2],
             "fournisseur": row[3],
             "conditionnement": row[4],
-            "date debut validite": row[5],
-            "date fin validite": row[6] if row[6] is not None else 0,
+            "dateDebutValidite": row[5],
+            "dateFinValidite": row[6] if row[6] is not None else 0,
         }
         formatted_result.update(
             {f"{piece_labels[i]}": row[i + 7] if row[i + 7] is not None else 0 for i in range(len(piece_labels))})
@@ -413,6 +403,17 @@ def create_article(article: schemas.ArticlesCreate, db: Session = Depends(get_db
                 status_code=409, detail="l'article existe deja")
         else:
             return CRUD.create_article(db, article)
+        
+
+@app.put("/editArticle/", response_model=schemas.ArticlesEdit)
+def update_article(article: schemas.ArticlesEdit, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):   
+    if current_user.Editeur is True:
+        if article.pieceEdited is not None and article.newPieceValue is not None:
+            piece_id = CRUD.get_pieceID_by_libelle(piece_libelle=article.pieceEdited, db=db)
+            CRUD.edit_article_piece(db, article_id=article.articleID, piece_id=piece_id)
+            return CRUD.edit_article(db, article)
+        else:
+            return CRUD.edit_article(db, article)
 
 # endregion : Visualisation et création d'un article
 
@@ -486,28 +487,28 @@ def create_secteur(secteur: schemas.Secteurs, db: Session = Depends(get_db), cur
 #         return CRUD.create_gestiondescout(db, gestiondescout)
 
 
-@app.get("/lieuxdestockage/", response_model=list[schemas.LieuxDeStockage])
-def read_lieuxdestockage(skip: int = 0, limit: int = 100,db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
-    if current_user.Autorisation is True:
-        LieuxDeStockage = CRUD.get_lieuxdestockage(db, skip=skip, limit=limit)
-        return LieuxDeStockage
+# @app.get("/lieuxdestockage/", response_model=list[schemas.LieuxDeStockage])
+# def read_lieuxdestockage(skip: int = 0, limit: int = 100,db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+#     if current_user.Autorisation is True:
+#         LieuxDeStockage = CRUD.get_lieuxdestockage(db, skip=skip, limit=limit)
+#         return LieuxDeStockage
 
 
-@app.post("/create_lieuxdestockage/", response_model=schemas.LieuxDeStockage)
-def create_lieuxdestockage(LieuxDeStockage: schemas.LieuxDeStockage, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
-    if current_user.Autorisation is True:
-        return CRUD.create_lieuxdestockage(db, LieuxDeStockage)
+# @app.post("/create_lieuxdestockage/", response_model=schemas.LieuxDeStockage)
+# def create_lieuxdestockage(LieuxDeStockage: schemas.LieuxDeStockage, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+#     if current_user.Autorisation is True:
+#         return CRUD.create_lieuxdestockage(db, LieuxDeStockage)
 
 
-@app.get("/usersdates/", response_model=list[schemas.usersdates])
-def read_usersdates(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    usersdates = CRUD.get_usersdates(db, skip=skip, limit=limit)
-    return usersdates
+# @app.get("/usersdates/", response_model=list[schemas.usersdates])
+# def read_usersdates(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+#     usersdates = CRUD.get_usersdates(db, skip=skip, limit=limit)
+#     return usersdates
 
 
-@app.post("/create_usersdate/", response_model=schemas.usersdates)
-def create_userdate(userdate: schemas.usersdates, db: Session = Depends(get_db)):
-    return CRUD.create_userdate(db, userdate)
+# @app.post("/create_usersdate/", response_model=schemas.usersdates)
+# def create_userdate(userdate: schemas.usersdates, db: Session = Depends(get_db)):
+#     return CRUD.create_userdate(db, userdate)
 
 @app.get("/get_pieces/", response_model=list[schemas.Piece])
 def read_pieces(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

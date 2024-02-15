@@ -18,7 +18,7 @@ const TableArticlesReception = ({ pieces }) => {
     const { id } = params;
     const updatedData = [...data];
     const rowIndex = updatedData.findIndex((row) => row.id === id);
-    const newValue = !params.row["En totalité ?"]; // Invert the value
+    const newValue = !params.row["En totalité ?"];
     const updatedRow = { ...updatedData[rowIndex], "En totalité ?": newValue };
     updatedData[rowIndex] = updatedRow;
     setData(updatedData);
@@ -81,14 +81,11 @@ const TableArticlesReception = ({ pieces }) => {
 
   // handleCellEditCommit() permet de mettre à jour les données dans la base de données
   const handleCellEditCommit = async (params) => {
-    const { id } = params;
     const updatedData = [...data];
-    const rowIndex = updatedData.findIndex((row) => row.id === id);
+    const rowIndex = updatedData.findIndex((row) => row.id === params.id);
     const updatedRow = { ...updatedData[rowIndex] };
     for (const key in params) {
-      if (key !== "id") {
-        updatedRow[key] = params[key];
-      }
+      updatedRow[key] = params[key];
     }
     updatedData[rowIndex] = updatedRow;
     setData(updatedData);

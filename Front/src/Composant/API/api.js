@@ -43,6 +43,21 @@ export const createUser = async (Email, Password) => {
   }
 };
 
+export const getUserInfo = async () => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/user/info/`,
+      null,
+      getAuthHeader()
+    );
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const checkCredentials = async (Email, Password) => {
   try {
     const requestData = {
@@ -61,12 +76,7 @@ export const checkCredentials = async (Email, Password) => {
     };
     setAuthHeader(authHeader);
 
-    const response = await axios.post(
-      `${API_URL}/user/info/`,
-      null,
-      authHeader
-    );
-    const data = response.data;
+    const data = getUserInfo();
     return data;
   } catch (error) {
     console.error(error);
