@@ -265,12 +265,6 @@ const Creation = () => {
             <li className="bouton" onClick={() => setSubContent("Fournisseur")}>
               Fournisseur
             </li>
-            <li
-              className="bouton"
-              onClick={() => setSubContent("Lieu de stockage")}
-            >
-              Lieu de stockage
-            </li>
             <li className="bouton" onClick={() => setSubContent("Piece")}>
               Piece
             </li>{" "}
