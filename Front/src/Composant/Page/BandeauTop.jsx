@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { getAuthHeader } from "../API/token";
-import axios from "axios";
-import { API_URL } from "../API/api";
+import { getUserInfo } from "../API/api";
 
 const Headers = ({ setContent, onLogout }) => {
   const [isEditeur, setIsEditeur] = useState(false);
@@ -12,14 +10,15 @@ const Headers = ({ setContent, onLogout }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const userData = await axios.get(
-        `${API_URL}/user/info/`,
-        getAuthHeader()
-      );
-      setIsAcheteur(userData.data.Acheteur);
-      setIsAdmin(userData.data.Admin);
-      setIsDemandeur(userData.data.Demandeur);
-      setIsEditeur(userData.data.Editeur);
+      try {
+        const userData = await getUserInfo();
+        setIsAcheteur(userData.Acheteur);
+        setIsAdmin(userData.Admin);
+        setIsDemandeur(userData.Demandeur);
+        setIsEditeur(userData.Editeur);
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     fetchData();

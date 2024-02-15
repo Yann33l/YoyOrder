@@ -128,16 +128,6 @@ async def read_user_info(current_user: schemas.UserBase = Depends(get_current_us
         Acheteur=current_user.Acheteur,
         Editeur=current_user.Editeur,
     )
-@app.get("/user/info/", response_model=schemas.UserBase)
-async def read_user_info(current_user: schemas.UserBase = Depends(get_current_user)):
-    return schemas.UserBase(
-        Email=current_user.Email,
-        Admin=current_user.Admin,
-        Autorisation=current_user.Autorisation,
-        Demandeur=current_user.Demandeur,
-        Acheteur=current_user.Acheteur,
-        Editeur=current_user.Editeur,
-    )
 # endregion : Connexion par token
 
 # region : visualisation, création et modification d'un utilisateur
