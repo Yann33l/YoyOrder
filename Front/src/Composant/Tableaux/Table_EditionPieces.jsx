@@ -53,11 +53,9 @@ const TableEditionPieces = () => {
   };
 
   const handleCellEditCommit = async (params) => {
-    const { fournisseur_id } = params;
+    const { ID } = params;
     const updatedData = [...secteurs];
-    const rowIndex = updatedData.findIndex(
-      (row) => row.fournisseur_id === fournisseur_id
-    );
+    const rowIndex = updatedData.findIndex((row) => row.ID === ID);
 
     const updatedRow = { ...updatedData[rowIndex] };
     for (const key in params) {
@@ -95,7 +93,7 @@ const TableEditionPieces = () => {
         await axios.put(`${API_URL}/editPiece/`, requestData, getAuthHeader());
         await fetchPieces();
 
-        setGridKey((prev) => prev + 1); // Change la clé pour créer une nouvelle instance
+        setGridKey((prev) => prev + 1);
       }
     } catch (error) {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
