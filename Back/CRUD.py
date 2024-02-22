@@ -197,27 +197,31 @@ def create_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
         email=fournisseur.email,
         siteWeb=fournisseur.siteWeb,
         getCertificatAnalyse=fournisseur.getCertificatAnalyse,
-    )
+        dateDebutValidite=date.today(),
+        dateFinValidite=datetime(3000, 12, 31),)
+    
     db.add(db_fournisseur)
     db.commit()
     return db_fournisseur
 
 
-def edit_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
+def edit_fournisseur(db: Session, fournisseur: schemas.FournisseursEdit):
     db_fournisseur = db.query(models.fournisseurs).filter(
         models.fournisseurs.ID == fournisseur.ID).scalar()
     if db_fournisseur:
-        db_fournisseur.libelle = fournisseur.libelle
-        db_fournisseur.telephone = fournisseur.telephone
-        db_fournisseur.email = fournisseur.email
-        db_fournisseur.siteWeb = fournisseur.siteWeb
-        db_fournisseur.getCertificatAnalyse = fournisseur.getCertificatAnalyse
-        db.commit()
-        db.refresh(db_fournisseur)
+        for key, value in fournisseur.model_dump().items():
+            if value is not None and key != "ID" :
+                setattr(db_fournisseur, key, value)
+                db.commit()
+                db.refresh(db_fournisseur)
     return db_fournisseur
 
-# Secteurs
+def get_fournisseur_by_libelle(db: Session, libelle: str): 
+    return db.query(models.fournisseurs).filter(models.fournisseurs.libelle == libelle).scalar()
 
+# Secteurs
+def get_pieces(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.pieces).offset(skip).limit(limit).all()
 
 def get_secteurs(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.secteurs).offset(skip).limit(limit).all()
@@ -226,11 +230,14 @@ def get_secteurs(db: Session, skip: int = 0, limit: int = 100):
 def create_secteur(db: Session, secteur: schemas.Secteurs):
     db_secteur = models.secteurs(
         libelle=secteur.libelle,
-    )
+        dateDebutValidite=date.today(),
+        dateFinValidite=datetime(3000, 12, 31),)
     db.add(db_secteur)
     db.commit()
     return db_secteur
 
+def get_secteur_by_libelle(db: Session, libelle: str):
+    return db.query(models.secteurs).filter(models.secteurs.libelle == libelle).scalar()
 
 
 # Commandes
@@ -346,14 +353,36 @@ def edit_commande_ReceptionEnTotalite(db: Session, commande: schemas.edit_demand
         db.refresh(db_commande)
     return db_commande
 
-
-def get_pieces(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.pieces).offset(skip).limit(limit).all()
-
 def create_piece(db: Session, piece: schemas.Piece):
     db_piece = models.pieces(
         libelle=piece.libelle,
-    )
+        dateDebutValidite=date.today(),
+        dateFinValidite=datetime(3000, 12, 31),)
     db.add(db_piece)
     db.commit()
     return db_piece
+
+def get_piece_by_libelle(db: Session, libelle: str):
+    return db.query(models.pieces).filter(models.pieces.libelle == libelle).scalar()
+
+def edit_piece(db: Session, piece: schemas.edit_piece_or_secteur):
+    db_piece = db.query(models.pieces).filter(
+        models.pieces.ID == piece.ID).scalar()
+    if db_piece:
+        for key, value in piece.model_dump().items():
+            if value is not None and key != "ID" :
+                setattr(db_piece, key, value)
+                db.commit()
+                db.refresh(db_piece)
+    return db_piece
+
+def edit_secteur(db: Session, secteur: schemas.edit_piece_or_secteur):
+    db_secteur = db.query(models.secteurs).filter(
+        models.secteurs.ID == secteur.ID).scalar()
+    if db_secteur:
+        for key, value in secteur.model_dump().items():
+            if value is not None and key != "ID" :
+                setattr(db_secteur, key, value)
+                db.commit()
+                db.refresh(db_secteur)
+    return db_secteur

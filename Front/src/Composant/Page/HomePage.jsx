@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
 import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
 import Edition from "./Edition";
-import { GetPiece } from "../API/api";
+import { GetActivesPieces } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
 import mainSubContentDemande from "./Demande";
@@ -15,7 +15,7 @@ function HomePage({ onLogout }) {
   const [subContent, setSubContent] = useState("default");
   const fetchPieces = async () => {
     try {
-      const piecesData = await GetPiece();
+      const piecesData = await GetActivesPieces();
       setPieces(piecesData);
     } catch (error) {
       console.error("Erreur lors de la récupération des pièces :", error);

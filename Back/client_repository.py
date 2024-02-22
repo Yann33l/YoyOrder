@@ -6,13 +6,13 @@ from .database import engine
 def get_secteur_labels():
     with engine.connect() as connection:
         result = connection.execute(
-            text("SELECT DISTINCT libelle FROM secteurs;"))
+            text("SELECT DISTINCT libelle FROM secteurs  WHERE dateFinValidite >= NOW() ;"))
         return [row.libelle for row in result.fetchall()]
 
 def get_piece_labels():
     with engine.connect() as connection:
         result = connection.execute(
-            text("SELECT DISTINCT libelle FROM piece;"))
+            text("SELECT DISTINCT libelle FROM piece WHERE dateFinValidite >= NOW();"))
         return [row.libelle for row in result.fetchall()]
 
 def get_users():
@@ -66,10 +66,10 @@ def get_articleID_by_data(article_libelle, article_ref, article_fournisseur_id):
         else:
             return None
 
-def get_piece():
+def get_pieces():
     with engine.connect() as connection:
         query = text(
-            "SELECT ID, libelle FROM piece")
+            "SELECT ID, libelle FROM piece WHERE dateFinValidite >= NOW()")
         result = connection.execute(query)
         return result.fetchall()
     
@@ -94,7 +94,7 @@ def get_articles_by_secteur(piece_libelle):
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
               "WHERE (p.libelle like :piece_libelle or :piece_libelle='%') "
               "AND (c.dateDemande IS NULL OR (c.dateDemande IS NOT NULL AND c.dateCommande IS NULL) OR (c.dateDemande IS NOT NULL AND c.dateCommande < c.dateDemande)) "
-              "AND a.dateFinValidite > NOW() "
+              "AND a.dateFinValidite >= NOW() "
               "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande "
               "ORDER BY a.ID DESC ")
 
@@ -166,7 +166,7 @@ def get_articles_to_buy():
 def get_articles_to_edit():
     with engine.connect() as connection:
         piece_labels = connection.execute(
-            text("SELECT DISTINCT libelle FROM piece; ")).fetchall()
+            text("SELECT DISTINCT libelle FROM piece WHERE dateFinValidite >= NOW(); ")).fetchall()
         piece_labels = [libelle[0] for libelle in piece_labels]
 
         select_part = ", ".join(

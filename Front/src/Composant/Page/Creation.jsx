@@ -5,7 +5,7 @@ import {
   createPiece,
   createSecteur,
 } from "../API/api";
-import { GetPiece } from "../API/api";
+import { GetActivesPieces } from "../API/api";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
@@ -18,7 +18,7 @@ const Creation = () => {
 
   const fetchPieces = async () => {
     try {
-      const piecesData = await GetPiece();
+      const piecesData = await GetActivesPieces();
       setPieces(piecesData);
     } catch (error) {
       console.error("Erreur lors de la récupération des pièces :", error);

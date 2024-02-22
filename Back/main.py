@@ -215,6 +215,14 @@ def create_r_user_secteur(user_secteur_edited: schemas.r_user_secteur, db: Sessi
 def get_secteur_labels():
     return client_repository.get_secteur_labels()
 
+@app.put("/editSecteur/")
+def update_secteur(edit_secteur: schemas.edit_piece_or_secteur, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Editeur is True:
+        try:
+            CRUD.edit_secteur(db, edit_secteur)
+        except Exception as e:
+            print(f"Authentication error: {e}")
+
 # region : Visualisation création et modification d'une commande
 
     # Formatage des résultats de la requête
@@ -381,7 +389,7 @@ def format_Article_For_Edit_results(results):
     return formatted_results 
 
 @app.get("/getArticleForEdit/")
-def update_article(db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+def update_article(current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Editeur is True:
         results = client_repository.get_articles_to_edit()
         formatted_results = format_Article_For_Edit_results(results)
@@ -427,13 +435,38 @@ def read_fournisseurs(skip: int = 0, limit: int = 100, db: Session = Depends(get
 @app.post("/create_fournisseur/", response_model=schemas.CreationFournisseurs)
 def create_fournisseur(fournisseur: schemas.CreationFournisseurs, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Autorisation is True:
-        return CRUD.create_fournisseur(db, fournisseur)
+        fournisseur_exist = CRUD.get_fournisseur_by_libelle(db,  fournisseur.libelle)
+        if fournisseur_exist is not None:
+            raise HTTPException(
+                status_code=409, detail="le fournisseur existe deja")
+        else:
+            return CRUD.create_fournisseur(db, fournisseur)
+
+@app.put("/editFournisseur/", response_model=schemas.FournisseursEdit)
+def update_article(fournisseur: schemas.FournisseursEdit, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):   
+    if current_user.Editeur is True:
+        return CRUD.edit_fournisseur(db, fournisseur)
+
 
 @app.post("/create_piece/", response_model=schemas.Piece)
 def create_fournisseur(piece: schemas.Piece, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Autorisation is True:
-        return CRUD.create_piece(db, piece)
-    
+        piece_exist = CRUD.get_piece_by_libelle(db,  piece.libelle)
+        if piece_exist is not None:
+            raise HTTPException(
+                status_code=409, detail="la piece existe deja")
+        else:
+            return CRUD.create_piece(db, piece)
+
+
+@app.put("/editPiece/")
+def update_piece(edit_Piece: schemas.edit_piece_or_secteur, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Editeur is True:
+        try:
+            CRUD.edit_piece(db, edit_Piece)
+        except Exception as e:
+            print(f"Authentication error: {e}")
+
 
 @app.get("/commandes/", response_model=list[schemas.Commandes])
 def read_commandes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
@@ -453,12 +486,28 @@ def read_secteurs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     if current_user.Autorisation is True:
         secteurs = CRUD.get_secteurs(db, skip=skip, limit=limit)
         return secteurs
+    
+@app.get("/get_active_pieces/", response_model=list[schemas.Piece])
+def read_pieces(current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Autorisation is True:
+        pieces = client_repository.get_pieces()
+        return pieces
 
+@app.get("/get_pieces/", response_model=list[schemas.Secteurs])
+def read_secteurs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Autorisation is True:
+        secteurs = CRUD.get_pieces(db, skip=skip, limit=limit)
+        return secteurs
 
 @app.post("/create_secteur/", response_model=schemas.Secteurs)
 def create_secteur(secteur: schemas.Secteurs, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Autorisation is True:
-        return CRUD.create_secteur(db, secteur)
+        secteur_exist = CRUD.get_secteur_by_libelle(db,  secteur.libelle)
+        if secteur_exist is not None:
+            raise HTTPException(
+                status_code=409, detail="le secteur existe deja")
+        else:
+            return CRUD.create_secteur(db, secteur)
 
 
 # @app.get("/stocks/", response_model=list[schemas.Stocks])
@@ -510,10 +559,6 @@ def create_secteur(secteur: schemas.Secteurs, db: Session = Depends(get_db), cur
 # def create_userdate(userdate: schemas.usersdates, db: Session = Depends(get_db)):
 #     return CRUD.create_userdate(db, userdate)
 
-@app.get("/get_pieces/", response_model=list[schemas.Piece])
-def read_pieces(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    pieces = CRUD.get_pieces(db, skip=skip, limit=limit)
-    return pieces
 
 
 app.include_router(router)

@@ -52,7 +52,7 @@ class Articles(BaseModel):
     fournisseur_id: int
     conditionnement: Optional[str] = None
     dateDebutValidite: Optional[date] = datetime.now().date()
-    dateFinValidite: Optional[date] = 3000-12-31
+    dateFinValidite: Optional[date] = date(3000,12,31)
 
     class Config:
         orm_mode = True
@@ -80,11 +80,25 @@ class CreationFournisseurs(BaseModel):
     email: Optional[str] = None
     siteWeb: Optional[str] = None
     getCertificatAnalyse: Optional[str] = None
+    dateDebutValidite: Optional[date] = datetime.now().date()
+    dateFinValidite: Optional[date] = date(3000,12,31)
     class Config:
         orm_mode = True
 
 class Fournisseurs(CreationFournisseurs):
     ID: int
+
+
+class FournisseursEdit(BaseModel):
+    ID: int
+    libelle: Optional[str] = None
+    telephone: Optional[str] = None
+    email: Optional[str] = None
+    siteWeb: Optional[str] = None
+    getCertificatAnalyse: Optional[str] = None
+    dateDebutValidite: Optional[date] = None
+    dateFinValidite: Optional[date] = None
+
 
 class Commandes(BaseModel):
     ID: int
@@ -95,6 +109,8 @@ class Commandes(BaseModel):
 class Secteurs(BaseModel):
     ID: Optional[int] = None
     libelle: str
+    dateDebutValidite: Optional[date] = datetime.now().date()
+    dateFinValidite: Optional[date] = date(3000,12,31)
 
 class R_Secteur_Commande(BaseModel):
     ID: int
@@ -111,46 +127,47 @@ class edit_commande(BaseModel):
     commandeID: int
     editedValue: date
 
-class Stocks(BaseModel):
-    ID: int
-    article_id: int
-    quantiteInitiale: Optional[int] = None
-    quantiteRestante: Optional[int] = None
-    lot: Optional[str] = None
-    datePeremption: Optional[date] = None
-    dateReception: Optional[date] = None
-    COA: Optional[bytes] = None
+# class Stocks(BaseModel):
+#     ID: int
+#     article_id: int
+#     quantiteInitiale: Optional[int] = None
+#     quantiteRestante: Optional[int] = None
+#     lot: Optional[str] = None
+#     datePeremption: Optional[date] = None
+#     dateReception: Optional[date] = None
+#     COA: Optional[bytes] = None
 
 
-class GestionDesCouts(BaseModel):
-    ID: int
-    article_id: int
-    prixUnitaire: Optional[float] = None
-    dateDebutValidite: Optional[date] = None
-    dateFinValidite: Optional[date] = 31-12-3000
+# class GestionDesCouts(BaseModel):
+#     ID: int
+#     article_id: int
+#     prixUnitaire: Optional[float] = None
+#     dateDebutValidite: Optional[date] = None
+#     dateFinValidite: Optional[date] = 31-12-3000
 
 
-class LieuxDeStockage(BaseModel):
-    ID: int
-    libelle: str
-    temperature: int
+# class LieuxDeStockage(BaseModel):
+#     ID: int
+#     libelle: str
+#     temperature: int
 
 
 class Piece(BaseModel):
     ID: Optional[int] = None
     libelle: str
+    dateDebutValidite: Optional[date] = datetime.now().date()
+    dateFinValidite: Optional[date] = date(3000,12,31)
 
-
-class r_articles_lieux(BaseModel):
+class edit_piece_or_secteur(BaseModel):
     ID: int
-    article_id: int
-    lieuxDeStockage_id: int
+    libelle: Optional[str]= None
+    dateDebutValidite: Optional[date] = None
+    dateFinValidite: Optional[date] = None
 
-class r_articles_pieces(BaseModel):
-    ID: int
-    article_id: int
-    piece_id: int
-
+# class r_articles_lieux(BaseModel):
+#     ID: int
+#     article_id: int
+#     lieuxDeStockage_id: int
 
 class r_articles_pieces(BaseModel):
     ID: int
@@ -164,19 +181,19 @@ class r_articles_secteurs(BaseModel):
     secteur_id: int
 
 
-class r_user_stock(BaseModel):
-    ID: int
-    user_id: int
-    stock_id: int
-    quantiteUpdate: int
-    dateUpdate: date
+# class r_user_stock(BaseModel):
+#     ID: int
+#     user_id: int
+#     stock_id: int
+#     quantiteUpdate: int
+#     dateUpdate: date
 
 
-class r_user_commande(BaseModel):
-    ID: int
-    user_id: int
-    commande_id: int
-    dateUpdate: date
+# class r_user_commande(BaseModel):
+#     ID: int
+#     user_id: int
+#     commande_id: int
+#     dateUpdate: date
 
 
 class r_user_secteur(BaseModel):
@@ -184,8 +201,8 @@ class r_user_secteur(BaseModel):
     secteur_libelle: str
 
 
-class usersdates(BaseModel):
-    ID: int
-    user_id: int
-    date: date
-    statut: str
+# class usersdates(BaseModel):
+#     ID: int
+#     user_id: int
+#     date: date
+#     statut: str
