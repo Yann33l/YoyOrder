@@ -53,11 +53,9 @@ const TableEditionSecteurs = () => {
   };
 
   const handleCellEditCommit = async (params) => {
-    const { fournisseur_id } = params;
+    const { ID } = params;
     const updatedData = [...secteurs];
-    const rowIndex = updatedData.findIndex(
-      (row) => row.fournisseur_id === fournisseur_id
-    );
+    const rowIndex = updatedData.findIndex((row) => row.ID === ID);
 
     const updatedRow = { ...updatedData[rowIndex] };
     for (const key in params) {

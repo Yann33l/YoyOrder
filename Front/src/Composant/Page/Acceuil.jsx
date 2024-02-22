@@ -96,13 +96,9 @@ let AcceuilContent = (
     <p>Reste à faire V1:</p>
     <ul>
       <li>Implémenter les tests</li>
-      <li>Finir les Editions (Fournisseurs, Pieces et Secteurs)</li>
       <li>
         Ajouter les colonnes de commentaire Demandeur, Acheteur et une pour
         l&#39;IBF
-      </li>
-      <li>
-        Verrou + alerte lors d&#39;ajout d&#39;une ref article déjà existante
       </li>
       <li>
         <a

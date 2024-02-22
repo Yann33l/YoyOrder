@@ -2,7 +2,7 @@ import { dataTableStyle } from "./TableStyle";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { API_URL, GetFournisseurs } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
@@ -13,18 +13,19 @@ const TableEditionFournisseurs = () => {
   const [gridKey, setGridKey] = useState(0);
   const [fournisseurs, setFournisseurs] = useState([]);
 
-  const fetchFournisseurs = useCallback(async () => {
+  const fetchFournisseurs = async () => {
     try {
       const fournisseursData = await GetFournisseurs();
+      console.log("fournisseursData", fournisseursData);
       setFournisseurs(fournisseursData);
     } catch (error) {
       console.error("Erreur lors de la récupération des fournisseurs :", error);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchFournisseurs();
-  }, [fetchFournisseurs]);
+  }, []);
 
   const generateColumns = (data) => {
     const columnsWithoutIgnoredFields =
@@ -72,11 +73,9 @@ const TableEditionFournisseurs = () => {
   };
 
   const handleCellEditCommit = async (params) => {
-    const { fournisseur_id } = params;
+    const { ID } = params;
     const updatedData = [...fournisseurs];
-    const rowIndex = updatedData.findIndex(
-      (row) => row.fournisseur_id === fournisseur_id
-    );
+    const rowIndex = updatedData.findIndex((row) => row.ID === ID);
 
     const updatedRow = { ...updatedData[rowIndex] };
     for (const key in params) {
@@ -86,6 +85,7 @@ const TableEditionFournisseurs = () => {
     setFournisseurs(updatedData);
 
     try {
+      console.log("updatedData", updatedData);
       const requestData = {
         ID: updatedData[rowIndex]["ID"],
       };
@@ -100,6 +100,11 @@ const TableEditionFournisseurs = () => {
             dataChanged = true;
           }
         } else {
+          console.log("updatedData[rowIndex][key]", updatedData[rowIndex][key]);
+          console.log(
+            "fournisseurs[rowIndex][key]",
+            fournisseurs[rowIndex][key]
+          );
           if (updatedData[rowIndex][key] !== fournisseurs[rowIndex][key]) {
             updatedData[rowIndex][key] === ""
               ? (requestData[key] = 0)
@@ -118,7 +123,7 @@ const TableEditionFournisseurs = () => {
         );
         await fetchFournisseurs();
 
-        setGridKey((prev) => prev + 1); // Change la clé pour créer une nouvelle instance
+        setGridKey((prev) => prev + 1);
       }
     } catch (error) {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
