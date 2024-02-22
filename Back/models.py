@@ -38,6 +38,8 @@ class fournisseurs(Base):
     email = Column(String(255))
     siteWeb = Column(String(255))
     getCertificatAnalyse = Column(String(255))
+    dateDebutValidite = Column(DATE)
+    dateFinValidite = Column(DATE)
 
 
 class commandes(Base):
@@ -56,6 +58,8 @@ class secteurs(Base):
 
     ID = Column(Integer, primary_key=True, index=True)
     libelle = Column(String(255))
+    dateDebutValidite = Column(DATE)
+    dateFinValidite = Column(DATE)
 
 
 class stocks(Base):
@@ -158,5 +162,8 @@ class pieces(Base):
 
     ID = Column(Integer, primary_key=True, index=True)
     libelle = Column(String(255))
+    dateDebutValidite = Column(DATE)
+    dateFinValidite = Column(DATE)
+
 
     

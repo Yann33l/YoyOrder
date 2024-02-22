@@ -84,9 +84,12 @@ export const checkCredentials = async (Email, Password) => {
   }
 };
 
-export const GetPiece = async () => {
+export const GetActivesPieces = async () => {
   try {
-    const response = await axios.get(`${API_URL}/get_pieces/`);
+    const response = await axios.get(
+      `${API_URL}/get_active_pieces/`,
+      getAuthHeader()
+    );
     const pieces = response.data;
     return pieces;
   } catch (error) {
@@ -98,6 +101,19 @@ export const GetPiece = async () => {
   }
 };
 
+export const GetPieces = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/get_pieces/`, getAuthHeader());
+    const pieces = response.data;
+    return pieces;
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des pièces depuis l'API :",
+      error
+    );
+    throw error;
+  }
+};
 export const createPiece = async (newPieceData) => {
   try {
     const response = await axios.post(
@@ -108,6 +124,7 @@ export const createPiece = async (newPieceData) => {
     const data = response.data;
     return data;
   } catch (error) {
+    alert("La pièce existe déjà");
     console.error(error);
     throw error;
   }
@@ -127,6 +144,19 @@ export const GetFournisseurs = async () => {
     throw error;
   }
 };
+export const GetSecteurs = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/secteurs/`, getAuthHeader());
+    const Secteurs = response.data;
+    return Secteurs;
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des pièces depuis l'API :",
+      error
+    );
+    throw error;
+  }
+};
 
 export const createFournisseur = async (newFournisseurData) => {
   try {
@@ -138,6 +168,7 @@ export const createFournisseur = async (newFournisseurData) => {
     const data = response.data;
     return data;
   } catch (error) {
+    alert("Le fournisseur existe déjà");
     console.error(error);
     throw error;
   }
@@ -153,6 +184,7 @@ export const createArticle = async (newArticleData) => {
     const data = response.data;
     return data;
   } catch (error) {
+    alert("La ref de l'article existe déjà");
     console.error(error);
     throw error;
   }
@@ -168,6 +200,7 @@ export const createSecteur = async (newSecteurData) => {
     const data = response.data;
     return data;
   } catch (error) {
+    alert("Le secteur existe déjà");
     console.error(error);
     throw error;
   }

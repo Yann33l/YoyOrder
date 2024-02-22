@@ -70,11 +70,12 @@ const TableArticlesReception = ({ pieces }) => {
     return (
       <input
         type="checkbox"
-        checked={params.row["En totalité ?"] || false}
+        checked={params.value || false}
         onChange={() => handleCheckBoxChange(params)}
       />
     );
   };
+
   useEffect(() => {
     updateData();
   }, [pieces, updateData]);

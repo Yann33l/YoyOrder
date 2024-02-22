@@ -1,4 +1,8 @@
 import TableEditionArticles from "../Tableaux/Table_EditionArticles";
+import TableEditionFournisseurs from "../Tableaux/Table_EditionFournisseurs";
+import TableEditionSecteurs from "../Tableaux/Table_EditionSecteurs";
+import TableEditionPieces from "../Tableaux/Table_EditionPieces";
+
 import { useState } from "react";
 
 const Edition = () => {
@@ -21,6 +25,7 @@ const Edition = () => {
         mainSubContent = (
           <div className="creation">
             <p>ici c&rsquo;est l&apos;édition {subContent}</p>
+            <TableEditionFournisseurs />
           </div>
         );
         break;
@@ -29,6 +34,15 @@ const Edition = () => {
         mainSubContent = (
           <div className="creation">
             <p>ici c&#39;est la création {subContent}</p>
+            <TableEditionPieces />
+          </div>
+        );
+        break;
+      case "Secteur":
+        mainSubContent = (
+          <div className="creation">
+            <p>ici c&#39;est la création {subContent}</p>
+            <TableEditionSecteurs />
           </div>
         );
         break;
