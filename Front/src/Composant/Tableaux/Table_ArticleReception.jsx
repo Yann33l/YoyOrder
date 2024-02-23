@@ -1,4 +1,5 @@
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
+import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../API/api";
@@ -201,7 +202,10 @@ const TableArticlesReception = ({ pieces }) => {
       sx={dataTableStyle}
       rowHeight={30}
       getRowId={(row) => row.id}
-      slots={{ toolbar: GridToolbar }}
+      density="compact"
+      slots={{
+        toolbar: CustomToolbar,
+      }}
       processRowUpdate={handleCellEditCommit}
     />
   );

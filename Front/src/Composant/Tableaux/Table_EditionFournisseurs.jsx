@@ -1,6 +1,6 @@
 import { dataTableStyle } from "./TableStyle";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-
+import { DataGrid } from "@mui/x-data-grid";
+import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { API_URL, GetFournisseurs } from "../API/api";
@@ -132,15 +132,16 @@ const TableEditionFournisseurs = () => {
 
   return (
     <DataGrid
-      autoHeight
       key={gridKey}
-      {...fournisseurs}
       rows={fournisseurs}
       rowHeight={35}
       columns={generateColumns(fournisseurs)}
       sx={dataTableStyle}
       getRowId={(row) => row.ID}
-      slots={{ toolbar: GridToolbar }}
+      density="compact"
+      slots={{
+        toolbar: CustomToolbar,
+      }}
       processRowUpdate={handleCellEditCommit}
     />
   );

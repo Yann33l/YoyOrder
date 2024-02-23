@@ -1,12 +1,22 @@
 from sqlalchemy.sql.expression import text
 
 from .database import engine
-
+def get_secteurID_by_libelle(secteur_libelle):
+    with engine.connect() as connection:
+        query = text(
+            "SELECT ID FROM secteurs WHERE libelle = :secteur_libelle")
+        result = connection.execute(
+            query, {"secteur_libelle": secteur_libelle})
+        row = result.fetchone()
+        if row:
+            return row.ID
+        else:
+            return None
 
 def get_secteur_labels():
     with engine.connect() as connection:
         result = connection.execute(
-            text("SELECT DISTINCT libelle FROM secteurs  WHERE dateFinValidite >= NOW() ;"))
+            text("SELECT DISTINCT libelle FROM secteurs   WHERE dateFinValidite >= NOW() order by libelle;"))
         return [row.libelle for row in result.fetchall()]
 
 def get_piece_labels():
@@ -16,17 +26,16 @@ def get_piece_labels():
         return [row.libelle for row in result.fetchall()]
 
 def get_users():
-
     with engine.connect() as connection:
         secteur_labels = connection.execute(
-            text("SELECT DISTINCT libelle FROM secteurs;")).fetchall()
+            text("SELECT DISTINCT ID, libelle FROM secteurs WHERE dateFinValidite >= NOW() ORDER BY libelle;")).fetchall()
 
         select_part = ", ".join(
-            [f"MAX(CASE WHEN s.ID = {s_id} THEN secteur_{s_id}.libelle ELSE NULL END) AS libelle{s_id}" for s_id in range(1, len(secteur_labels) + 1)])
-        join_part = " ".join([f"LEFT JOIN secteurs secteur_{s_id} ON s.ID = secteur_{s_id}.ID" for s_id in range(
-            1, len(secteur_labels) + 1)])
+            [f"MAX(CASE WHEN s.libelle = '{s_label[1]}' THEN secteur_{s_label[0]}.libelle ELSE NULL END) AS libelle{s_label[0]}" for s_label in secteur_labels])
+        
+        join_part = " ".join([f"LEFT JOIN secteurs secteur_{s_label[0]} ON s.ID = {s_label[0]} AND s.dateFinValidite >= NOW() " for s_label in secteur_labels])
 
-        query = text(f"SELECT u.ID, Email, Admin, Autorisation, Demandeur, Acheteur , Editeur, {select_part} "
+        query = text(f"SELECT u.ID, Email, Admin, Autorisation, Demandeur, Acheteur, Editeur, {select_part} "
                      "FROM users u "
                      "LEFT JOIN r_user_secteur r_us ON r_us.user_id = u.ID "
                      "LEFT JOIN secteurs s ON s.ID = r_us.secteur_id "

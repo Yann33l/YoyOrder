@@ -1,11 +1,11 @@
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import { dataTableStyle } from "./TableStyle";
-
+import CustomToolbar from "./CustomToolBar";
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["commande_id", "article_id", "date Commande"];
@@ -159,15 +159,16 @@ const TableArticlesDemande = ({ pieces }) => {
 
   return (
     <DataGrid
-      autoHeight
-      {...data}
       key={gridKey}
       rows={data}
       rowHeight={35}
       columns={generateColumns(data)}
       sx={dataTableStyle}
       getRowId={(row) => row.article_id}
-      slots={{ toolbar: GridToolbar }}
+      density="compact"
+      slots={{
+        toolbar: CustomToolbar,
+      }}
       processRowUpdate={handleCellEditCommit}
     />
   );
