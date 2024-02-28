@@ -27,6 +27,7 @@ class articles(Base):
     conditionnement = Column(String(255))
     dateDebutValidite = Column(DATE)
     dateFinValidite = Column(DATE)
+    commentaire = Column(String(255))
 
 
 class fournisseurs(Base):
@@ -51,6 +52,7 @@ class commandes(Base):
     dateDemande = Column(DATE)
     dateReception = Column(DATE)
     enTotalite = Column(Boolean)
+    commentaire = Column(String(255))
 
 
 class secteurs(Base):
@@ -62,34 +64,34 @@ class secteurs(Base):
     dateFinValidite = Column(DATE)
 
 
-class stocks(Base):
-    __tablename__ = "stocks"
+# class stocks(Base):
+#     __tablename__ = "stocks"
 
-    ID = Column(Integer, primary_key=True, index=True)
-    article_id = Column(Integer)
-    quantiteInitiale = Column(Integer)
-    quantiteRestante = Column(Integer)
-    lot = Column(String(255))
-    datePeremption = Column(DATE)
-    COA = Column(String(255))
-
-
-class gestiondescouts(Base):
-    __tablename__ = "gestiondescouts"
-
-    ID = Column(Integer, primary_key=True, index=True)
-    article_id = Column(Integer)
-    prixUnitaire = Column(Integer)
-    dateDebutValidite = Column(DATE)
-    dateFinValidite = Column(DATE)
+#     ID = Column(Integer, primary_key=True, index=True)
+#     article_id = Column(Integer)
+#     quantiteInitiale = Column(Integer)
+#     quantiteRestante = Column(Integer)
+#     lot = Column(String(255))
+#     datePeremption = Column(DATE)
+#     COA = Column(String(255))
 
 
-class lieuxdestockage(Base):
-    __tablename__ = "lieuxdestockage"
+# class gestiondescouts(Base):
+#     __tablename__ = "gestiondescouts"
 
-    ID = Column(Integer, primary_key=True, index=True)
-    libelle = Column(String(255))
-    temperature = Column(Integer)
+#     ID = Column(Integer, primary_key=True, index=True)
+#     article_id = Column(Integer)
+#     prixUnitaire = Column(Integer)
+#     dateDebutValidite = Column(DATE)
+#     dateFinValidite = Column(DATE)
+
+
+# class lieuxdestockage(Base):
+#     __tablename__ = "lieuxdestockage"
+
+#     ID = Column(Integer, primary_key=True, index=True)
+#     libelle = Column(String(255))
+#     temperature = Column(Integer)
 
 
 class r_articles_lieux(Base):
@@ -114,24 +116,23 @@ class r_articles_pieces(Base):
     article_id = Column(Integer)
     piece_id = Column(Integer)
 
+# class r_user_stock(Base):
+#     __tablename__ = "r_user_stock"
 
-class r_user_stock(Base):
-    __tablename__ = "r_user_stock"
-
-    ID = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer)
-    stock_id = Column(Integer)
-    quantiteUpdate = Column(Integer)
-    dateUpdate = Column(DATE)
+#     ID = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer)
+#     stock_id = Column(Integer)
+#     quantiteUpdate = Column(Integer)
+#     dateUpdate = Column(DATE)
 
 
-class r_user_commande(Base):
-    __tablename__ = "r_user_commande"
+# class r_user_commande(Base):
+#     __tablename__ = "r_user_commande"
 
-    ID = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer)
-    commande_id = Column(Integer)
-    dateUpdate = Column(DATE)
+#     ID = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer)
+#     commande_id = Column(Integer)
+#     dateUpdate = Column(DATE)
 
 class r_secteur_commande(Base):
     __tablename__ = "r_secteur_commande"
@@ -149,13 +150,13 @@ class r_user_secteur(Base):
     secteur_id = Column(Integer)
 
 
-class usersdates(Base):
-    __tablename__ = "usersdates"
+# class usersdates(Base):
+#     __tablename__ = "usersdates"
 
-    ID = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer)
-    date = Column(DATE)
-    statut = Column(String(255))
+#     ID = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer)
+#     date = Column(DATE)
+#     statut = Column(String(255))
 
 class pieces(Base):
     __tablename__ = "piece"

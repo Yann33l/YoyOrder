@@ -1,4 +1,5 @@
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
+import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { API_URL } from "../API/api";
@@ -119,7 +120,10 @@ const TableUtilisateurs = () => {
       loading={!data.length}
       sx={dataTableStyle}
       getRowId={(row) => row.id}
-      slots={{ toolbar: GridToolbar }}
+      density="compact"
+      slots={{
+        toolbar: CustomToolbar,
+      }}
     />
   );
 };

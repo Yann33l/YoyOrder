@@ -100,25 +100,6 @@ let AcceuilContent = (
         Ajouter les colonnes de commentaire Demandeur, Acheteur et une pour
         l&#39;IBF
       </li>
-      <li>
-        <a
-          href="https://codesandbox.io/p/sandbox/datagrid-searchbar-1ugpl?file=%2Fsrc%2FDemo.tsx"
-          target="_blank"
-          rel="bookmark noreferrer"
-        >
-          Ajouter une barre de recherche/filtre d&#39;article pour les demandes
-        </a>
-      </li>
-      <li>
-        <a
-          href="https://codesandbox.io/p/sandbox/datagrid-searchbar-1ugpl?file=%2Fsrc%2FDemo.tsx"
-          target="_blank"
-          rel="bookmark noreferrer"
-        >
-          Ajouter une barre de recherche/filtre de fournisseurs pour les
-          commandes
-        </a>
-      </li>
     </ul>
     <p>Reste à faire V2:</p>
     <ul>

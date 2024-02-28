@@ -1,7 +1,7 @@
 import { dataTableStyle } from "./TableStyle";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
 import { MenuItem, Select } from "@mui/material";
-
+import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { API_URL, GetFournisseurs } from "../API/api";
@@ -229,15 +229,16 @@ const TableEditionArticles = () => {
 
   return (
     <DataGrid
-      autoHeight
       key={gridKey}
-      {...articles}
       rows={articles}
       rowHeight={35}
       columns={generateColumns(articles)}
       sx={dataTableStyle}
       getRowId={(row) => row.article_id}
-      slots={{ toolbar: GridToolbar }}
+      density="compact"
+      slots={{
+        toolbar: CustomToolbar,
+      }}
       processRowUpdate={handleCellEditCommit}
     />
   );

@@ -122,10 +122,12 @@ class edit_demande(BaseModel):
     commandeID: Optional[int] = None
     articleID: Optional[int] = None
     editedValue: Optional[Union[int, date]] = None
+    commentaire: Optional[str] = None
 
 class edit_commande(BaseModel):
     commandeID: int
-    editedValue: date
+    editedValue: Optional[date] = None
+    commentaire: Optional[str] = None
 
 # class Stocks(BaseModel):
 #     ID: int

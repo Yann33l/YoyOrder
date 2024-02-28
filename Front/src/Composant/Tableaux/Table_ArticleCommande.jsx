@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import { dataTableStyle } from "./TableStyle";
+import CustomToolbar from "./CustomToolBar";
 
 const IGNORED_FIELDS = ["commande_id", "article_id"];
-const EDITABLE_COLUMNS = ["date Commande"];
+const EDITABLE_COLUMNS = ["date Commande", "numero IBF"];
 
 const TableArticlesCommande = () => {
   const [data, setData] = useState([]);
@@ -50,6 +51,7 @@ const TableArticlesCommande = () => {
       const requestData = {
         commandeID: updatedData[rowIndex]["commande_id"],
         editedValue: undefined,
+        commentaire: undefined,
       };
       let dataChanged = false; // Variable pour suivre si les données ont changé
 
@@ -59,6 +61,8 @@ const TableArticlesCommande = () => {
             const dateObj = new Date(updatedData[rowIndex][key]);
             const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             requestData.editedValue = formattedDate;
+          } else if (key === "numero IBF") {
+            requestData.commentaire = updatedData[rowIndex][key];
           } else
             updatedData[rowIndex][key] === ""
               ? (requestData.editedValue = 0)
@@ -69,6 +73,7 @@ const TableArticlesCommande = () => {
 
       // Vérifier si les données ont changé avant d'effectuer les appels Axios
       if (dataChanged) {
+        console.log("requestData", requestData);
         await axios.put(
           `${API_URL}/editCommande/`,
           requestData,
@@ -93,7 +98,7 @@ const TableArticlesCommande = () => {
         return {
           field: label,
           headerName: label,
-          flex: 1,
+          flex: 0.3,
           editable: EDITABLE_COLUMNS.includes(label),
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
@@ -102,17 +107,37 @@ const TableArticlesCommande = () => {
         return {
           field: label,
           headerName: label,
-          flex: 1,
+          flex: 0.3,
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           valueFormatter: (params) =>
             params.value ? dayjs(params.value).format("DD/MM/YYYY") : "",
           type: "date",
         };
-      } else {
+      } else if (
+        label === "ref" ||
+        label === "fournisseur" ||
+        label === "quantité" ||
+        label === "conditionnement"
+      ) {
+        return {
+          field: label,
+          headerName: label,
+          flex: 0.3,
+          editable: true,
+        };
+      } else if (label === "nom article") {
         return {
           field: label,
           headerName: label,
           flex: 1,
+          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
+          editable: EDITABLE_COLUMNS.includes(label),
+        };
+      } else {
+        return {
+          field: label,
+          headerName: label,
+          flex: 0.1,
           renderCell: (params) => (params.row[label] ? params.row[label] : ""),
           editable: EDITABLE_COLUMNS.includes(label),
         };
@@ -131,7 +156,10 @@ const TableArticlesCommande = () => {
       columns={generateColumns(data)}
       sx={dataTableStyle}
       getRowId={(row) => row.commande_id}
-      slots={{ toolbar: GridToolbar }}
+      density="compact"
+      slots={{
+        toolbar: CustomToolbar,
+      }}
       processRowUpdate={handleCellEditCommit}
     />
   );

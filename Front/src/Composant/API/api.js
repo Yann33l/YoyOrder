@@ -184,7 +184,7 @@ export const createArticle = async (newArticleData) => {
     const data = response.data;
     return data;
   } catch (error) {
-    alert("La ref de l'article existe déjà");
+    alert("L'article existe déjà");
     console.error(error);
     throw error;
   }
