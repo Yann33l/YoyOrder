@@ -278,6 +278,26 @@ def edit_commande_dateDemande(db: Session, commande: schemas.edit_demande):
 
     return db_commande
 
+def edit_article_commentaire(db: Session, commande: schemas.edit_demande):
+    db_commande = db.query(models.commandes).filter(
+        models.commandes.ID == commande.commandeID).scalar()
+    if db_commande is not None and commande.commentaire is not None:
+        db_article = db.query(models.articles).filter(
+            models.articles.ID == db_commande.article_id).scalar()
+        db_article.commentaire = commande.commentaire
+        db.commit()
+        db.refresh(db_commande)
+    return db_commande
+
+def edit_commande_commentaire(db: Session, commande: schemas.edit_commande):
+    db_commande = db.query(models.commandes).filter(
+        models.commandes.ID == commande.commandeID).scalar()
+    if db_commande:
+        db_commande.commentaire = commande.commentaire
+        db.commit()
+        db.refresh(db_commande)
+    return db_commande
+
 def get_secteurID_by_libelle(db: Session, secteur_libelle: str):
     return db.query(models.secteurs).filter(models.secteurs.libelle == secteur_libelle).scalar().ID
 

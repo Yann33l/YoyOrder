@@ -16,7 +16,7 @@ def get_secteurID_by_libelle(secteur_libelle):
 def get_secteur_labels():
     with engine.connect() as connection:
         result = connection.execute(
-            text("SELECT DISTINCT libelle FROM secteurs   WHERE dateFinValidite >= NOW() order by libelle;"))
+            text("SELECT DISTINCT libelle FROM secteurs  WHERE dateFinValidite >= NOW() order by libelle;"))
         return [row.libelle for row in result.fetchall()]
 
 def get_piece_labels():
@@ -85,7 +85,7 @@ def get_pieces():
 def get_articles_by_secteur(piece_libelle):
     with engine.connect() as connection:
         secteur_labels = connection.execute(
-            text("SELECT DISTINCT libelle FROM secteurs;")).fetchall()
+            text("SELECT DISTINCT libelle FROM secteurs WHERE dateFinValidite >= NOW() order by libelle;")).fetchall()
         secteur_labels = [libelle[0] for libelle in secteur_labels]
 
         select_part = ", ".join(
@@ -93,7 +93,7 @@ def get_articles_by_secteur(piece_libelle):
 
         query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-              f"c.dateDemande, c.dateCommande, {select_part} "
+              f"c.dateDemande, c.dateCommande, {select_part}, a.commentaire, c.commentaire "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
               "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
@@ -115,7 +115,7 @@ def get_articles_by_secteur(piece_libelle):
 def get_articles_to_receve(piece_libelle):
     with engine.connect() as connection:
         secteur_labels = connection.execute(
-            text("SELECT DISTINCT libelle FROM secteurs;")).fetchall()
+            text("SELECT DISTINCT libelle FROM secteurs WHERE dateFinValidite >= NOW() order by libelle;")).fetchall()
         secteur_labels = [libelle[0] for libelle in secteur_labels]
 
         select_part = ", ".join(
@@ -123,7 +123,7 @@ def get_articles_to_receve(piece_libelle):
 
         query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-              f"c.dateDemande, c.dateCommande, c.dateReception, c.enTotalite , {select_part} "
+              f"c.dateDemande, c.dateCommande, c.dateReception, c.enTotalite , {select_part}, a.commentaire, c.commentaire "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
               "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
@@ -146,7 +146,7 @@ def get_articles_to_receve(piece_libelle):
 def get_articles_to_buy():
     with engine.connect() as connection:
         secteur_labels = connection.execute(
-            text("SELECT DISTINCT libelle FROM secteurs;")).fetchall()
+            text("SELECT DISTINCT libelle FROM secteurs WHERE dateFinValidite >= NOW() order by libelle;")).fetchall()
         secteur_labels = [libelle[0] for libelle in secteur_labels]
 
         select_part = ", ".join(
@@ -155,7 +155,7 @@ def get_articles_to_buy():
         query = text(f"SELECT DISTINCT c.ID, a.ID, a.libelle , a.ref, f.libelle, a.conditionnement, "
               f"(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
               "c.dateDemande , c.dateCommande, "    
-              f"{select_part} "
+              f"{select_part}, a.commentaire, c.commentaire "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
               "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "

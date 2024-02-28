@@ -8,7 +8,7 @@ import { dataTableStyle } from "./TableStyle";
 import CustomToolbar from "./CustomToolBar";
 
 const IGNORED_FIELDS = ["commande_id", "article_id"];
-const EDITABLE_COLUMNS = ["date Commande"];
+const EDITABLE_COLUMNS = ["date Commande", "numero IBF"];
 
 const TableArticlesCommande = () => {
   const [data, setData] = useState([]);
@@ -51,6 +51,7 @@ const TableArticlesCommande = () => {
       const requestData = {
         commandeID: updatedData[rowIndex]["commande_id"],
         editedValue: undefined,
+        commentaire: undefined,
       };
       let dataChanged = false; // Variable pour suivre si les données ont changé
 
@@ -60,6 +61,8 @@ const TableArticlesCommande = () => {
             const dateObj = new Date(updatedData[rowIndex][key]);
             const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             requestData.editedValue = formattedDate;
+          } else if (key === "numero IBF") {
+            requestData.commentaire = updatedData[rowIndex][key];
           } else
             updatedData[rowIndex][key] === ""
               ? (requestData.editedValue = 0)
@@ -70,6 +73,7 @@ const TableArticlesCommande = () => {
 
       // Vérifier si les données ont changé avant d'effectuer les appels Axios
       if (dataChanged) {
+        console.log("requestData", requestData);
         await axios.put(
           `${API_URL}/editCommande/`,
           requestData,

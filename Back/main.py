@@ -243,6 +243,8 @@ def format_Commande_results(results):
         }
         formatted_result.update(
             {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else 0 for i in range(len(secteur_labels))})
+        formatted_result.update({f"commentaire": row[9 + len(secteur_labels)]})
+        formatted_result.update({f"numero IBF": row[10 + len(secteur_labels)]})        
         formatted_results.append(formatted_result)
     return formatted_results 
 
@@ -265,7 +267,10 @@ def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_curren
 def update_commande(edit_commande: schemas.edit_commande, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Acheteur is True:
         try:
-            CRUD.edit_commande_dateCommande(db, edit_commande)
+            if isinstance(edit_commande.editedValue, date):
+                CRUD.edit_commande_dateCommande(db, edit_commande)
+            elif edit_commande.commentaire is not None:
+                CRUD.edit_commande_commentaire(db, edit_commande)
             results = client_repository.get_articles_to_buy()
             formatted_results = format_Commande_results(results)
             return {"results": formatted_results}
@@ -314,7 +319,12 @@ def format_Reception_results(results):
         }
         formatted_result.update(
             {f"{secteur_labels[i]}": row[i + 11] if row[i + 11] is not None else 0 for i in range(len(secteur_labels))})
+        formatted_result.update(
+            {"commentaire": row[11 + len(secteur_labels)] if row[11 + len(secteur_labels)] is not None else None}) 
+        formatted_result.update(
+            {"numero IBF": row[12 + len(secteur_labels)] if row[12 + len(secteur_labels)] is not None else None})
         formatted_results.append(formatted_result)
+
 
     return formatted_results 
 
@@ -342,8 +352,10 @@ def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session
     if current_user.Demandeur is True:  
         if isinstance(edit_demande.editedValue, int):
             CRUD.edit_commande_quantite(db, edit_demande, edited_row)
-        else:
+        elif isinstance(edit_demande.editedValue, date):
             CRUD.edit_commande_dateDemande(db, edit_demande)
+        else:
+            CRUD.edit_article_commentaire(db, edit_demande)
         try:
             value= edit_demande
             return {"results": value}

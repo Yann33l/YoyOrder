@@ -8,7 +8,12 @@ import { dataTableStyle } from "./TableStyle";
 import CustomToolbar from "./CustomToolBar";
 import PropTypes from "prop-types";
 
-const IGNORED_FIELDS = ["commande_id", "article_id", "date Commande"];
+const IGNORED_FIELDS = [
+  "commande_id",
+  "article_id",
+  "date Commande",
+  "numero IBF",
+];
 
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
@@ -66,6 +71,7 @@ const TableArticlesDemande = ({ pieces }) => {
         commandeID: updatedData[rowIndex]["commande_id"],
         articleID: updatedData[rowIndex]["article_id"],
         editedValue: undefined,
+        commentaire: undefined,
       };
       let dataChanged = false;
       let changedKey = null;
@@ -76,6 +82,12 @@ const TableArticlesDemande = ({ pieces }) => {
           const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
           if (formattedDate !== data[rowIndex][key]) {
             requestData.editedValue = formattedDate;
+            dataChanged = true;
+            changedKey = key;
+          }
+        } else if (key === "commentaire") {
+          if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+            requestData.commentaire = updatedData[rowIndex][key];
             dataChanged = true;
             changedKey = key;
           }
@@ -96,6 +108,7 @@ const TableArticlesDemande = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
+        console.log(requestData);
         await updateData();
 
         setGridKey((prev) => prev + 1); // Change la clé pour créer une nouvelle instance
@@ -150,7 +163,7 @@ const TableArticlesDemande = ({ pieces }) => {
           headerName: label,
           flex: 0.2,
           renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-          editable: EDITABLE_COLUMNS.includes(label),
+          editable: EDITABLE_COLUMNS.includes(label) || label === "commentaire",
         };
       }
     });
