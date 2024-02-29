@@ -144,6 +144,22 @@ export const GetFournisseurs = async () => {
     throw error;
   }
 };
+
+export const GetActiveFournisseurs = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/fournisseursActifs/`);
+    const Fournisseurs = response.data;
+    console.log(Fournisseurs);
+    return Fournisseurs;
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des pièces depuis l'API :",
+      error
+    );
+    throw error;
+  }
+};
+
 export const GetSecteurs = async () => {
   try {
     const response = await axios.get(`${API_URL}/secteurs/`, getAuthHeader());

@@ -33,7 +33,7 @@ const TableArticlesDemande = ({ pieces }) => {
     fetchEditableColumns();
   }, []);
 
-  const EDITABLE_COLUMNS = ["date Demande", ...editableColumns];
+  const EDITABLE_COLUMNS = ["date Demande", "commentaire", ...editableColumns];
   const updateData = useCallback(async () => {
     try {
       const response = await axios.get(
@@ -130,18 +130,27 @@ const TableArticlesDemande = ({ pieces }) => {
         return {
           field: label,
           headerName: label,
+          headerClassName: EDITABLE_COLUMNS.includes(label)
+            ? "editableHeader"
+            : "",
           flex: 0.3,
           editable: EDITABLE_COLUMNS.includes(label),
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
         };
-      } else if (label === "date Commande") {
+      } else if (
+        label === "commentaire" ||
+        label === "fournisseur" ||
+        label === "quantité" ||
+        label === "conditionnement" ||
+        label === "ref"
+      ) {
         return {
           field: label,
           headerName: label,
           flex: 0.3,
-          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
-          type: "date",
+          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
+          editable: EDITABLE_COLUMNS.includes(label),
         };
       } else if (label === "nom article") {
         return {
@@ -150,20 +159,16 @@ const TableArticlesDemande = ({ pieces }) => {
           flex: 1,
           renderCell: (params) => (params.row[label] ? params.row[label] : ""),
         };
-      } else if (label === "fournisseur") {
-        return {
-          field: label,
-          headerName: label,
-          flex: 0.2,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        };
       } else {
         return {
           field: label,
           headerName: label,
-          flex: 0.2,
+          headerClassName: EDITABLE_COLUMNS.includes(label)
+            ? "editableHeader"
+            : "",
+          flex: 0.1,
           renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-          editable: EDITABLE_COLUMNS.includes(label) || label === "commentaire",
+          editable: EDITABLE_COLUMNS.includes(label),
         };
       }
     });

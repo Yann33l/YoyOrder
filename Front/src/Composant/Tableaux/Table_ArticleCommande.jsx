@@ -99,6 +99,9 @@ const TableArticlesCommande = () => {
           field: label,
           headerName: label,
           flex: 0.3,
+          headerClassName: EDITABLE_COLUMNS.includes(label)
+            ? "editableHeader"
+            : "",
           editable: EDITABLE_COLUMNS.includes(label),
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
@@ -108,6 +111,9 @@ const TableArticlesCommande = () => {
           field: label,
           headerName: label,
           flex: 0.3,
+          headerClassName: EDITABLE_COLUMNS.includes(label)
+            ? "editableHeader"
+            : "",
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           valueFormatter: (params) =>
             params.value ? dayjs(params.value).format("DD/MM/YYYY") : "",
@@ -117,19 +123,27 @@ const TableArticlesCommande = () => {
         label === "ref" ||
         label === "fournisseur" ||
         label === "quantité" ||
-        label === "conditionnement"
+        label === "conditionnement" ||
+        label === "commentaire" ||
+        label === "numero IBF"
       ) {
         return {
           field: label,
           headerName: label,
           flex: 0.3,
-          editable: true,
+          headerClassName: EDITABLE_COLUMNS.includes(label)
+            ? "editableHeader"
+            : "",
+          editable: EDITABLE_COLUMNS.includes(label),
         };
       } else if (label === "nom article") {
         return {
           field: label,
           headerName: label,
           flex: 1,
+          headerClassName: EDITABLE_COLUMNS.includes(label)
+            ? "editableHeader"
+            : "",
           renderCell: (params) => (params.row[label] ? params.row[label] : ""),
           editable: EDITABLE_COLUMNS.includes(label),
         };
@@ -138,6 +152,9 @@ const TableArticlesCommande = () => {
           field: label,
           headerName: label,
           flex: 0.1,
+          headerClassName: EDITABLE_COLUMNS.includes(label)
+            ? "editableHeader"
+            : "",
           renderCell: (params) => (params.row[label] ? params.row[label] : ""),
           editable: EDITABLE_COLUMNS.includes(label),
         };

@@ -50,16 +50,7 @@ let AcceuilContent = (
       <li> Administrateurs </li>
     </ul>
     <br />
-    <p>Les demandeurs peuvent : </p>
-    <ul>
-      <li>Creer des</li>
-      <ul>
-        <li> Pieces </li>
-        <li> Secteurs </li>
-        <li> Fournisseurs </li>
-        <li> Articles </li>
-      </ul>
-    </ul>
+    <h3>Les demandeurs peuvent : </h3>
     <ul>
       <li>Saisir des</li>
       <ul>
@@ -73,7 +64,7 @@ let AcceuilContent = (
         </li>
       </ul>
     </ul>
-    <p> Les acheteurs peuvent : </p>
+    <h3> Les acheteurs peuvent : </h3>
     <ul>
       <li>Saisir la date de commande des articles</li>
       <li>
@@ -81,14 +72,26 @@ let AcceuilContent = (
         fournisseur
       </li>
     </ul>
-    <p>Les Editeurs peuvent : </p>
+    <h3>Les Editeurs peuvent : </h3>
     <ul>
-      <li>Editer les articles</li>
-      <li>Editer les fournisseurs</li>
-      <li>Editer les pieces</li>
-      <li>Editer les secteurs</li>
+      <li>Creer des</li>
+      <ul>
+        <li> Pieces </li>
+        <li> Secteurs </li>
+        <li> Fournisseurs </li>
+        <li> Articles </li>
+      </ul>
     </ul>
-    <p>Les Administrateurs peuvent : </p>
+    <ul>
+      <li>Editer les </li>
+      <ul>
+        <li> Pieces </li>
+        <li> Secteurs </li>
+        <li> Fournisseurs </li>
+        <li> Articles </li>
+      </ul>
+    </ul>
+    <h3>Les Administrateurs peuvent : </h3>
     <ul>
       <li>Acceder au panneau d&#39;administration</li>
     </ul>
@@ -96,10 +99,6 @@ let AcceuilContent = (
     <p>Reste à faire V1:</p>
     <ul>
       <li>Implémenter les tests</li>
-      <li>
-        Ajouter les colonnes de commentaire Demandeur, Acheteur et une pour
-        l&#39;IBF
-      </li>
     </ul>
     <p>Reste à faire V2:</p>
     <ul>

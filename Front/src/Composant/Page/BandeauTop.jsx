@@ -49,7 +49,7 @@ const Headers = ({ setContent, onLogout }) => {
               Demande
             </li>
           )}
-          {(isDemandeur || isAcheteur) && (
+          {isEditeur && (
             <li className="bouton" onClick={() => setContent("Creation")}>
               Creation
             </li>

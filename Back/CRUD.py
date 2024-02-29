@@ -92,18 +92,18 @@ def get_articles_by_libelle(db: Session, libelle: str):
     return db.query(models.articles).filter(models.articles.libelle == libelle).first()
 
 
-def liaison_article_lieuxdestockage(db: Session, article: schemas.ArticlesCreate):
-    article_id = client_repository.get_articleID_by_data(
-        article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
-    lieuxdestockage_id = client_repository.get_stockageID_by_emplacement_and_temperature(
-        article.lieuxDeStockage, article.temperature)
-    db_r_article_lieuxdestockage = models.r_articles_lieux(
-        article_id=article_id,
-        lieuDeStockage_id=lieuxdestockage_id)
-    db.add(db_r_article_lieuxdestockage)
-    db.commit()
-    db.refresh(db_r_article_lieuxdestockage)
-    return db_r_article_lieuxdestockage
+#def liaison_article_lieuxdestockage(db: Session, article: schemas.ArticlesCreate):
+#    article_id = client_repository.get_articleID_by_data(
+#        article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
+#    lieuxdestockage_id = client_repository.get_stockageID_by_emplacement_and_temperature(
+#        article.lieuxDeStockage, article.temperature)
+#    db_r_article_lieuxdestockage = models.r_articles_lieux(
+#        article_id=article_id,
+#        lieuDeStockage_id=lieuxdestockage_id)
+#    db.add(db_r_article_lieuxdestockage)
+#    db.commit()
+#    db.refresh(db_r_article_lieuxdestockage)
+#    return db_r_article_lieuxdestockage
 
 
 def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list):
@@ -118,16 +118,21 @@ def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list
     return db_r_article_secteur
 
 def liaison_article_piece(db: Session, article: schemas.ArticlesCreate):
-    article_id = client_repository.get_articleID_by_data(
-        article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
-    for piece_id in article.piece_liste:
-        db_r_article_piece = models.r_articles_pieces(
-            article_id=article_id,
-            piece_id=piece_id)
-        db.add(db_r_article_piece)
-        db.commit()
-        db.refresh(db_r_article_piece)
-    return db_r_article_piece
+    try :
+        article_id = client_repository.get_articleID_by_data(
+            article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
+        for piece_id in article.piece_liste:
+            db_r_article_piece = models.r_articles_pieces(
+                article_id=article_id,
+                piece_id=piece_id)
+            db.add(db_r_article_piece)
+            db.commit()
+            db.refresh(db_r_article_piece)
+        return db_r_article_piece
+    except:
+        raise HTTPException(status_code=404, detail="Piece non selectionnée")
+    
+    
 
 
 
@@ -143,8 +148,9 @@ def create_article(db: Session, article: schemas.ArticlesCreate):
     db.add(db_article)
     db.commit()
     db.refresh(db_article)
-    liaison_article_lieuxdestockage(db, article)
-    liaison_article_piece(db, article)
+#    liaison_article_lieuxdestockage(db, article)
+    try :liaison_article_piece(db, article)
+    except: pass
 
     return db_article
 
@@ -186,9 +192,11 @@ def edit_article_piece(db: Session, piece_id: int, article_id: int):
         return db_article
  
 
-def get_fournisseurs(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.fournisseurs).offset(skip).limit(limit).all()
+def get_fournisseurs(db: Session):
+    return db.query(models.fournisseurs).all()
 
+def get_fournisseurs_actifs(db: Session):
+    return db.query(models.fournisseurs).where(models.fournisseurs.dateFinValidite >= date.today()).all()
 
 def create_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
     db_fournisseur = models.fournisseurs(

@@ -146,6 +146,7 @@ const TableArticlesReception = ({ pieces }) => {
           headerName: label,
           flex: 0.3,
           editable: true,
+          headerClassName: "editableHeader",
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
         };
@@ -162,6 +163,7 @@ const TableArticlesReception = ({ pieces }) => {
           field: label,
           headerName: label,
           flex: 0.2,
+          headerClassName: "editableHeader",
           renderCell: renderCheckCell,
           editable: true,
         };
