@@ -211,3 +211,10 @@ footer {
   background-color: var(--validated);
   color: var(--text);
 }
+
+.editableHeader {
+  background-color: var(--backgroundLight);
+  color: var(--text);
+  border: 1px solid var(--thirdary);
+  border-radius: 7px;
+}

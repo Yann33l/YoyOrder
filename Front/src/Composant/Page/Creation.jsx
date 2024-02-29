@@ -1,7 +1,7 @@
 import {
   createArticle,
   createFournisseur,
-  GetFournisseurs,
+  GetActiveFournisseurs,
   createPiece,
   createSecteur,
 } from "../API/api";
@@ -26,7 +26,7 @@ const Creation = () => {
   };
   const fetchFournisseurs = async () => {
     try {
-      const fournisseursData = await GetFournisseurs();
+      const fournisseursData = await GetActiveFournisseurs();
       setFournisseurs(fournisseursData);
     } catch (error) {
       console.error("Erreur lors de la récupération des fournisseurs :", error);

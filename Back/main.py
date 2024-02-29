@@ -438,11 +438,15 @@ def update_article(article: schemas.ArticlesEdit, db: Session = Depends(get_db),
 # endregion : Visualisation et création d'un article
 
 
-@app.get("/fournisseurs/", response_model=list[schemas.Fournisseurs])
-def read_fournisseurs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-        fournisseurs = CRUD.get_fournisseurs(db, skip=skip, limit=limit)
+@app.get("/fournisseursActifs/", response_model=list[schemas.Fournisseurs])
+def read_fournisseurs( db: Session = Depends(get_db)):
+        fournisseurs = CRUD.get_fournisseurs_actifs(db)
         return fournisseurs
 
+@app.get("/fournisseurs/", response_model=list[schemas.Fournisseurs])
+def read_fournisseurs( db: Session = Depends(get_db)):
+        fournisseurs = CRUD.get_fournisseurs(db)
+        return fournisseurs
 
 @app.post("/create_fournisseur/", response_model=schemas.CreationFournisseurs)
 def create_fournisseur(fournisseur: schemas.CreationFournisseurs, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
