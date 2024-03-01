@@ -17,7 +17,6 @@ const IGNORED_FIELDS = [
 
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
-  const [gridKey, setGridKey] = useState(0);
   const [editableColumns, setEditableColumns] = useState([]);
 
   useEffect(() => {
@@ -108,10 +107,8 @@ const TableArticlesDemande = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        console.log(requestData);
         await updateData();
-
-        setGridKey((prev) => prev + 1); // Change la clé pour créer une nouvelle instance
+        return updatedRow;
       }
     } catch (error) {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
@@ -148,6 +145,9 @@ const TableArticlesDemande = ({ pieces }) => {
         return {
           field: label,
           headerName: label,
+          headerClassName: EDITABLE_COLUMNS.includes(label)
+            ? "editableHeader"
+            : "",
           flex: 0.3,
           renderCell: (params) => (params.row[label] ? params.row[label] : ""),
           editable: EDITABLE_COLUMNS.includes(label),
@@ -177,7 +177,6 @@ const TableArticlesDemande = ({ pieces }) => {
 
   return (
     <DataGrid
-      key={gridKey}
       rows={data}
       rowHeight={35}
       columns={generateColumns(data)}

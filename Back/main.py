@@ -242,7 +242,7 @@ def format_Commande_results(results):
             "date Commande": row[8] if row[8] is not None else None,
         }
         formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else 0 for i in range(len(secteur_labels))})
+            {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else None for i in range(len(secteur_labels))})
         formatted_result.update({f"commentaire": row[9 + len(secteur_labels)]})
         formatted_result.update({f"numero IBF": row[10 + len(secteur_labels)]})        
         formatted_results.append(formatted_result)
@@ -417,7 +417,7 @@ def read_articles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 @app.post("/create_article/", response_model=schemas.ArticlesCreate)
 def create_article(article: schemas.ArticlesCreate, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Autorisation is True:
-        article_exist = CRUD.get_articles_by_libelle(db,  article.libelle)
+        article_exist = CRUD.get_articles_by_ref(db,  article.ref)
         if article_exist is not None:
             raise HTTPException(
                 status_code=409, detail="l'article existe deja")

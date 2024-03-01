@@ -13,8 +13,6 @@ const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
 
 const TableArticlesReception = ({ pieces }) => {
   const [data, setData] = useState([]);
-  const [gridKey, setGridKey] = useState(0);
-
   const handleCheckBoxChange = async (params) => {
     const { id } = params;
     const updatedData = [...data];
@@ -43,7 +41,6 @@ const TableArticlesReception = ({ pieces }) => {
           getAuthHeader()
         );
         await updateData();
-        setGridKey((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour : ", error);
@@ -124,8 +121,7 @@ const TableArticlesReception = ({ pieces }) => {
           getAuthHeader()
         );
         await updateData();
-
-        setGridKey((prev) => prev + 1); // Change la clé pour créer une nouvelle instance
+        return updatedRow;
       }
     } catch (error) {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
@@ -196,9 +192,6 @@ const TableArticlesReception = ({ pieces }) => {
 
   return (
     <DataGrid
-      autoHeight
-      {...data}
-      key={gridKey}
       rows={data}
       columns={generateColumns(data)}
       sx={dataTableStyle}
