@@ -6,14 +6,11 @@ import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import { dataTableStyle } from "./TableStyle";
 import CustomToolbar from "./CustomToolBar";
-
 const IGNORED_FIELDS = ["commande_id", "article_id"];
 const EDITABLE_COLUMNS = ["date Commande", "numero IBF"];
 
 const TableArticlesCommande = () => {
   const [data, setData] = useState([]);
-  const [gridKey, setGridKey] = useState(0);
-
   const updateData = async () => {
     try {
       const response = await axios.get(
@@ -73,14 +70,13 @@ const TableArticlesCommande = () => {
 
       // Vérifier si les données ont changé avant d'effectuer les appels Axios
       if (dataChanged) {
-        console.log("requestData", requestData);
         await axios.put(
           `${API_URL}/editCommande/`,
           requestData,
           getAuthHeader()
         );
         await updateData();
-        setGridKey((prevKey) => prevKey + 1);
+        return updatedRow;
       }
     } catch (error) {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
@@ -165,9 +161,6 @@ const TableArticlesCommande = () => {
 
   return (
     <DataGrid
-      autoHeight
-      {...data}
-      key={gridKey}
       rows={data}
       rowHeight={35}
       columns={generateColumns(data)}

@@ -89,7 +89,7 @@ def get_articles_by_secteur(piece_libelle):
         secteur_labels = [libelle[0] for libelle in secteur_labels]
 
         select_part = ", ".join(
-            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
+            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE null END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
 
         query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "

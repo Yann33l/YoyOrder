@@ -91,6 +91,8 @@ def get_articles(db: Session, skip: int = 0, limit: int = 100):
 def get_articles_by_libelle(db: Session, libelle: str):
     return db.query(models.articles).filter(models.articles.libelle == libelle).first()
 
+def get_articles_by_ref(db: Session, ref: str):
+    return db.query(models.articles).filter(models.articles.ref == ref).first()
 
 #def liaison_article_lieuxdestockage(db: Session, article: schemas.ArticlesCreate):
 #    article_id = client_repository.get_articleID_by_data(

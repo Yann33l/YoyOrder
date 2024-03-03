@@ -4,7 +4,7 @@ import { MenuItem, Select } from "@mui/material";
 import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
-import { API_URL, GetFournisseurs } from "../API/api";
+import { API_URL, GetActiveFournisseurs } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 
@@ -27,7 +27,7 @@ const TableEditionArticles = () => {
 
   const fetchFournisseurs = async () => {
     try {
-      const fournisseursData = await GetFournisseurs();
+      const fournisseursData = await GetActiveFournisseurs();
       setFournisseurs(fournisseursData);
     } catch (error) {
       console.error("Erreur lors de la récupération des fournisseurs :", error);
