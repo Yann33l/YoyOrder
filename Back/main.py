@@ -344,7 +344,21 @@ def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depend
             return {"error": str(e)}
     else:
         raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
-    
+
+@app.get("/historiqueReception/")
+def read_historique_commandes(current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Demandeur is True or current_user.Acheteur is True:
+        try:
+            print("current_user.Demandeur", current_user.Demandeur)
+            results = client_repository.get_historique_commandes()
+            print("results", results)
+            formatted_results = format_Reception_results(results)
+            print("formatted_results", formatted_results)
+            return {"results": formatted_results}
+        except Exception as e:
+            return {"error": str(e)}
+    else:
+        raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
 
     # Edition d'une demande 
 @router.put("/editDemande/{edited_row}")

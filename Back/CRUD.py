@@ -368,10 +368,36 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_commande):
 def edit_commande_dateReception(db: Session, commande: schemas.edit_demande):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
-    if db_commande:
+    if db_commande.dateReception is None or db_commande.dateCommande > db_commande.dateReception:
         db_commande.dateReception = commande.editedValue
         db.commit()
         db.refresh(db_commande)
+    elif db_commande.dateReception > commande.editedValue:
+        db_commande.dateReception = commande.editedValue
+        db.commit()
+        db.refresh(db_commande)
+    else:
+        db_commande.enTotalite=False
+        db.commit()
+        reception_en_plusieurs_temps_db_commande = models.commandes(
+            article_id=db_commande.article_id,
+            dateCommande=db_commande.dateCommande,
+            dateReception=commande.editedValue,
+            dateDemande=db_commande.dateDemande,
+            enTotalite=False,
+            commentaire=db_commande.commentaire,
+            )
+        db.add(reception_en_plusieurs_temps_db_commande)
+        db.commit()
+        quantite_commandee = db.query(models.r_secteur_commande).filter(
+            models.r_secteur_commande.commande_id == commande.commandeID).all()
+        for secteur in quantite_commandee:
+            db_r_secteur_commande = models.r_secteur_commande(
+                commande_id=reception_en_plusieurs_temps_db_commande.ID,
+                secteur_id=secteur.secteur_id,
+                quantite=secteur.quantite)
+            db.add(db_r_secteur_commande)
+        db.commit()
     return db_commande
 
 def edit_commande_ReceptionEnTotalite(db: Session, commande: schemas.edit_demande):
