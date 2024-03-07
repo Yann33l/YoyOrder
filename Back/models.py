@@ -51,7 +51,6 @@ class commandes(Base):
     article_id = Column(Integer, ForeignKey("articles.ID"))
     dateCommande = Column(Date)
     dateDemande = Column(Date)
-    dateReception = Column(Date)
     enTotalite = Column(Boolean)
     commentaire = Column(String(255))
     secteurs = relationship("secteurs", secondary="r_secteur_commande")
@@ -101,7 +100,18 @@ class pieces(Base):
     dateDebutValidite = Column(Date)
     dateFinValidite = Column(Date)
 
-# class r_articles_lieux(Base):
+
+class receptions(Base):
+    __tablename__ = "receptions"
+
+    ID = Column(Integer, primary_key=True, index=True)
+    commande_id = Column(Integer, ForeignKey("commandes.ID"))
+    quantite = Column(Integer)
+    dateReception = Column(Date)
+    commentaire = Column(String(255))
+                         
+
+# class r_articles_lieux_stockage(Base):
 #     __tablename__ = "r_articles_lieux"
 
 #     ID = Column(Integer, primary_key=True, index=True)
@@ -112,7 +122,7 @@ class pieces(Base):
 #     __tablename__ = "stocks"
 
 #     ID = Column(Integer, primary_key=True, index=True)
-#     article_id = Column(Integer)
+#     commande_id = Column(Integer)
 #     quantiteInitiale = Column(Integer)
 #     quantiteRestante = Column(Integer)
 #     lot = Column(String(255))
@@ -130,7 +140,7 @@ class pieces(Base):
 #     dateFinValidite = Column(DATE)
 
 
-# class lieuxdestockage(Base):
+# class lieux_de_stockage(Base):
 #     __tablename__ = "lieuxdestockage"
 
 #     ID = Column(Integer, primary_key=True, index=True)
