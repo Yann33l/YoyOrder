@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
 import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
 import Edition from "./Edition";
+import mainSubContentReception from "./Reception";
 import { GetActivesPieces } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
 import mainSubContentDemande from "./Demande";
 import PropTypes from "prop-types";
 import Creation from "./Creation";
+import Historique from "./Historique";
 
 function HomePage({ onLogout }) {
   const [content, setContent] = useState("default");
@@ -69,6 +71,34 @@ function HomePage({ onLogout }) {
       break;
     case "Creation":
       mainContent = <Creation />;
+      break;
+    case "Reception":
+      mainContent = (
+        <div>
+          <div>
+            <nav className="sous_menu-nav">
+              <ul>
+                <li className="bouton" onClick={() => setSubContent("Tous")}>
+                  Tous
+                </li>
+                {pieces.map((piece) => (
+                  <li
+                    key={piece.ID}
+                    className="bouton"
+                    onClick={() => setSubContent(piece.libelle)}
+                  >
+                    {piece.libelle}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+          <div>{mainSubContentReception(subContent, pieces)}</div>
+        </div>
+      );
+      break;
+    case "Historique":
+      mainContent = <Historique />;
       break;
     case "Edition":
       mainContent = <Edition />;

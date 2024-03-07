@@ -39,24 +39,34 @@ const Headers = ({ setContent, onLogout }) => {
           <li className="bouton" onClick={() => setContent("acceuil")}>
             Acceuil
           </li>
+          {isDemandeur && (
+            <li className="bouton" onClick={() => setContent("Demande")}>
+              Demandes
+            </li>
+          )}
           {isAcheteur && (
             <li className="bouton" onClick={() => setContent("Commande")}>
-              Commande
+              Commandes
             </li>
           )}
           {isDemandeur && (
-            <li className="bouton" onClick={() => setContent("Demande")}>
-              Demande
+            <li className="bouton" onClick={() => setContent("Reception")}>
+              Réceptions
+            </li>
+          )}
+          {isDemandeur && (
+            <li className="bouton" onClick={() => setContent("Historique")}>
+              Historique
             </li>
           )}
           {isEditeur && (
             <li className="bouton" onClick={() => setContent("Creation")}>
-              Creation
+              Creations
             </li>
           )}
           {isEditeur && (
             <li className="bouton" onClick={() => setContent("Edition")}>
-              Edition
+              Editions
             </li>
           )}
           {isAdmin && (

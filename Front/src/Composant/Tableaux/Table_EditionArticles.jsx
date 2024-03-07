@@ -12,7 +12,6 @@ const IGNORED_FIELDS = ["article_id"];
 
 const TableEditionArticles = () => {
   const [articles, setArticles] = useState([]);
-  const [gridKey, setGridKey] = useState(0);
   const [fournisseurs, setFournisseurs] = useState([]);
 
   const renderCheckCell = (params) => {
@@ -68,7 +67,6 @@ const TableEditionArticles = () => {
           getAuthHeader()
         );
         await updateData();
-        setGridKey((prev) => prev + 1);
       } else {
         console.log("Aucune modification");
       }
@@ -218,9 +216,7 @@ const TableEditionArticles = () => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
-
-        setGridKey((prev) => prev + 1); // Change la clé pour créer une nouvelle instance
+        return updatedRow;
       }
     } catch (error) {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
@@ -229,7 +225,6 @@ const TableEditionArticles = () => {
 
   return (
     <DataGrid
-      key={gridKey}
       rows={articles}
       rowHeight={35}
       columns={generateColumns(articles)}

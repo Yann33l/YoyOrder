@@ -1,5 +1,4 @@
 import TableArticlesDemande from "../Tableaux/Table_ArticleDemande";
-import TableArticlesReception from "../Tableaux/Table_ArticleReception";
 
 const mainSubContentDemande = (subContent, pieces) => {
   const selectedPiece = pieces.find((piece) => piece.libelle === subContent);
@@ -10,8 +9,6 @@ const mainSubContentDemande = (subContent, pieces) => {
         <h2>{selectedPiece.libelle}</h2>
         <p>Articles à commander</p>
         <TableArticlesDemande pieces={selectedPiece.libelle} />
-        <p>Articles à réceptionner </p>
-        <TableArticlesReception pieces={selectedPiece.libelle} />
       </div>
     );
   } else {
@@ -20,9 +17,6 @@ const mainSubContentDemande = (subContent, pieces) => {
         <h2>Tous</h2>
         <p>Articles à commander</p>
         <TableArticlesDemande pieces={"Tous"} />
-        <br />
-        <p>Articles à réceptionner </p>
-        <TableArticlesReception pieces={"Tous"} />
       </div>
     );
   }

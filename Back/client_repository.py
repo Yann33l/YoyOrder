@@ -111,7 +111,6 @@ def get_articles_by_secteur(piece_libelle):
             query, {"piece_libelle": piece_libelle})
 
         return result.fetchall()
-
 def get_articles_to_receve(piece_libelle):
     with engine.connect() as connection:
         secteur_labels = connection.execute(
@@ -123,18 +122,19 @@ def get_articles_to_receve(piece_libelle):
 
         query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-              f"c.dateDemande, c.dateCommande, c.dateReception, c.enTotalite , {select_part}, a.commentaire, c.commentaire "
+              f"c.dateDemande, c.dateCommande, max(r.dateReception), c.enTotalite , {select_part}, a.commentaire, c.commentaire "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
               "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
               "LEFT JOIN piece p ON p.ID = r_ap.piece_id "
               "LEFT JOIN commandes c ON c.article_id = a.ID "
+              "LEFT JOIN receptions r ON r.commande_id = c.ID "
               "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
               "WHERE (p.libelle like :piece_libelle or :piece_libelle='%') "
               "AND ((c.dateDemande and c.dateCommande) IS NOT NULL) "
-              "AND (((c.enTotalite IS NULL or c.enTotalite = 0) or ((c.dateReception and c.enTotalite) IS NULL)) or (c.dateReception < c.dateCommande)) "
-              "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande, c.dateReception, c.enTotalite  "
+              "AND (((c.enTotalite IS NULL or c.enTotalite = 0) or ((r.dateReception and c.enTotalite) IS NULL)) or (r.dateReception < c.dateCommande)) "
+              "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande, c.enTotalite  "
               "ORDER BY a.ID DESC ")
 
         result = connection.execute(
@@ -142,6 +142,35 @@ def get_articles_to_receve(piece_libelle):
         
         return result.fetchall()
 
+    
+def get_historique_commandes():
+    with engine.connect() as connection:
+        secteur_labels = connection.execute(
+            text("SELECT DISTINCT libelle FROM secteurs WHERE dateFinValidite >= NOW() order by libelle;")).fetchall()
+        secteur_labels = [libelle[0] for libelle in secteur_labels]
+
+        select_part = ", ".join(
+            [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
+
+        query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
+              "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
+              f"c.dateDemande, c.dateCommande, r.dateReception, c.enTotalite , {select_part}, a.commentaire, c.commentaire "
+              "FROM articles a "
+              "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
+              "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
+              "LEFT JOIN piece p ON p.ID = r_ap.piece_id "
+              "LEFT JOIN commandes c ON c.article_id = a.ID "
+              "LEFT JOIN receptions r ON r.commande_id = c.ID "
+              "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
+              "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
+              "WHERE ((c.dateDemande and c.dateCommande) IS NOT NULL) "
+              "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande, r.dateReception, c.enTotalite  "
+              "ORDER BY a.ID DESC ")
+
+        result = connection.execute(
+            query)
+        
+        return result.fetchall()
         
 def get_articles_to_buy():
     with engine.connect() as connection:
