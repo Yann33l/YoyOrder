@@ -53,6 +53,7 @@ class commandes(Base):
     dateDemande = Column(Date)
     enTotalite = Column(Boolean)
     commentaire = Column(String(255))
+    commentaireDemandeur = Column(String(255))
     secteurs = relationship("secteurs", secondary="r_secteur_commande")
 
 class secteurs(Base):

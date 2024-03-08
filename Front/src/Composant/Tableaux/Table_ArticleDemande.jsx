@@ -76,28 +76,20 @@ const TableArticlesDemande = ({ pieces }) => {
       let changedKey = null;
 
       for (const key in updatedData[rowIndex]) {
-        if (key === "date Demande") {
-          const dateObj = new Date(updatedData[rowIndex][key]);
-          const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
-          if (formattedDate !== data[rowIndex][key]) {
+        if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+          if (key === "date Demande") {
+            const dateObj = new Date(updatedData[rowIndex][key]);
+            const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             requestData.editedValue = formattedDate;
-            dataChanged = true;
-            changedKey = key;
-          }
-        } else if (key === "commentaire") {
-          if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+          } else if (key === "commentaire") {
             requestData.commentaire = updatedData[rowIndex][key];
-            dataChanged = true;
-            changedKey = key;
-          }
-        } else {
-          if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+          } else {
             updatedData[rowIndex][key] === ""
               ? (requestData.editedValue = 0)
               : (requestData.editedValue = updatedData[rowIndex][key]);
-            dataChanged = true;
-            changedKey = key;
           }
+          dataChanged = true;
+          changedKey = key;
         }
       }
 
@@ -178,11 +170,11 @@ const TableArticlesDemande = ({ pieces }) => {
   return (
     <DataGrid
       rows={data}
-      rowHeight={35}
       columns={generateColumns(data)}
       sx={dataTableStyle}
       getRowId={(row) => row.article_id}
       density="compact"
+      getRowHeight={() => "auto"}
       slots={{
         toolbar: CustomToolbar,
       }}

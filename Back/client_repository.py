@@ -111,6 +111,7 @@ def get_articles_by_secteur(piece_libelle):
             query, {"piece_libelle": piece_libelle})
 
         return result.fetchall()
+    
 def get_articles_to_receve(piece_libelle):
     with engine.connect() as connection:
         secteur_labels = connection.execute(
@@ -122,7 +123,7 @@ def get_articles_to_receve(piece_libelle):
 
         query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-              f"c.dateDemande, c.dateCommande, max(r.dateReception), c.enTotalite , {select_part}, a.commentaire, c.commentaire "
+              f"c.dateDemande, c.dateCommande, max(r.dateReception), c.enTotalite , {select_part}, a.commentaire, c.commentaire, r.commentaire, r.ID "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
               "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
@@ -133,8 +134,10 @@ def get_articles_to_receve(piece_libelle):
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
               "WHERE (p.libelle like :piece_libelle or :piece_libelle='%') "
               "AND ((c.dateDemande and c.dateCommande) IS NOT NULL) "
+              "AND (c.commentaire IS not NULL) "
+              "AND (r.dateReception IS NULL OR r.dateReception = (SELECT MAX(dateReception) FROM receptions WHERE commande_id = c.ID)) "
               "AND (((c.enTotalite IS NULL or c.enTotalite = 0) or ((r.dateReception and c.enTotalite) IS NULL)) or (r.dateReception < c.dateCommande)) "
-              "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande, c.enTotalite  "
+              "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande, c.enTotalite, r.commentaire, r.ID   "
               "ORDER BY a.ID DESC ")
 
         result = connection.execute(
@@ -154,7 +157,7 @@ def get_historique_commandes():
 
         query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-              f"c.dateDemande, c.dateCommande, r.dateReception, c.enTotalite , {select_part}, a.commentaire, c.commentaire "
+              f"c.dateDemande, c.dateCommande, r.dateReception, c.enTotalite, {select_part}, a.commentaire, c.commentaire, r.commentaire, r.ID  "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
               "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
@@ -163,8 +166,8 @@ def get_historique_commandes():
               "LEFT JOIN receptions r ON r.commande_id = c.ID "
               "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
-              "WHERE ((c.dateDemande and c.dateCommande) IS NOT NULL) "
-              "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande, r.dateReception, c.enTotalite  "
+              "WHERE (c.dateDemande IS NOT NULL OR c.dateCommande IS NOT NULL OR c.commentaire IS NOT NULL) "
+              "GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande, r.dateReception, c.enTotalite, r.commentaire, r.ID   "
               "ORDER BY a.ID DESC ")
 
         result = connection.execute(
@@ -192,7 +195,7 @@ def get_articles_to_buy():
               "LEFT JOIN commandes c ON c.article_id = a.ID "
               "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
-              "WHERE (c.dateDemande > c.dateCommande OR c.dateCommande IS NULL) "
+              "WHERE (c.dateDemande > c.dateCommande OR c.dateCommande IS NULL or (c.commentaire IS NULL AND c.dateDemande <= c.dateCommande)) "
               "AND c.dateDemande IS NOT NULL "
               "GROUP BY c.ID,a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateDemande, c.dateCommande "
               "ORDER BY a.ID DESC ")

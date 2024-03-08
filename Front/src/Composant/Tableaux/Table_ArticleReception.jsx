@@ -9,7 +9,7 @@ import { dataTableStyle } from "./TableStyle";
 
 import PropTypes from "prop-types";
 
-const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
+const IGNORED_FIELDS = ["id", "commande_id", "article_id", "reception_id"];
 
 const TableArticlesReception = ({ pieces }) => {
   const [data, setData] = useState([]);
@@ -54,11 +54,7 @@ const TableArticlesReception = ({ pieces }) => {
         getAuthHeader()
       );
       const responseData = response.data;
-      const dataWithIds = responseData.results.map((row, index) => ({
-        ...row,
-        id: index + 1,
-      }));
-      setData(dataWithIds);
+      setData(responseData.results);
     } catch (error) {
       console.error(error);
     }
@@ -92,25 +88,28 @@ const TableArticlesReception = ({ pieces }) => {
     try {
       const requestData = {
         commandeID: updatedData[rowIndex]["commande_id"],
+        receptionID: updatedData[rowIndex]["reception_id"],
         editedValue: undefined,
+        commentaire: undefined,
       };
       let dataChanged = false;
 
       for (const key in updatedData[rowIndex]) {
-        if (key === "date Reception") {
-          const dateObj = new Date(updatedData[rowIndex][key]);
-          const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
-          if (formattedDate !== data[rowIndex][key]) {
-            requestData.editedValue = formattedDate;
-            dataChanged = true;
-          }
-        } else {
-          if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+        if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
+          if (key === "date Reception") {
+            const dateObj = new Date(updatedData[rowIndex][key]);
+            const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
+            if (formattedDate !== data[rowIndex][key]) {
+              requestData.editedValue = formattedDate;
+            }
+          } else if (key === "commentaire reception") {
+            requestData.commentaire = updatedData[rowIndex][key];
+          } else {
             updatedData[rowIndex][key] === ""
-              ? (requestData.editedValue = 0)
+              ? (requestData.editedValue = "")
               : (requestData.editedValue = updatedData[rowIndex][key]);
-            dataChanged = true;
           }
+          dataChanged = true;
         }
       }
 
@@ -154,6 +153,15 @@ const TableArticlesReception = ({ pieces }) => {
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
         };
+      } else if (label === "commentaire reception") {
+        return {
+          field: label,
+          headerName: label,
+          flex: 0.3,
+          editable: true,
+          headerClassName: "editableHeader",
+          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
+        };
       } else if (label === "En totalité ?") {
         return {
           field: label,
@@ -195,9 +203,9 @@ const TableArticlesReception = ({ pieces }) => {
       rows={data}
       columns={generateColumns(data)}
       sx={dataTableStyle}
-      rowHeight={30}
-      getRowId={(row) => row.id}
+      getRowId={(row) => row.commande_id}
       density="compact"
+      getRowHeight={() => "auto"}
       slots={{
         toolbar: CustomToolbar,
       }}

@@ -118,16 +118,14 @@ class R_Secteur_Commande(BaseModel):
     commande_id: int
     quantite: int
 
-class edit_demande(BaseModel):
+class edit_demande_commande_reception(BaseModel):
     commandeID: Optional[int] = None
+    receptionID: Optional[int] = None
     articleID: Optional[int] = None
     editedValue: Optional[Union[int, date]] = None
     commentaire: Optional[str] = None
 
-class edit_commande(BaseModel):
-    commandeID: int
-    editedValue: Optional[date] = None
-    commentaire: Optional[str] = None
+
 
 # class Stocks(BaseModel):
 #     ID: int

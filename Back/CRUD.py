@@ -270,7 +270,7 @@ def create_commande(db: Session, commande: schemas.Commandes):
     return db_commande
 
 
-def edit_commande_dateDemande(db: Session, commande: schemas.edit_demande):
+def edit_demmande_dateDemande(db: Session, commande: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
     
@@ -288,18 +288,16 @@ def edit_commande_dateDemande(db: Session, commande: schemas.edit_demande):
 
     return db_commande
 
-def edit_article_commentaire(db: Session, commande: schemas.edit_demande):
-    db_commande = db.query(models.commandes).filter(
-        models.commandes.ID == commande.commandeID).scalar()
-    if db_commande is not None and commande.commentaire is not None:
-        db_article = db.query(models.articles).filter(
-            models.articles.ID == db_commande.article_id).scalar()
-        db_article.commentaire = commande.commentaire
+def edit_article_commentaire(db: Session, demande: schemas.edit_demande_commande_reception):
+    db_article = db.query(models.articles).filter(
+        models.articles.ID == demande.articleID).scalar()
+    if db_article:
+        db_article.commentaire = demande.commentaire
         db.commit()
-        db.refresh(db_commande)
-    return db_commande
+        db.refresh(db_article)
+    return db_article
 
-def edit_commande_commentaire(db: Session, commande: schemas.edit_commande):
+def edit_commande_commentaire(db: Session, commande: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
     if db_commande:
@@ -312,7 +310,7 @@ def get_secteurID_by_libelle(db: Session, secteur_libelle: str):
     return db.query(models.secteurs).filter(models.secteurs.libelle == secteur_libelle).scalar().ID
 
 
-def edit_commande_quantite(db: Session, commande: schemas.edit_demande, secteur_libelle):
+def edit_demmande_quantite(db: Session, commande: schemas.edit_demande_commande_reception, secteur_libelle):
     db_r_secteur_commande = db.query(models.r_secteur_commande).filter(
         models.r_secteur_commande.commande_id == commande.commandeID,
         models.r_secteur_commande.secteur_id == get_secteurID_by_libelle(db, secteur_libelle)).scalar()
@@ -350,11 +348,10 @@ def edit_commande_quantite(db: Session, commande: schemas.edit_demande, secteur_
         raise HTTPException(status_code=404, detail="Secteur not found")
     
 
-def edit_commande_dateCommande(db: Session, commande: schemas.edit_commande):
+def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
-    print(db_commande)
-    if db_commande:
+    if db_commande and db_commande.dateDemande <= commande.editedValue:
         db_commande.dateCommande = commande.editedValue
         db.commit()
         if commande.editedValue >= db_commande.dateDemande:
@@ -376,20 +373,20 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_commande):
         db.refresh(db_reception)
     return db_commande
 
-def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demande):
+def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(models.commandes.ID == edit_reception.commandeID).scalar()
-    db_reception = db.query(models.receptions).filter(models.receptions.commande_id == edit_reception.commandeID).order_by(models.receptions.dateReception.desc()).first()
+    db_reception = db.query(models.receptions).filter(models.receptions.ID == edit_reception.receptionID).scalar()
     previous_db_reception = db.query(models.receptions).filter(models.receptions.commande_id == edit_reception.commandeID).order_by(models.receptions.dateReception.desc()).offset(1).first()
     print(db_reception.dateReception)
-    if db_reception.dateReception is None or (edit_reception.editedValue >= db_commande.dateCommande and db_commande.dateCommande>db_reception.dateReception):
+    if (db_reception.dateReception is None and edit_reception.editedValue >= db_commande.dateCommande):
         db_reception.dateReception = edit_reception.editedValue
         db.commit()
         db.refresh(db_commande)
-    elif db_reception.dateReception > edit_reception.editedValue and (previous_db_reception is None or previous_db_reception.dateReception < edit_reception.editedValue):
+    elif db_reception.dateReception > edit_reception.editedValue and (previous_db_reception is None or previous_db_reception.dateReception < edit_reception.editedValue) and edit_reception.editedValue >= db_commande.dateCommande:
         db_reception.dateReception = edit_reception.editedValue
         db.commit()
         db.refresh(db_commande)
-    elif (edit_reception.editedValue >= db_commande.dateCommande and edit_reception.editedValue > db_reception.dateReception and (db_commande.enTotalite is None or db_commande.enTotalite is False)):
+    elif (edit_reception.editedValue >= db_commande.dateCommande and edit_reception.editedValue > db_reception.dateReception):
         reception_incomplete = models.receptions(
         commande_id=edit_reception.commandeID,
         quantite=None,
@@ -401,8 +398,15 @@ def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demand
         db.refresh(db_commande)
     return db_commande
 
+def edit_reception_commentaire(db: Session, receptions: schemas.edit_demande_commande_reception):
+    db_reception = db.query(models.receptions).filter(models.receptions.ID == receptions.receptionID).scalar()
+    if db_reception:
+        db_reception.commentaire = receptions.commentaire
+        db.commit()
+        db.refresh(db_reception)
+    return db_reception
 
-def edit_commande_ReceptionEnTotalite(db: Session, commande: schemas.edit_demande):
+def edit_commande_ReceptionEnTotalite(db: Session, commande: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
     if db_commande:

@@ -226,7 +226,7 @@ const TableEditionArticles = () => {
   return (
     <DataGrid
       rows={articles}
-      rowHeight={35}
+      getRowHeight={() => "auto"}
       columns={generateColumns(articles)}
       sx={dataTableStyle}
       getRowId={(row) => row.article_id}
