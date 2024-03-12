@@ -37,7 +37,7 @@ const TableArticlesCommande = () => {
     const updatedRow = { ...updatedData[rowIndex] };
 
     for (const key in params) {
-      if (key !== "id") {
+      if (params[key] !== updatedData[rowIndex][key]) {
         updatedRow[key] = params[key];
       }
     }
@@ -47,6 +47,7 @@ const TableArticlesCommande = () => {
     try {
       const requestData = {
         commandeID: updatedData[rowIndex]["commande_id"],
+        articleID: updatedData[rowIndex]["article_id"],
         editedValue: undefined,
         commentaire: undefined,
       };
@@ -162,11 +163,11 @@ const TableArticlesCommande = () => {
   return (
     <DataGrid
       rows={data}
-      rowHeight={35}
       columns={generateColumns(data)}
       sx={dataTableStyle}
       getRowId={(row) => row.commande_id}
       density="compact"
+      getRowHeight={() => "auto"}
       slots={{
         toolbar: CustomToolbar,
       }}

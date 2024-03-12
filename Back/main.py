@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from . import CRUD, client_repository, models, schemas
 from .database import  SessionLocal, engine
+from typing import Optional
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -54,7 +55,7 @@ def get_db():
 
 # ------------------- Connexion ------------------------ #
 # region Connexion par token
-def create_access_token(data: dict, expires_delta: timedelta or None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta]):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -244,7 +245,7 @@ def format_Commande_results(results):
         formatted_result.update(
             {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else None for i in range(len(secteur_labels))})
         formatted_result.update({f"commentaire": row[9 + len(secteur_labels)]})
-        formatted_result.update({f"numero IBF": row[10 + len(secteur_labels)]})        
+        formatted_result.update({f"numero IBF": row[10 + len(secteur_labels)]})
         formatted_results.append(formatted_result)
     return formatted_results 
 
@@ -264,7 +265,7 @@ def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_curren
     
     # Edition d'une commande
 @app.put("/editCommande/")
-def update_commande(edit_commande: schemas.edit_commande, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+def update_commande(edit_commande: schemas.edit_demande_commande_reception, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Acheteur is True:
         try:
             if isinstance(edit_commande.editedValue, date):
@@ -281,17 +282,40 @@ def update_commande(edit_commande: schemas.edit_commande, db: Session = Depends(
 
 # region : Visualisation modification et création d'une demande
     # Récupération de la liste des articles par piece
+def format_demmande_results(results):
+    secteur_labels = client_repository.get_secteur_labels()
+    formatted_results = []
+    for row in results:
+        formatted_result = {
+            "commande_id": row[0],
+            "article_id": row[1],
+            "nom article": row[2],
+            "ref": row[3],
+            "fournisseur": row[4],
+            "conditionnement": row[5],
+            "quantité en attente": row[11 + len(secteur_labels)] if row[11 + len(secteur_labels)] is not None else 0,
+            "quantité": row[6] if row[6] is not None else 0,
+            "date Demande": row[7] if row[7] is not None else None,
+            "date Commande": row[8] if row[8] is not None else None,
+        }
+        formatted_result.update(
+            {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else None for i in range(len(secteur_labels))})
+        formatted_result.update({f"commentaire": row[9 + len(secteur_labels)]})
+        formatted_result.update({f"numero IBF": row[10 + len(secteur_labels)]})
+        formatted_results.append(formatted_result)
+    return formatted_results             
+
 @router.get("/articlesDemande/{piece}")
 def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Demandeur is True:
         try:
             if piece != "Tous":
                 results = client_repository.get_articles_by_secteur(piece_libelle=piece)
-                formatted_results = format_Commande_results(results)
+                formatted_results = format_demmande_results(results)
                 return {"results": formatted_results}
             else:
                 results = client_repository.get_articles_by_secteur(piece_libelle="%")
-                formatted_results = format_Commande_results(results)
+                formatted_results = format_demmande_results(results)
                 return {"results": formatted_results}
              
         except Exception as e:
@@ -311,11 +335,14 @@ def format_Reception_results(results):
             "ref": row[3],
             "fournisseur": row[4],
             "conditionnement": row[5],
-            "quantité": row[6] if row[6] is not None else 0,
             "date Demande": row[7] if row[7] is not None else None,
             "date Commande": row[8] if row[8] is not None else None,
             "date Reception": row[9] if row[9] is not None else None,
+            "quantité commandé": row[6] if row[6] is not None else 0,
+            "quantité reçue": row[15 + len(secteur_labels)] if row[15 + len(secteur_labels)] is not None else None,
             "En totalité ?": row[10] if row[10] is not None else None,
+            "commentaire reception": row[13 + len(secteur_labels)] if row[13 + len(secteur_labels)] is not None else None,
+            "reception_id": row[14 + len(secteur_labels)] if row[14 + len(secteur_labels)] is not None else None,
         }
         formatted_result.update(
             {f"{secteur_labels[i]}": row[i + 11] if row[i + 11] is not None else 0 for i in range(len(secteur_labels))})
@@ -323,8 +350,8 @@ def format_Reception_results(results):
             {"commentaire": row[11 + len(secteur_labels)] if row[11 + len(secteur_labels)] is not None else None}) 
         formatted_result.update(
             {"numero IBF": row[12 + len(secteur_labels)] if row[12 + len(secteur_labels)] is not None else None})
-        formatted_results.append(formatted_result)
 
+        formatted_results.append(formatted_result)
 
     return formatted_results 
 
@@ -333,7 +360,7 @@ def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depend
     if current_user.Demandeur is True:
         try:
             if piece != "Tous":
-                results = client_repository.get_articles_to_receve(piece_libelle=piece)
+                results = client_repository.get_articles_to_receve(piece_libelle=piece)                
                 formatted_results = format_Reception_results(results)
                 return {"results": formatted_results}
             else:
@@ -359,12 +386,12 @@ def read_historique_commandes(current_user: schemas.UserBase = Depends(get_curre
 
     # Edition d'une demande 
 @router.put("/editDemande/{edited_row}")
-def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+def uptdate_demande(edited_row, edit_demande: schemas.edit_demande_commande_reception,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Demandeur is True:  
         if isinstance(edit_demande.editedValue, int):
-            CRUD.edit_commande_quantite(db, edit_demande, edited_row)
+            CRUD.edit_demmande_quantite(db, edit_demande, edited_row)
         elif isinstance(edit_demande.editedValue, date):
-            CRUD.edit_commande_dateDemande(db, edit_demande)
+            CRUD.edit_demmande_dateDemande(db, edit_demande)
         else:
             CRUD.edit_article_commentaire(db, edit_demande)
         try:
@@ -374,20 +401,22 @@ def uptdate_demande(edited_row, edit_demande: schemas.edit_demande,  db: Session
             print(f"Authentication error: {e}")
 
 @app.put("/editReception/")
-def uptdate_reception(edit_reception: schemas.edit_demande,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+def uptdate_reception(edit_reception: schemas.edit_demande_commande_reception,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Demandeur is True:
         try:
             if isinstance(edit_reception.editedValue, date):
                 CRUD.edit_commande_dateReception(db, edit_reception)
-                results = client_repository.get_articles_to_receve("%")
-                formatted_results = format_Reception_results(results)
-                return {"results": formatted_results}        
-            else:
+            elif edit_reception.commentaire is not None:
+                CRUD.edit_reception_commentaire(db, edit_reception)
+            elif isinstance(edit_reception.editedValue, int):
                 CRUD.edit_commande_ReceptionEnTotalite(db, edit_reception)
-                results = client_repository.get_articles_to_receve("%")
-                formatted_results = format_Reception_results(results)
+            elif edit_reception.quantité is not None:
+                print("edit_reception.quantité")
+                CRUD.edit_reception_Quantite(db, edit_reception)
+            results = client_repository.get_articles_to_receve("%")
+            formatted_results = format_Reception_results(results)
 
-                return {"results": formatted_results}        
+            return {"results": formatted_results}        
         except Exception as e:
             print(f"error: {e}")
 
@@ -493,19 +522,6 @@ def update_piece(edit_Piece: schemas.edit_piece_or_secteur, db: Session = Depend
             CRUD.edit_piece(db, edit_Piece)
         except Exception as e:
             print(f"Authentication error: {e}")
-
-
-@app.get("/commandes/", response_model=list[schemas.Commandes])
-def read_commandes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
-    if current_user.Autorisation is True:
-        commandes = CRUD.get_commandes(db, skip=skip, limit=limit)
-        return commandes
-
-
-@app.post("/create_commande/", response_model=schemas.Commandes)
-def create_commande(commande: schemas.Commandes, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
-    if current_user.Autorisation is True:
-        return CRUD.create_commande(db, commande)
 
 
 @app.get("/secteurs/", response_model=list[schemas.Secteurs])

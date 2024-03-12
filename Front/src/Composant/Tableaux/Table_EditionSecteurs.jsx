@@ -108,7 +108,7 @@ const TableEditionSecteurs = () => {
     <DataGrid
       key={gridKey}
       rows={secteurs}
-      rowHeight={35}
+      getRowHeight={() => "auto"}
       columns={generateColumns(secteurs)}
       sx={dataTableStyle}
       getRowId={(row) => row.ID}

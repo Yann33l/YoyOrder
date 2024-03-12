@@ -16,7 +16,6 @@ const TableEditionFournisseurs = () => {
   const fetchFournisseurs = async () => {
     try {
       const fournisseursData = await GetFournisseurs();
-      console.log("fournisseursData", fournisseursData);
       setFournisseurs(fournisseursData);
     } catch (error) {
       console.error("Erreur lors de la récupération des fournisseurs :", error);
@@ -85,7 +84,6 @@ const TableEditionFournisseurs = () => {
     setFournisseurs(updatedData);
 
     try {
-      console.log("updatedData", updatedData);
       const requestData = {
         ID: updatedData[rowIndex]["ID"],
       };
@@ -100,11 +98,6 @@ const TableEditionFournisseurs = () => {
             dataChanged = true;
           }
         } else {
-          console.log("updatedData[rowIndex][key]", updatedData[rowIndex][key]);
-          console.log(
-            "fournisseurs[rowIndex][key]",
-            fournisseurs[rowIndex][key]
-          );
           if (updatedData[rowIndex][key] !== fournisseurs[rowIndex][key]) {
             updatedData[rowIndex][key] === ""
               ? (requestData[key] = 0)
@@ -115,7 +108,6 @@ const TableEditionFournisseurs = () => {
       }
 
       if (dataChanged) {
-        console.log("requestData", requestData);
         await axios.put(
           `${API_URL}/editFournisseur/`,
           requestData,
@@ -134,7 +126,7 @@ const TableEditionFournisseurs = () => {
     <DataGrid
       key={gridKey}
       rows={fournisseurs}
-      rowHeight={35}
+      getRowHeight={() => "auto"}
       columns={generateColumns(fournisseurs)}
       sx={dataTableStyle}
       getRowId={(row) => row.ID}

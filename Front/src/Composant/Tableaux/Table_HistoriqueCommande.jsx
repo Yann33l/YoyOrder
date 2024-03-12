@@ -6,7 +6,7 @@ import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import { dataTableStyle } from "./TableStyle";
 
-const IGNORED_FIELDS = ["id", "commande_id", "article_id"];
+const IGNORED_FIELDS = ["id", "article_id", "reception_id"];
 
 const TableArticlesReception = () => {
   const [data, setData] = useState([]);
@@ -102,7 +102,7 @@ const TableArticlesReception = () => {
       rows={data}
       columns={generateColumns(data)}
       sx={dataTableStyle}
-      rowHeight={30}
+      getRowHeight={() => "auto"}
       getRowId={(row) => row.id}
       density="compact"
       slots={{
