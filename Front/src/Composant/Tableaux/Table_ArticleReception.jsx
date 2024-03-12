@@ -9,25 +9,26 @@ import { dataTableStyle } from "./TableStyle";
 
 import PropTypes from "prop-types";
 
-const IGNORED_FIELDS = ["id", "commande_id", "article_id", "reception_id"];
+const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
 
 const TableArticlesReception = ({ pieces }) => {
   const [data, setData] = useState([]);
+
   const handleCheckBoxChange = async (params) => {
-    const { id } = params;
+    const { commande_id } = params;
     const updatedData = [...data];
-    const rowIndex = updatedData.findIndex((row) => row.id === id);
+    const rowIndex = updatedData.findIndex(
+      (row) => row.commande_id === commande_id
+    );
     const newValue = !params.row["En totalité ?"];
     const updatedRow = { ...updatedData[rowIndex], "En totalité ?": newValue };
+
     updatedData[rowIndex] = updatedRow;
     setData(updatedData);
 
     try {
       let dataChanged = false;
-      if (
-        params.field === "En totalité ?" &&
-        newValue !== data[rowIndex]["En totalité ?"]
-      ) {
+      if (params.field === "En totalité ?") {
         dataChanged = true;
       }
       if (dataChanged) {
@@ -35,12 +36,14 @@ const TableArticlesReception = ({ pieces }) => {
           commandeID: params.row.commande_id,
           editedValue: newValue,
         };
+        console.log("handleCheckBoxChange ", requestData);
         await axios.put(
           `${API_URL}/editReception/`,
           requestData,
           getAuthHeader()
         );
         await updateData();
+        return updatedRow;
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour : ", error);
@@ -76,9 +79,14 @@ const TableArticlesReception = ({ pieces }) => {
 
   // handleCellEditCommit() permet de mettre à jour les données dans la base de données
   const handleCellEditCommit = async (params) => {
+    const { commande_id } = params;
+
     const updatedData = [...data];
-    const rowIndex = updatedData.findIndex((row) => row.id === params.id);
+    const rowIndex = updatedData.findIndex(
+      (row) => row.commande_id === commande_id
+    );
     const updatedRow = { ...updatedData[rowIndex] };
+
     for (const key in params) {
       updatedRow[key] = params[key];
     }
@@ -91,6 +99,7 @@ const TableArticlesReception = ({ pieces }) => {
         receptionID: updatedData[rowIndex]["reception_id"],
         editedValue: undefined,
         commentaire: undefined,
+        quantité: undefined,
       };
       let dataChanged = false;
 
@@ -104,6 +113,8 @@ const TableArticlesReception = ({ pieces }) => {
             }
           } else if (key === "commentaire reception") {
             requestData.commentaire = updatedData[rowIndex][key];
+          } else if (key === "quantité reçue") {
+            requestData.quantité = updatedData[rowIndex][key];
           } else {
             updatedData[rowIndex][key] === ""
               ? (requestData.editedValue = "")
@@ -114,6 +125,8 @@ const TableArticlesReception = ({ pieces }) => {
       }
 
       if (dataChanged) {
+        console.log("handleCellEditCommit ", requestData);
+
         await axios.put(
           `${API_URL}/editReception/`,
           requestData,
@@ -153,7 +166,10 @@ const TableArticlesReception = ({ pieces }) => {
           valueGetter: (params) => (params.value ? new Date(params.value) : ""),
           type: "date",
         };
-      } else if (label === "commentaire reception") {
+      } else if (
+        label === "commentaire reception" ||
+        label === "quantité reçue"
+      ) {
         return {
           field: label,
           headerName: label,

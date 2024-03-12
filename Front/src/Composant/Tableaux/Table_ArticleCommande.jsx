@@ -47,6 +47,7 @@ const TableArticlesCommande = () => {
     try {
       const requestData = {
         commandeID: updatedData[rowIndex]["commande_id"],
+        articleID: updatedData[rowIndex]["article_id"],
         editedValue: undefined,
         commentaire: undefined,
       };

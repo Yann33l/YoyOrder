@@ -135,10 +135,6 @@ def liaison_article_piece(db: Session, article: schemas.ArticlesCreate):
         raise HTTPException(status_code=404, detail="Piece non selectionnée")
     
     
-
-
-
-
 def create_article(db: Session, article: schemas.ArticlesCreate):
     db_article = models.articles(
         libelle=article.libelle,
@@ -251,24 +247,6 @@ def get_secteur_by_libelle(db: Session, libelle: str):
 
 
 # Commandes
-def get_commandes(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.commandes).offset(skip).limit(limit).all()
-
-
-def create_commande(db: Session, commande: schemas.Commandes):
-    db_commande = models.commandes(
-        ID=commande.ID,
-        article_id=commande.article_id,
-        quantite=commande.quantite,
-        secteur_id=commande.secteur_id,
-        dateCommande=commande.dateCommande,
-        dateReception=commande.dateReception,
-        dateDemande=commande.dateDemande,
-    )
-    db.add(db_commande)
-    db.commit()
-    return db_commande
-
 
 def edit_demmande_dateDemande(db: Session, commande: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(
@@ -297,14 +275,7 @@ def edit_article_commentaire(db: Session, demande: schemas.edit_demande_commande
         db.refresh(db_article)
     return db_article
 
-def edit_commande_commentaire(db: Session, commande: schemas.edit_demande_commande_reception):
-    db_commande = db.query(models.commandes).filter(
-        models.commandes.ID == commande.commandeID).scalar()
-    if db_commande:
-        db_commande.commentaire = commande.commentaire
-        db.commit()
-        db.refresh(db_commande)
-    return db_commande
+
 
 def get_secteurID_by_libelle(db: Session, secteur_libelle: str):
     return db.query(models.secteurs).filter(models.secteurs.libelle == secteur_libelle).scalar().ID
@@ -351,26 +322,47 @@ def edit_demmande_quantite(db: Session, commande: schemas.edit_demande_commande_
 def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
+    db_article = db.query(models.articles).filter(
+        models.articles.ID == commande.articleID).scalar()
     if db_commande and db_commande.dateDemande <= commande.editedValue:
+        if db_commande.dateCommande is None :
+            db_commande2 = models.commandes(
+            article_id = db_commande.article_id,
+            )
+            db_reception = models.receptions(
+                commande_id=commande.commandeID,
+                quantite=None,
+                dateReception=None,
+                commentaire=None,
+            )
+            db.add(db_reception)
+            db.add(db_commande2)
         db_commande.dateCommande = commande.editedValue
-        db.commit()
-        if commande.editedValue >= db_commande.dateDemande:
-            db_commande.dateCommande = commande.editedValue
-            db_commande = models.commandes(
-                article_id = db_commande.article_id,)
-            db.add(db_commande)
+    if db_article :
+        if db_article.commentaire != db_commande.commentaireDemandeur:
+            db_commande.commentaireDemandeur = db_article.commentaire
             db.commit()
-        db_reception = models.receptions(
-            commande_id=commande.commandeID,
-            quantite=None,
-            dateReception=None,
-            commentaire=None,
-        )
-        print(db_reception.commande_id)
-        db.add(db_reception)
+            db.refresh(db_article)
+    db.commit()
+    db.refresh(db_commande)
+    db.refresh(db_reception)
+    return db_commande
+
+def edit_commande_commentaire(db: Session, commande: schemas.edit_demande_commande_reception):
+    print(commande.articleID)
+    db_commande = db.query(models.commandes).filter(
+        models.commandes.ID == commande.commandeID).scalar()
+    db_article = db.query(models.articles).filter(
+        models.articles.ID == commande.articleID).scalar()
+    if db_commande:
+        db_commande.commentaire = commande.commentaire
         db.commit()
         db.refresh(db_commande)
-        db.refresh(db_reception)
+    if db_article :
+        if db_article.commentaire != db_commande.commentaireDemandeur:
+            db_commande.commentaireDemandeur = db_article.commentaire
+            db.commit()
+            db.refresh(db_article)
     return db_commande
 
 def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demande_commande_reception):
@@ -406,14 +398,47 @@ def edit_reception_commentaire(db: Session, receptions: schemas.edit_demande_com
         db.refresh(db_reception)
     return db_reception
 
-def edit_commande_ReceptionEnTotalite(db: Session, commande: schemas.edit_demande_commande_reception):
+def edit_commande_ReceptionEnTotalite(db: Session, edition: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(
-        models.commandes.ID == commande.commandeID).scalar()
+        models.commandes.ID == edition.commandeID).scalar()
+    db_precedente_reception = db.query(models.receptions).filter(models.receptions.ID != edition.receptionID, models.commandes.ID == edition.commandeID).all()
+    db_reception = db.query(models.receptions).filter(models.receptions.ID == edition.receptionID).scalar()
     if db_commande:
-        db_commande.enTotalite = commande.editedValue
+        db_commande.enTotalite = edition.editedValue
         db.commit()
         db.refresh(db_commande)
+    if db_reception :
+        total_precedente_reception = sum(qte.quantite for qte in db_precedente_reception)
+        db_reception.quantite = db_commande.quantite - total_precedente_reception
+        db.commit()
+        db.refresh(db_reception)
+    else :
+        db_reception = models.receptions(
+            commande_id=edition.commandeID,
+            quantite=db_commande.quantite,
+            dateReception=None,
+            commentaire=None,
+        )
     return db_commande
+
+def edit_reception_Quantite(db: Session, reception: schemas.edit_demande_commande_reception):
+    db_reception = db.query(models.receptions).filter(models.receptions.ID == reception.receptionID).scalar()
+    if db_reception :
+        db_reception.quantite = reception.quantité
+        db.commit()
+        db.refresh(db_reception)
+    return db_reception
+
+
+
+# def edit_commande_ReceptionEnTotalite(db: Session, commande: schemas.edit_demande_commande_reception):
+#     db_commande = db.query(models.commandes).filter(
+#         models.commandes.ID == commande.commandeID).scalar()
+#     if db_commande:
+#         db_commande.enTotalite = commande.editedValue
+#         db.commit()
+#         db.refresh(db_commande)
+#     return db_commande
 
 def create_piece(db: Session, piece: schemas.Piece):
     db_piece = models.pieces(

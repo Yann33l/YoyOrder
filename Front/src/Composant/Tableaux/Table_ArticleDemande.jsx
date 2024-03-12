@@ -132,7 +132,8 @@ const TableArticlesDemande = ({ pieces }) => {
         label === "fournisseur" ||
         label === "quantité" ||
         label === "conditionnement" ||
-        label === "ref"
+        label === "ref" ||
+        label === "quantité en attente"
       ) {
         return {
           field: label,

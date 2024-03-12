@@ -124,6 +124,7 @@ class edit_demande_commande_reception(BaseModel):
     articleID: Optional[int] = None
     editedValue: Optional[Union[int, date]] = None
     commentaire: Optional[str] = None
+    quantité: Optional[int] = None
 
 
 
