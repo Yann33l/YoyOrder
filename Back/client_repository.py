@@ -106,7 +106,7 @@ def get_articles_by_secteur(piece_libelle):
 
         query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-              f"c.dateDemande, c.dateCommande, {select_part}, a.commentaire, c.commentaire "
+              f"c.dateDemande, {select_part}, a.commentaire "
               f", {quantite_demande}-{quantite_recu} as quantite_en_attente "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
@@ -118,7 +118,7 @@ def get_articles_by_secteur(piece_libelle):
               "WHERE (p.libelle like :piece_libelle or :piece_libelle='%') "
               "AND (c.dateDemande IS NULL OR (c.dateDemande IS NOT NULL AND c.dateCommande IS NULL) OR (c.dateDemande IS NOT NULL AND c.dateCommande < c.dateDemande)) "
               "AND a.dateFinValidite >= NOW() "
-              f"GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateCommande, c.dateDemande, a.commentaire , c.commentaire , quantite_en_attente "
+              f"GROUP BY c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateDemande, a.commentaire , quantite_en_attente "
               "ORDER BY a.ID DESC ")
 
         result = connection.execute(

@@ -4,9 +4,13 @@ import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
-import { dataTableStyle } from "./TableStyle";
-
+import {
+  dataTableStyle,
+  columnGroupingModel,
+  generateColumns,
+} from "./TableStyle";
 const IGNORED_FIELDS = ["id", "article_id", "reception_id"];
+const EDITABLE_COLUMNS = [];
 
 const TableArticlesReception = () => {
   const [data, setData] = useState([]);
@@ -32,75 +36,11 @@ const TableArticlesReception = () => {
     updateData();
   }, [updateData]);
 
-  const renderCheckCell = (params) => {
-    return <input type="checkbox" checked={params.value || false} readOnly />;
-  };
-  //generateColumns() permet de générer les colonnes dynamiquement en fonction des données reçues pour ne pas avoir à modifier à chaque changement
-  const generateColumns = (data) => {
-    const columnsWithoutIgnoredFields =
-      data && data.length > 0
-        ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
-        : [];
-
-    const articlesColumns = columnsWithoutIgnoredFields.map((label) => {
-      if (
-        label === "date Commande" ||
-        label === "date Demande" ||
-        label === "date Reception"
-      ) {
-        return {
-          field: label,
-          headerName: label,
-          width: 130,
-          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
-          type: "date",
-        };
-      } else if (label === "En totalité ?") {
-        return {
-          field: label,
-          headerName: label,
-          renderCell: renderCheckCell,
-        };
-      } else if (label === "nom article") {
-        return {
-          field: label,
-          headerName: label,
-          width: 400,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        };
-      } else if (
-        [
-          "commentaire",
-          "numero IBF",
-          "quantité",
-          "conditionnement",
-          "ref",
-          "fournisseur",
-        ].includes(label)
-      ) {
-        return {
-          field: label,
-          headerName: label,
-          width: 100,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        };
-      } else {
-        return {
-          field: label,
-          headerName: label,
-          width: 40,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        };
-      }
-    });
-
-    return articlesColumns;
-  };
-
   return (
     <DataGrid
+      experimentalFeatures={{ columnGrouping: true }}
       rows={data}
-      columns={generateColumns(data)}
+      columns={generateColumns(data, IGNORED_FIELDS, EDITABLE_COLUMNS)}
       sx={dataTableStyle}
       getRowHeight={() => "auto"}
       getRowId={(row) => row.id}
@@ -108,6 +48,7 @@ const TableArticlesReception = () => {
       slots={{
         toolbar: CustomToolbar,
       }}
+      columnGroupingModel={columnGroupingModel}
     />
   );
 };

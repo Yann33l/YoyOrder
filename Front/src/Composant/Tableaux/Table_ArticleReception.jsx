@@ -5,11 +5,12 @@ import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
-import { dataTableStyle } from "./TableStyle";
-
+import {
+  dataTableStyle,
+  columnGroupingModel,
+  generateColumns,
+} from "./TableStyle";
 import PropTypes from "prop-types";
-
-const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
 
 const TableArticlesReception = ({ pieces }) => {
   const [data, setData] = useState([]);
@@ -36,7 +37,6 @@ const TableArticlesReception = ({ pieces }) => {
           commandeID: params.row.commande_id,
           editedValue: newValue,
         };
-        console.log("handleCheckBoxChange ", requestData);
         await axios.put(
           `${API_URL}/editReception/`,
           requestData,
@@ -63,21 +63,10 @@ const TableArticlesReception = ({ pieces }) => {
     }
   }, [pieces]);
 
-  const renderCheckCell = (params) => {
-    return (
-      <input
-        type="checkbox"
-        checked={params.value || false}
-        onChange={() => handleCheckBoxChange(params)}
-      />
-    );
-  };
-
   useEffect(() => {
     updateData();
   }, [pieces, updateData]);
 
-  // handleCellEditCommit() permet de mettre à jour les données dans la base de données
   const handleCellEditCommit = async (params) => {
     const { commande_id } = params;
 
@@ -105,15 +94,15 @@ const TableArticlesReception = ({ pieces }) => {
 
       for (const key in updatedData[rowIndex]) {
         if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
-          if (key === "date Reception") {
+          if (key === "date_Reception") {
             const dateObj = new Date(updatedData[rowIndex][key]);
             const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             if (formattedDate !== data[rowIndex][key]) {
               requestData.editedValue = formattedDate;
             }
-          } else if (key === "commentaire reception") {
+          } else if (key === "commentaire_Reception") {
             requestData.commentaire = updatedData[rowIndex][key];
-          } else if (key === "quantité reçue") {
+          } else if (key === "quantité_Reçue") {
             requestData.quantité = updatedData[rowIndex][key];
           } else {
             updatedData[rowIndex][key] === ""
@@ -125,8 +114,6 @@ const TableArticlesReception = ({ pieces }) => {
       }
 
       if (dataChanged) {
-        console.log("handleCellEditCommit ", requestData);
-
         await axios.put(
           `${API_URL}/editReception/`,
           requestData,
@@ -140,84 +127,24 @@ const TableArticlesReception = ({ pieces }) => {
     }
   };
 
-  //generateColumns() permet de générer les colonnes dynamiquement en fonction des données reçues pour ne pas avoir à modifier à chaque changement
-  const generateColumns = (data) => {
-    const columnsWithoutIgnoredFields =
-      data && data.length > 0
-        ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
-        : [];
-
-    const articlesColumns = columnsWithoutIgnoredFields.map((label) => {
-      if (label === "date Reception") {
-        return {
-          field: label,
-          headerName: label,
-          flex: 0.3,
-          editable: true,
-          headerClassName: "editableHeader",
-          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
-          type: "date",
-        };
-      } else if (label === "date Commande" || label === "date Demande") {
-        return {
-          field: label,
-          headerName: label,
-          flex: 0.3,
-          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
-          type: "date",
-        };
-      } else if (
-        label === "commentaire reception" ||
-        label === "quantité reçue"
-      ) {
-        return {
-          field: label,
-          headerName: label,
-          flex: 0.3,
-          editable: true,
-          headerClassName: "editableHeader",
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        };
-      } else if (label === "En totalité ?") {
-        return {
-          field: label,
-          headerName: label,
-          flex: 0.2,
-          headerClassName: "editableHeader",
-          renderCell: renderCheckCell,
-          editable: true,
-        };
-      } else if (label === "nom article") {
-        return {
-          field: label,
-          headerName: label,
-          flex: 1,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        };
-      } else if (label === "fournisseur") {
-        return {
-          field: label,
-          headerName: label,
-          flex: 0.2,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        };
-      } else {
-        return {
-          field: label,
-          headerName: label,
-          flex: 0.2,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        };
-      }
-    });
-
-    return articlesColumns;
-  };
+  const EDITABLE_COLUMNS = [
+    "date_Reception",
+    "quantité_Reçue",
+    "commentaire_Reception",
+    "En totalité ?",
+  ];
+  const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
 
   return (
     <DataGrid
+      experimentalFeatures={{ columnGrouping: true }}
       rows={data}
-      columns={generateColumns(data)}
+      columns={generateColumns(
+        data,
+        IGNORED_FIELDS,
+        EDITABLE_COLUMNS,
+        handleCheckBoxChange
+      )}
       sx={dataTableStyle}
       getRowId={(row) => row.commande_id}
       density="compact"
@@ -226,6 +153,7 @@ const TableArticlesReception = ({ pieces }) => {
         toolbar: CustomToolbar,
       }}
       processRowUpdate={handleCellEditCommit}
+      columnGroupingModel={columnGroupingModel}
     />
   );
 };
