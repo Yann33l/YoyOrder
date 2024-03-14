@@ -4,16 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
-import { dataTableStyle } from "./TableStyle";
+import {
+  dataTableStyle,
+  columnGroupingModel,
+  generateColumns,
+} from "./TableStyle";
 import CustomToolbar from "./CustomToolBar";
 import PropTypes from "prop-types";
 
-const IGNORED_FIELDS = [
-  "commande_id",
-  "article_id",
-  "date Commande",
-  "numero IBF",
-];
+const IGNORED_FIELDS = ["commande_id", "article_id"];
 
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
@@ -32,7 +31,11 @@ const TableArticlesDemande = ({ pieces }) => {
     fetchEditableColumns();
   }, []);
 
-  const EDITABLE_COLUMNS = ["date Demande", "commentaire", ...editableColumns];
+  const EDITABLE_COLUMNS = [
+    "date_Demande",
+    "commentaire_Demande",
+    ...editableColumns,
+  ];
   const updateData = useCallback(async () => {
     try {
       const response = await axios.get(
@@ -77,11 +80,11 @@ const TableArticlesDemande = ({ pieces }) => {
 
       for (const key in updatedData[rowIndex]) {
         if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
-          if (key === "date Demande") {
+          if (key === "date_Demande") {
             const dateObj = new Date(updatedData[rowIndex][key]);
             const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             requestData.editedValue = formattedDate;
-          } else if (key === "commentaire") {
+          } else if (key === "commentaire_Demande") {
             requestData.commentaire = updatedData[rowIndex][key];
           } else {
             updatedData[rowIndex][key] === ""
@@ -107,71 +110,11 @@ const TableArticlesDemande = ({ pieces }) => {
     }
   };
 
-  //generateColumns() permet de générer les colonnes dynamiquement en fonction des données reçues pour ne pas avoir à modifier à chaque changement
-  const generateColumns = (data) => {
-    const columnsWithoutIgnoredFields =
-      data && data.length > 0
-        ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
-        : [];
-
-    const articlesColumns = columnsWithoutIgnoredFields.map((label) => {
-      if (label === "date Demande") {
-        return {
-          field: label,
-          headerName: label,
-          headerClassName: EDITABLE_COLUMNS.includes(label)
-            ? "editableHeader"
-            : "",
-          flex: 0.3,
-          editable: EDITABLE_COLUMNS.includes(label),
-          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
-          type: "date",
-        };
-      } else if (
-        label === "commentaire" ||
-        label === "fournisseur" ||
-        label === "quantité" ||
-        label === "conditionnement" ||
-        label === "ref" ||
-        label === "quantité en attente"
-      ) {
-        return {
-          field: label,
-          headerName: label,
-          headerClassName: EDITABLE_COLUMNS.includes(label)
-            ? "editableHeader"
-            : "",
-          flex: 0.3,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-          editable: EDITABLE_COLUMNS.includes(label),
-        };
-      } else if (label === "nom article") {
-        return {
-          field: label,
-          headerName: label,
-          flex: 1,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-        };
-      } else {
-        return {
-          field: label,
-          headerName: label,
-          headerClassName: EDITABLE_COLUMNS.includes(label)
-            ? "editableHeader"
-            : "",
-          flex: 0.1,
-          renderCell: (params) => (params.row[label] ? params.row[label] : ""),
-          editable: EDITABLE_COLUMNS.includes(label),
-        };
-      }
-    });
-    return articlesColumns;
-  };
-
   return (
     <DataGrid
+      experimentalFeatures={{ columnGrouping: true }}
       rows={data}
-      columns={generateColumns(data)}
+      columns={generateColumns(data, IGNORED_FIELDS, EDITABLE_COLUMNS)}
       sx={dataTableStyle}
       getRowId={(row) => row.article_id}
       density="compact"
@@ -180,6 +123,7 @@ const TableArticlesDemande = ({ pieces }) => {
         toolbar: CustomToolbar,
       }}
       processRowUpdate={handleCellEditCommit}
+      columnGroupingModel={columnGroupingModel}
     />
   );
 };

@@ -234,18 +234,18 @@ def format_Commande_results(results):
         formatted_result = {
             "commande_id": row[0],
             "article_id": row[1],
-            "nom article": row[2],
-            "ref": row[3],
-            "fournisseur": row[4],
-            "conditionnement": row[5],
-            "quantité": row[6] if row[6] is not None else 0,
-            "date Demande": row[7] if row[7] is not None else None,
-            "date Commande": row[8] if row[8] is not None else None,
+            "Article": row[2],
+            "Ref": row[3],
+            "Fournisseur": row[4],
+            "Conditionnement": row[5],
+            "quantité_A commander": row[6] if row[6] is not None else 0,
+            "date_Demande": row[7] if row[7] is not None else None,
+            "date_Commande": row[8] if row[8] is not None else None,
         }
         formatted_result.update(
             {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else None for i in range(len(secteur_labels))})
-        formatted_result.update({f"commentaire": row[9 + len(secteur_labels)]})
-        formatted_result.update({f"numero IBF": row[10 + len(secteur_labels)]})
+        formatted_result.update({f"commentaire_Demande": row[9 + len(secteur_labels)]})
+        formatted_result.update({f"commentaire_Commande": row[10 + len(secteur_labels)]})
         formatted_results.append(formatted_result)
     return formatted_results 
 
@@ -289,19 +289,17 @@ def format_demmande_results(results):
         formatted_result = {
             "commande_id": row[0],
             "article_id": row[1],
-            "nom article": row[2],
-            "ref": row[3],
-            "fournisseur": row[4],
-            "conditionnement": row[5],
-            "quantité en attente": row[11 + len(secteur_labels)] if row[11 + len(secteur_labels)] is not None else 0,
-            "quantité": row[6] if row[6] is not None else 0,
-            "date Demande": row[7] if row[7] is not None else None,
-            "date Commande": row[8] if row[8] is not None else None,
+            "Article": row[2],
+            "Ref": row[3],
+            "Fournisseur": row[4],
+            "Conditionnement": row[5],
+            "quantité_En attente": row[9 + len(secteur_labels)] if row[9 + len(secteur_labels)] is not None else 0,
+            "quantité_A commander": row[6] if row[6] is not None else 0,
+            "date_Demande": row[7] if row[7] is not None else None,
         }
         formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else None for i in range(len(secteur_labels))})
-        formatted_result.update({f"commentaire": row[9 + len(secteur_labels)]})
-        formatted_result.update({f"numero IBF": row[10 + len(secteur_labels)]})
+            {f"{secteur_labels[i]}": row[i + 8] if row[i + 8] is not None else None for i in range(len(secteur_labels))})
+        formatted_result.update({f"commentaire_Demande": row[8 + len(secteur_labels)]})
         formatted_results.append(formatted_result)
     return formatted_results             
 
@@ -331,25 +329,28 @@ def format_Reception_results(results):
         formatted_result = {
             "commande_id": row[0],
             "article_id": row[1],
-            "nom article": row[2],
-            "ref": row[3],
-            "fournisseur": row[4],
-            "conditionnement": row[5],
-            "date Demande": row[7] if row[7] is not None else None,
-            "date Commande": row[8] if row[8] is not None else None,
-            "date Reception": row[9] if row[9] is not None else None,
-            "quantité commandé": row[6] if row[6] is not None else 0,
-            "quantité reçue": row[15 + len(secteur_labels)] if row[15 + len(secteur_labels)] is not None else None,
+            "Article": row[2],
+            "Ref": row[3],
+            "Fournisseur": row[4],
+            "Conditionnement": row[5],
+            "date_Demande": row[7] if row[7] is not None else None,
+            "date_Commande": row[8] if row[8] is not None else None,
+            "date_Reception": row[9] if row[9] is not None else None,
+            "quantité_Commandé": row[6] if row[6] is not None else 0,
+            "quantité_Reçue": row[15 + len(secteur_labels)] if row[15 + len(secteur_labels)] is not None else None,
             "En totalité ?": row[10] if row[10] is not None else None,
-            "commentaire reception": row[13 + len(secteur_labels)] if row[13 + len(secteur_labels)] is not None else None,
+            
             "reception_id": row[14 + len(secteur_labels)] if row[14 + len(secteur_labels)] is not None else None,
         }
         formatted_result.update(
             {f"{secteur_labels[i]}": row[i + 11] if row[i + 11] is not None else 0 for i in range(len(secteur_labels))})
         formatted_result.update(
-            {"commentaire": row[11 + len(secteur_labels)] if row[11 + len(secteur_labels)] is not None else None}) 
+            {"commentaire_Demande": row[11 + len(secteur_labels)] if row[11 + len(secteur_labels)] is not None else None}) 
         formatted_result.update(
-            {"numero IBF": row[12 + len(secteur_labels)] if row[12 + len(secteur_labels)] is not None else None})
+            {"commentaire_Commande": row[12 + len(secteur_labels)] if row[12 + len(secteur_labels)] is not None else None})
+        formatted_result.update(
+            {"commentaire_Reception": row[13 + len(secteur_labels)] if row[13 + len(secteur_labels)] is not None else None})
+
 
         formatted_results.append(formatted_result)
 

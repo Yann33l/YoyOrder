@@ -11,12 +11,10 @@
   font-family: "Montserrat_Alternates_Medium";
   src: url(/Brand_files/fonts/Montserrat_Alternates_Medium.ttf) format(truetype);
 }
-
-::-webkit-scrollbar {
+body::-webkit-scrollbar {
   width: 0px;
   background: transparent;
 }
-
 /* app */
 body {
   color: var(--text);
