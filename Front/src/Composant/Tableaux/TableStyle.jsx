@@ -1,5 +1,3 @@
-import { GetPieces } from "../API/api";
-
 const dataTableStyle = {
   margin: "auto",
   backgroundColor: "#ffffff",
@@ -11,15 +9,14 @@ const dataTableStyle = {
 
 export { dataTableStyle };
 
-const pieces = await GetPieces();
-
 const generateColumns = (
   data,
   IGNORED_FIELDS,
   EDITABLE_COLUMNS,
   handleCheckBoxChange,
   renderDropdownCell,
-  CALLER
+  CALLER,
+  pieces
 ) => {
   const S_SizeColumn = [];
   const M_SizeColumn = [
@@ -36,7 +33,10 @@ const generateColumns = (
     "En totalité ?",
     "numero IBF",
   ];
-  M_SizeColumn.push(...pieces.map((secteur) => secteur.libelle));
+  if (CALLER === "editionArticle") {
+    M_SizeColumn.push(...pieces.map((secteur) => secteur.libelle));
+  }
+
   const L_SizeColumn = [
     "Fournisseur",
     "Conditionnement",

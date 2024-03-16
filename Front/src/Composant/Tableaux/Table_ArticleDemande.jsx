@@ -36,6 +36,7 @@ const TableArticlesDemande = ({ pieces }) => {
     "commentaire_Demande",
     ...editableColumns,
   ];
+
   const updateData = useCallback(async () => {
     try {
       const response = await axios.get(
@@ -53,7 +54,6 @@ const TableArticlesDemande = ({ pieces }) => {
     updateData();
   }, [pieces, updateData]);
 
-  // handleCellEditCommit() permet de mettre à jour les données dans la base de données
   const handleCellEditCommit = async (params) => {
     const { article_id } = params;
     const updatedData = [...data];
@@ -62,6 +62,7 @@ const TableArticlesDemande = ({ pieces }) => {
     );
 
     const updatedRow = { ...updatedData[rowIndex] };
+
     for (const key in params) {
       updatedRow[key] = params[key];
     }

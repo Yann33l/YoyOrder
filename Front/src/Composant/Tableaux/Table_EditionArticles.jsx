@@ -8,7 +8,7 @@ import { MenuItem, Select } from "@mui/material";
 import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
-import { API_URL, GetActiveFournisseurs } from "../API/api";
+import { API_URL, GetActiveFournisseurs, GetPieces } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 
@@ -19,6 +19,7 @@ const TableEditionArticles = () => {
   const [articles, setArticles] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
   const [EDITABLE_COLUMNS, setEDITABLE_COLUMNS] = useState([]);
+  const [pieces, setPieces] = useState([]);
 
   const fetchFournisseurs = async () => {
     try {
@@ -29,8 +30,18 @@ const TableEditionArticles = () => {
     }
   };
 
+  const fetchPieces = async () => {
+    try {
+      const Pieces = await GetPieces();
+      setPieces(Pieces);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des fournisseurs :", error);
+    }
+  };
+
   useEffect(() => {
     fetchFournisseurs();
+    fetchPieces();
   }, []);
 
   const handleCheckBoxChange = async (params) => {
@@ -180,7 +191,8 @@ const TableEditionArticles = () => {
         EDITABLE_COLUMNS,
         handleCheckBoxChange,
         renderDropdownCell,
-        CALLER
+        CALLER,
+        pieces
       )}
       sx={dataTableStyle}
       getRowId={(row) => row.article_id}
