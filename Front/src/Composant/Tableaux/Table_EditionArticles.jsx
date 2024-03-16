@@ -1,4 +1,8 @@
-import { dataTableStyle } from "./TableStyle";
+import {
+  dataTableStyle,
+  columnGroupingModel,
+  generateColumns,
+} from "./TableStyle";
 import { DataGrid } from "@mui/x-data-grid";
 import { MenuItem, Select } from "@mui/material";
 import CustomToolbar from "./CustomToolBar";
@@ -9,20 +13,12 @@ import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 
 const IGNORED_FIELDS = ["article_id"];
+const CALLER = "editionArticle";
 
 const TableEditionArticles = () => {
   const [articles, setArticles] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
-
-  const renderCheckCell = (params) => {
-    return (
-      <input
-        type="checkbox"
-        checked={params.value || false}
-        onChange={() => handleCheckBoxChange(params)}
-      />
-    );
-  };
+  const [EDITABLE_COLUMNS, setEDITABLE_COLUMNS] = useState([]);
 
   const fetchFournisseurs = async () => {
     try {
@@ -83,6 +79,7 @@ const TableEditionArticles = () => {
       );
       const responseData = response.data;
       setArticles(responseData.results);
+      setEDITABLE_COLUMNS(Object.keys(responseData.results[0]));
     } catch (error) {
       console.error(error);
     }
@@ -110,56 +107,6 @@ const TableEditionArticles = () => {
       ))}
     </Select>
   );
-
-  const generateColumns = (data) => {
-    const columnsWithoutIgnoredFields =
-      data && data.length > 0
-        ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
-        : [];
-    const columns = columnsWithoutIgnoredFields.map((key) => {
-      if (key === "dateDebutValidite" || key === "dateFinValidite") {
-        return {
-          field: key,
-          headerName: key,
-          flex: 0.3,
-          editable: true,
-          valueGetter: (params) => (params.value ? new Date(params.value) : ""),
-          type: "date",
-        };
-      } else if (key === "libelle") {
-        return {
-          field: key,
-          headerName: "nom article",
-          flex: 1,
-          editable: true,
-        };
-      } else if (key === "ref" || key === "conditionnement") {
-        return {
-          field: key,
-          headerName: key,
-          flex: 0.3,
-          editable: true,
-        };
-      } else if (key === "fournisseur") {
-        return {
-          field: key,
-          headerName: key,
-          flex: 0.3,
-          editable: true,
-          renderEditCell: renderDropdownCell,
-        };
-      } else {
-        return {
-          field: key,
-          headerName: key,
-          renderCell: renderCheckCell,
-          flex: 0.1,
-          editable: true,
-        };
-      }
-    });
-    return columns;
-  };
 
   const handleCellEditCommit = async (params) => {
     const { article_id } = params;
@@ -225,16 +172,25 @@ const TableEditionArticles = () => {
 
   return (
     <DataGrid
+      experimentalFeatures={{ columnGrouping: true }}
       rows={articles}
-      getRowHeight={() => "auto"}
-      columns={generateColumns(articles)}
+      columns={generateColumns(
+        articles,
+        IGNORED_FIELDS,
+        EDITABLE_COLUMNS,
+        handleCheckBoxChange,
+        renderDropdownCell,
+        CALLER
+      )}
       sx={dataTableStyle}
       getRowId={(row) => row.article_id}
       density="compact"
+      getRowHeight={() => "auto"}
       slots={{
         toolbar: CustomToolbar,
       }}
       processRowUpdate={handleCellEditCommit}
+      columnGroupingModel={columnGroupingModel}
     />
   );
 };
