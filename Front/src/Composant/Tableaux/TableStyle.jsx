@@ -13,10 +13,14 @@ const generateColumns = (
   data,
   IGNORED_FIELDS,
   EDITABLE_COLUMNS,
-  handleCheckBoxChange
+  handleCheckBoxChange,
+  renderDropdownCell,
+  CALLER,
+  pieces
 ) => {
   const S_SizeColumn = [];
   const M_SizeColumn = [
+    "telephone",
     "date_Reception",
     "date_Commande",
     "date_Demande",
@@ -24,22 +28,50 @@ const generateColumns = (
     "quantité_Reçue",
     "quantité_En attente",
     "quantité_A commander",
+    "dateDebutValidite",
+    "dateFinValidite",
     "Ref",
     "En totalité ?",
     "numero IBF",
   ];
+  if (CALLER === "editionArticle") {
+    M_SizeColumn.push(...pieces.map((secteur) => secteur.libelle));
+  }
+
   const L_SizeColumn = [
+    "email",
+    "dateDebutValidite",
+    "dateFinValidite",
     "Fournisseur",
     "Conditionnement",
     "commentaire_Reception",
     "commentaire_Commande",
     "commentaire_Demande",
   ];
-  const XL_SizeColumn = ["Article"];
+  const XL_SizeColumn = [
+    "libelle",
+    "Article",
+    "siteWeb",
+    "getCertificatAnalyse",
+  ];
 
-  const dateColumns = ["date_Reception", "date_Commande", "date_Demande"];
+  const dateColumns = [
+    "date_Reception",
+    "date_Commande",
+    "date_Demande",
+    "dateDebutValidite",
+    "dateFinValidite",
+  ];
   const textColumns = ["commentaire_Reception"];
-  const checkboxColumns = ["En totalité ?"];
+  let checkboxColumns = [];
+
+  if (CALLER === "receptionArticle") {
+    checkboxColumns = ["En totalité ?"];
+  } else if (CALLER === "editionArticle") {
+    const listePiece = pieces.map((secteur) => secteur.libelle);
+    checkboxColumns = listePiece;
+  }
+  const dropdownColumns = ["Fournisseur"];
 
   const columnsWithoutIgnoredFields =
     data && data.length > 0
@@ -79,6 +111,11 @@ const generateColumns = (
       renderCell = renderCheckCell;
     }
 
+    let renderEditCell;
+    if (dropdownColumns.includes(label)) {
+      renderEditCell = renderDropdownCell;
+    }
+
     const column = {
       field: label,
       headerName: label.substring(label.indexOf("_") + 1),
@@ -95,7 +132,9 @@ const generateColumns = (
     if (renderCell) {
       column.renderCell = renderCell;
     }
-
+    if (renderEditCell) {
+      column.renderEditCell = renderEditCell;
+    }
     return column;
   });
 

@@ -135,6 +135,8 @@ const TableArticlesReception = ({ pieces }) => {
   ];
   const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
 
+  const CALLER = "receptionArticle";
+
   return (
     <DataGrid
       experimentalFeatures={{ columnGrouping: true }}
@@ -143,7 +145,9 @@ const TableArticlesReception = ({ pieces }) => {
         data,
         IGNORED_FIELDS,
         EDITABLE_COLUMNS,
-        handleCheckBoxChange
+        handleCheckBoxChange,
+        null,
+        CALLER
       )}
       sx={dataTableStyle}
       getRowId={(row) => row.commande_id}

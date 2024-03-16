@@ -3,33 +3,36 @@ import { DataGrid } from "@mui/x-data-grid";
 import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { API_URL, GetFournisseurs } from "../API/api";
+import { API_URL, GetPieces, GetSecteurs } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 
 const IGNORED_FIELDS = ["ID"];
-const EDITABLE_COLUMNS = [
-  "libelle",
-  "dateDebutValidite",
-  "dateFinValidite",
-  "telephone",
-  "email",
-  "siteWeb",
-  "getCertificatAnalyse",
-];
+const EDITABLE_COLUMNS = ["libelle", "dateDebutValidite", "dateFinValidite"];
 
-const TableEditionFournisseurs = () => {
-  const [fournisseurs, setFournisseurs] = useState([]);
+import PropTypes from "prop-types";
+
+const TableEditionPiecesEtSecteurs = ({ PieceOuSecteur }) => {
+  const [pieces, setPieces] = useState([]);
+  const [secteurs, setSecteurs] = useState([]);
 
   useEffect(() => {
-    (async () => {
-      setFournisseurs(await GetFournisseurs());
-    })();
-  }, []);
+    if (PieceOuSecteur === "Piece") {
+      (async () => {
+        setPieces(await GetPieces());
+      })();
+    } else if (PieceOuSecteur === "Secteur") {
+      (async () => {
+        setSecteurs(await GetSecteurs());
+      })();
+    }
+  }, [PieceOuSecteur]);
+
+  const data = PieceOuSecteur === "Piece" ? pieces : secteurs;
 
   const handleCellEditCommit = async (params) => {
     const { ID } = params;
-    const updatedData = [...fournisseurs];
+    const updatedData = [...data];
     const rowIndex = updatedData.findIndex((row) => row.ID === ID);
 
     const updatedRow = { ...updatedData[rowIndex] };
@@ -37,7 +40,7 @@ const TableEditionFournisseurs = () => {
       updatedRow[key] = params[key];
     }
     updatedData[rowIndex] = updatedRow;
-    setFournisseurs(updatedData);
+    setPieces(updatedData);
 
     try {
       const requestData = {
@@ -49,12 +52,12 @@ const TableEditionFournisseurs = () => {
         if (key === "dateDebutValidite" || key === "dateFinValidite") {
           const dateObj = new Date(updatedData[rowIndex][key]);
           const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
-          if (formattedDate !== fournisseurs[rowIndex][key]) {
+          if (formattedDate !== data[rowIndex][key]) {
             requestData[key] = formattedDate;
             dataChanged = true;
           }
         } else {
-          if (updatedData[rowIndex][key] !== fournisseurs[rowIndex][key]) {
+          if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
             updatedData[rowIndex][key] === ""
               ? (requestData[key] = 0)
               : (requestData[key] = updatedData[rowIndex][key]);
@@ -65,10 +68,15 @@ const TableEditionFournisseurs = () => {
 
       if (dataChanged) {
         await axios.put(
-          `${API_URL}/editFournisseur/`,
+          `${API_URL}/edit${PieceOuSecteur}/`,
           requestData,
           getAuthHeader()
         );
+        if (PieceOuSecteur === "Piece") {
+          setPieces(await GetPieces());
+        } else if (PieceOuSecteur === "Secteur") {
+          setSecteurs(await GetSecteurs());
+        }
         return updatedRow;
       }
     } catch (error) {
@@ -78,12 +86,11 @@ const TableEditionFournisseurs = () => {
 
   return (
     <DataGrid
-      rows={fournisseurs}
-      columns={generateColumns(fournisseurs, IGNORED_FIELDS, EDITABLE_COLUMNS)}
+      rows={data}
+      columns={generateColumns(data, IGNORED_FIELDS, EDITABLE_COLUMNS)}
       sx={dataTableStyle}
       getRowId={(row) => row.ID}
       density="compact"
-      getRowHeight={() => "auto"}
       slots={{
         toolbar: CustomToolbar,
       }}
@@ -92,4 +99,8 @@ const TableEditionFournisseurs = () => {
   );
 };
 
-export default TableEditionFournisseurs;
+TableEditionPiecesEtSecteurs.propTypes = {
+  PieceOuSecteur: PropTypes.string.isRequired,
+};
+
+export default TableEditionPiecesEtSecteurs;

@@ -143,25 +143,35 @@ def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
         user.Password = bcrypt.hashpw(user.Password, salt)
         return CRUD.create_user(db, user)
 
+def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get=None):
+    formatted_results = []
+    for row in results:
+        print(row)
+        formatted_result = {}
+        for i, key in enumerate(first_keys_to_get):
+            if i < len(row):
+                formatted_result[key] = row[i] if row[i] is not None else (0 if key.startswith('quantité') else None)
+                print(formatted_result)
+            else:
+                formatted_result[key] = None
+                print(formatted_result)
+        for i in range(len(secteur_labels)):
+            formatted_result[secteur_labels[i]] = row[i + len(first_keys_to_get)] if row[i + len(first_keys_to_get)] is not None else None
+            print(formatted_result)
+        if second_keys_to_get:
+            for i, key in enumerate(second_keys_to_get):
+                formatted_result[key] = row[i + len(first_keys_to_get) + len(secteur_labels)] if row[i + len(first_keys_to_get) + len(secteur_labels)] is not None else None
+                print(formatted_result)
+        formatted_results.append(formatted_result)
+    print(formatted_results)
+    return formatted_results
 
     # Formatage des résultats de la requête
 def format_user_results(results):
     secteur_labels = client_repository.get_secteur_labels()
-    formatted_results = []
-    for row in results:
-        formatted_result = {
-            "user_id": row[0],
-            "Email": row[1],
-            "Admin": row[2],
-            "Autorisation": row[3],
-            "Demandeur": row[4],
-            "Acheteur": row[5],
-            "Editeur": row[6],
-        }
-        formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 7] for i in range(len(secteur_labels))})
-        formatted_results.append(formatted_result)
-    return formatted_results
+    first_keys_to_get = ["user_id", "Email", "Admin", "Autorisation", "Demandeur", "Acheteur", "Editeur"]
+    second_keys_to_get = None
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 
     # Récupération de la liste des utilisateurs
 @app.get("/users/")
@@ -227,28 +237,29 @@ def update_secteur(edit_secteur: schemas.edit_piece_or_secteur, db: Session = De
 # region : Visualisation création et modification d'une commande
 
     # Formatage des résultats de la requête
+def format_demmande_results(results):
+    secteur_labels = client_repository.get_secteur_labels()
+    first_keys_to_get = ["article_id", "commande_id", "Article", "Ref", "Fournisseur", "Conditionnement", "quantité_En attente", "quantité_A commander", "date_Demande"]
+    second_keys_to_get = ["commentaire_Demande"]
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+
 def format_Commande_results(results):
     secteur_labels = client_repository.get_secteur_labels()
-    formatted_results = []
-    for row in results:
-        formatted_result = {
-            "commande_id": row[0],
-            "article_id": row[1],
-            "Article": row[2],
-            "Ref": row[3],
-            "Fournisseur": row[4],
-            "Conditionnement": row[5],
-            "quantité_A commander": row[6] if row[6] is not None else 0,
-            "date_Demande": row[7] if row[7] is not None else None,
-            "date_Commande": row[8] if row[8] is not None else None,
-        }
-        formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 9] if row[i + 9] is not None else None for i in range(len(secteur_labels))})
-        formatted_result.update({f"commentaire_Demande": row[9 + len(secteur_labels)]})
-        formatted_result.update({f"commentaire_Commande": row[10 + len(secteur_labels)]})
-        formatted_results.append(formatted_result)
-    return formatted_results 
+    first_keys_to_get = ["article_id", "commande_id", "Article", "Ref", "Fournisseur", "Conditionnement", "quantité_A commander", "date_Demande", "date_Commande"]
+    second_keys_to_get = ["commentaire_Demande", "commentaire_Commande"]
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 
+def format_Reception_results(results):
+    secteur_labels = client_repository.get_secteur_labels()
+    first_keys_to_get = ["article_id", "commande_id", "reception_id", "Article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_En attente", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
+    second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+
+def format_Historique_results(results):
+    secteur_labels = client_repository.get_secteur_labels()
+    first_keys_to_get = ["article_id", "commande_id", "reception_id", "Article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
+    second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 
 @app.get("/articlesCommande/")
 def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_user)):
@@ -282,26 +293,6 @@ def update_commande(edit_commande: schemas.edit_demande_commande_reception, db: 
 
 # region : Visualisation modification et création d'une demande
     # Récupération de la liste des articles par piece
-def format_demmande_results(results):
-    secteur_labels = client_repository.get_secteur_labels()
-    formatted_results = []
-    for row in results:
-        formatted_result = {
-            "commande_id": row[0],
-            "article_id": row[1],
-            "Article": row[2],
-            "Ref": row[3],
-            "Fournisseur": row[4],
-            "Conditionnement": row[5],
-            "quantité_En attente": row[9 + len(secteur_labels)] if row[9 + len(secteur_labels)] is not None else 0,
-            "quantité_A commander": row[6] if row[6] is not None else 0,
-            "date_Demande": row[7] if row[7] is not None else None,
-        }
-        formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 8] if row[i + 8] is not None else None for i in range(len(secteur_labels))})
-        formatted_result.update({f"commentaire_Demande": row[8 + len(secteur_labels)]})
-        formatted_results.append(formatted_result)
-    return formatted_results             
 
 @router.get("/articlesDemande/{piece}")
 def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depends(get_current_user)):
@@ -322,39 +313,7 @@ def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depend
         raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
 
         
-def format_Reception_results(results):
-    secteur_labels = client_repository.get_secteur_labels()
-    formatted_results = []
-    for row in results:
-        formatted_result = {
-            "commande_id": row[0],
-            "article_id": row[1],
-            "Article": row[2],
-            "Ref": row[3],
-            "Fournisseur": row[4],
-            "Conditionnement": row[5],
-            "date_Demande": row[7] if row[7] is not None else None,
-            "date_Commande": row[8] if row[8] is not None else None,
-            "date_Reception": row[9] if row[9] is not None else None,
-            "quantité_Commandé": row[6] if row[6] is not None else 0,
-            "quantité_Reçue": row[15 + len(secteur_labels)] if row[15 + len(secteur_labels)] is not None else None,
-            "En totalité ?": row[10] if row[10] is not None else None,
-            
-            "reception_id": row[14 + len(secteur_labels)] if row[14 + len(secteur_labels)] is not None else None,
-        }
-        formatted_result.update(
-            {f"{secteur_labels[i]}": row[i + 11] if row[i + 11] is not None else 0 for i in range(len(secteur_labels))})
-        formatted_result.update(
-            {"commentaire_Demande": row[11 + len(secteur_labels)] if row[11 + len(secteur_labels)] is not None else None}) 
-        formatted_result.update(
-            {"commentaire_Commande": row[12 + len(secteur_labels)] if row[12 + len(secteur_labels)] is not None else None})
-        formatted_result.update(
-            {"commentaire_Reception": row[13 + len(secteur_labels)] if row[13 + len(secteur_labels)] is not None else None})
 
-
-        formatted_results.append(formatted_result)
-
-    return formatted_results 
 
 @router.get("/articlesReception/{piece}")
 def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depends(get_current_user)):
@@ -378,7 +337,7 @@ def read_historique_commandes(current_user: schemas.UserBase = Depends(get_curre
     if current_user.Demandeur is True or current_user.Acheteur is True:
         try:
             results = client_repository.get_historique_commandes()
-            formatted_results = format_Reception_results(results)
+            formatted_results = format_Historique_results(results)
             return {"results": formatted_results}
         except Exception as e:
             return {"error": str(e)}
@@ -421,25 +380,12 @@ def uptdate_reception(edit_reception: schemas.edit_demande_commande_reception,  
         except Exception as e:
             print(f"error: {e}")
 
-
 def format_Article_For_Edit_results(results):
     piece_labels = client_repository.get_piece_labels()
-    formatted_results = []
-    for row in results:
-        formatted_result = {
-            "article_id": row[0],
-            "libelle": row[1],
-            "ref": row[2],
-            "fournisseur": row[3],
-            "conditionnement": row[4],
-            "dateDebutValidite": row[5],
-            "dateFinValidite": row[6] if row[6] is not None else 0,
-        }
-        formatted_result.update(
-            {f"{piece_labels[i]}": row[i + 7] if row[i + 7] is not None else 0 for i in range(len(piece_labels))})
-        formatted_results.append(formatted_result)
+    first_keys_to_get = ["article_id","Article", "Ref", "Fournisseur", "Conditionnement", "dateDebutValidite", "dateFinValidite"]
+    second_keys_to_get = []
+    return format_results(results, piece_labels, first_keys_to_get, second_keys_to_get)
 
-    return formatted_results 
 
 @app.get("/getArticleForEdit/")
 def update_article(current_user: schemas.UserBase = Depends(get_current_user)):

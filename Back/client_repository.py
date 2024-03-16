@@ -104,10 +104,11 @@ def get_articles_by_secteur(piece_libelle):
         select_part = ", ".join(
             [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS quantite_{libelle}" for libelle in secteur_labels])
 
-        query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, "
+        query = text(f"SELECT a.ID, c.ID, a.libelle, a.ref, f.libelle, a.conditionnement, "
+              f"{quantite_demande}-{quantite_recu} as quantite_en_attente, "
               "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
               f"c.dateDemande, {select_part}, a.commentaire "
-              f", {quantite_demande}-{quantite_recu} as quantite_en_attente "
+
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
               "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
@@ -134,10 +135,19 @@ def get_articles_to_receve(piece_libelle):
 
         select_part = ", ".join(
             [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
+        
+        quantite_demande = text("(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID) ")
 
-        query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
-              "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-              f"c.dateDemande, c.dateCommande, max(r.dateReception), c.enTotalite , {select_part}, c.commentaireDemandeur, c.commentaire, r.commentaire, r.ID, r.quantite "
+        quantite_recu = text("(SELECT SUM(COALESCE(r_sub.quantite, 0)) as quantite_recu "
+             "FROM commandes c_sub "
+             "LEFT JOIN receptions r_sub ON r_sub.commande_id = c_sub.ID "
+             "WHERE c_sub.article_id = a.ID "
+             "AND c_sub.id = c.ID  "
+             "AND (c_sub.enTotalite is null or c_sub.enTotalite = 0)) ")
+        
+        query = text(f"SELECT a.ID, c.ID, r.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
+              f"{quantite_demande}, {quantite_demande}-{quantite_recu} as quantite_en_attente , r.quantite, "
+              f"c.dateDemande, c.dateCommande, max(r.dateReception), c.enTotalite , {select_part}, c.commentaireDemandeur, c.commentaire, r.commentaire "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
               "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
@@ -169,9 +179,9 @@ def get_historique_commandes():
         select_part = ", ".join(
             [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
 
-        query = text(f"SELECT c.ID, a.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
-              "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-              f"c.dateDemande, c.dateCommande, r.dateReception, c.enTotalite, {select_part}, c.commentaireDemandeur, c.commentaire, r.commentaire, r.ID, r.quantite  "
+        query = text(f"SELECT a.ID,c.ID, r.ID, a.libelle, a.ref, f.libelle, a.conditionnement,  "
+              "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), r.quantite, "
+              f"c.dateDemande, c.dateCommande, r.dateReception, c.enTotalite, {select_part}, c.commentaireDemandeur, c.commentaire, r.commentaire  "
               "FROM articles a "
               "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
               "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
@@ -198,7 +208,7 @@ def get_articles_to_buy():
         select_part = ", ".join(
             [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
 
-        query = text(f"SELECT DISTINCT c.ID, a.ID, a.libelle , a.ref, f.libelle, a.conditionnement, "
+        query = text(f"SELECT DISTINCT a.ID, c.ID, a.libelle , a.ref, f.libelle, a.conditionnement, "
               f"(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
               "c.dateDemande , c.dateCommande, "    
               f"{select_part}, a.commentaire, c.commentaire "
