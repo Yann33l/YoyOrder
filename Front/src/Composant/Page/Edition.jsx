@@ -1,7 +1,6 @@
 import TableEditionArticles from "../Tableaux/Table_EditionArticles";
 import TableEditionFournisseurs from "../Tableaux/Table_EditionFournisseurs";
-import TableEditionSecteurs from "../Tableaux/Table_EditionSecteurs";
-import TableEditionPieces from "../Tableaux/Table_EditionPieces";
+import TableEditionPiecesEtSecteurs from "../Tableaux/Table_EditionPiecesEtSecteurs";
 
 import { useState } from "react";
 
@@ -34,7 +33,7 @@ const Edition = () => {
         mainSubContent = (
           <div className="creation">
             <p>ici c&#39;est la création {subContent}</p>
-            <TableEditionPieces />
+            <TableEditionPiecesEtSecteurs PieceOuSecteur={subContent} />
           </div>
         );
         break;
@@ -42,7 +41,7 @@ const Edition = () => {
         mainSubContent = (
           <div className="creation">
             <p>ici c&#39;est la création {subContent}</p>
-            <TableEditionSecteurs />
+            <TableEditionPiecesEtSecteurs PieceOuSecteur={subContent} />
           </div>
         );
         break;

@@ -21,27 +21,11 @@ const TableEditionArticles = () => {
   const [EDITABLE_COLUMNS, setEDITABLE_COLUMNS] = useState([]);
   const [pieces, setPieces] = useState([]);
 
-  const fetchFournisseurs = async () => {
-    try {
-      const fournisseursData = await GetActiveFournisseurs();
-      setFournisseurs(fournisseursData);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des fournisseurs :", error);
-    }
-  };
-
-  const fetchPieces = async () => {
-    try {
-      const Pieces = await GetPieces();
-      setPieces(Pieces);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des fournisseurs :", error);
-    }
-  };
-
   useEffect(() => {
-    fetchFournisseurs();
-    fetchPieces();
+    (async () => {
+      setFournisseurs(await GetActiveFournisseurs());
+      setPieces(await GetPieces());
+    })();
   }, []);
 
   const handleCheckBoxChange = async (params) => {

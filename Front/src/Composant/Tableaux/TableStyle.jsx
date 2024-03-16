@@ -20,6 +20,7 @@ const generateColumns = (
 ) => {
   const S_SizeColumn = [];
   const M_SizeColumn = [
+    "telephone",
     "date_Reception",
     "date_Commande",
     "date_Demande",
@@ -38,13 +39,21 @@ const generateColumns = (
   }
 
   const L_SizeColumn = [
+    "email",
+    "dateDebutValidite",
+    "dateFinValidite",
     "Fournisseur",
     "Conditionnement",
     "commentaire_Reception",
     "commentaire_Commande",
     "commentaire_Demande",
   ];
-  const XL_SizeColumn = ["Article"];
+  const XL_SizeColumn = [
+    "libelle",
+    "Article",
+    "siteWeb",
+    "getCertificatAnalyse",
+  ];
 
   const dateColumns = [
     "date_Reception",
