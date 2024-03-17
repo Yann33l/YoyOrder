@@ -7,8 +7,13 @@ import { DataGrid } from "@mui/x-data-grid";
 import { MenuItem, Select } from "@mui/material";
 import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
-import { API_URL, GetActiveFournisseurs, GetPieces } from "../API/api";
+import { useEffect, useState } from "react";
+import {
+  API_URL,
+  GetActiveFournisseurs,
+  GetPieces,
+  updateDataTables,
+} from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 
@@ -25,6 +30,16 @@ const TableEditionArticles = () => {
     (async () => {
       setFournisseurs(await GetActiveFournisseurs());
       setPieces(await GetPieces());
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const responseData = await updateDataTables(
+        setArticles,
+        "getArticleForEdit"
+      );
+      setEDITABLE_COLUMNS(Object.keys(responseData.results[0]));
     })();
   }, []);
 
@@ -57,7 +72,7 @@ const TableEditionArticles = () => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await updateDataTables(setArticles, "getArticleForEdit");
       } else {
         console.log("Aucune modification");
       }
@@ -65,24 +80,6 @@ const TableEditionArticles = () => {
       console.error("Erreur lors de la mise à jour : ", error);
     }
   };
-
-  const updateData = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/getArticleForEdit/`,
-        getAuthHeader()
-      );
-      const responseData = response.data;
-      setArticles(responseData.results);
-      setEDITABLE_COLUMNS(Object.keys(responseData.results[0]));
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  useEffect(() => {
-    updateData();
-  }, [updateData]);
 
   const renderDropdownCell = (params) => (
     <Select
@@ -131,7 +128,7 @@ const TableEditionArticles = () => {
             requestData[key] = formattedDate;
             dataChanged = true;
           }
-        } else if (key === "fournisseur") {
+        } else if (key === "Fournisseur") {
           if (updatedData[rowIndex][key] !== articles[rowIndex][key]) {
             const fournisseurLabelChanged = updatedData[rowIndex][key];
             for (const fournisseur of fournisseurs) {
@@ -141,11 +138,18 @@ const TableEditionArticles = () => {
             }
             dataChanged = true;
           }
+        } else if (key === "Article") {
+          if (updatedData[rowIndex][key] !== articles[rowIndex][key]) {
+            updatedData[rowIndex][key] === ""
+              ? (requestData[key] = 0)
+              : (requestData["libelle"] = updatedData[rowIndex][key]);
+            dataChanged = true;
+          }
         } else {
           if (updatedData[rowIndex][key] !== articles[rowIndex][key]) {
             updatedData[rowIndex][key] === ""
               ? (requestData[key] = 0)
-              : (requestData[key] = updatedData[rowIndex][key]);
+              : (requestData[key.toLowerCase()] = updatedData[rowIndex][key]);
             dataChanged = true;
           }
         }

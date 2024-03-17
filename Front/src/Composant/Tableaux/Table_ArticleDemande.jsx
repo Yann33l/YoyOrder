@@ -1,7 +1,7 @@
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
-import { API_URL } from "../API/api";
+import { useEffect, useState } from "react";
+import { API_URL, updateDataTables } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import {
@@ -19,16 +19,7 @@ const TableArticlesDemande = ({ pieces }) => {
   const [editableColumns, setEditableColumns] = useState([]);
 
   useEffect(() => {
-    const fetchEditableColumns = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/secteur_labels/`);
-        const responseData = response.data;
-        setEditableColumns(responseData);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchEditableColumns();
+    updateDataTables(setEditableColumns, "secteur_labels");
   }, []);
 
   const EDITABLE_COLUMNS = [
@@ -37,22 +28,9 @@ const TableArticlesDemande = ({ pieces }) => {
     ...editableColumns,
   ];
 
-  const updateData = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/articlesDemande/${pieces}`,
-        getAuthHeader()
-      );
-      const responseData = response.data;
-      setData(responseData.results);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [pieces]);
-
   useEffect(() => {
-    updateData();
-  }, [pieces, updateData]);
+    updateDataTables(setData, "articlesDemande", pieces);
+  }, [pieces]);
 
   const handleCellEditCommit = async (params) => {
     const { article_id } = params;
@@ -103,7 +81,7 @@ const TableArticlesDemande = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await updateDataTables(setData, "articlesDemande", pieces);
         return updatedRow;
       }
     } catch (error) {

@@ -35,7 +35,7 @@ const generateColumns = (
     "numero IBF",
   ];
   if (CALLER === "editionArticle") {
-    M_SizeColumn.push(...pieces.map((secteur) => secteur.libelle));
+    M_SizeColumn.push(...pieces.map((piece) => piece.libelle));
   }
 
   const L_SizeColumn = [
@@ -68,7 +68,7 @@ const generateColumns = (
   if (CALLER === "receptionArticle") {
     checkboxColumns = ["En totalité ?"];
   } else if (CALLER === "editionArticle") {
-    const listePiece = pieces.map((secteur) => secteur.libelle);
+    const listePiece = pieces.map((piece) => piece.libelle);
     checkboxColumns = listePiece;
   }
   const dropdownColumns = ["Fournisseur"];

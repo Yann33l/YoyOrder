@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
-import { API_URL } from "../API/api";
+import { API_URL, updateDataTables } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import {
@@ -15,21 +15,9 @@ const EDITABLE_COLUMNS = ["date_Commande", "commentaire_Commande"];
 
 const TableArticlesCommande = () => {
   const [data, setData] = useState([]);
-  const updateData = async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/articlesCommande/`,
-        getAuthHeader()
-      );
-      const responseData = response.data;
-      setData(responseData.results);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   useEffect(() => {
-    updateData();
+    updateDataTables(setData, "articlesCommande");
   }, []);
 
   const handleCellEditCommit = async (params) => {
@@ -80,7 +68,8 @@ const TableArticlesCommande = () => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await updateDataTables(setData, "articlesCommande");
+
         return updatedRow;
       }
     } catch (error) {

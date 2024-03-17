@@ -114,6 +114,7 @@ export const GetPieces = async () => {
     throw error;
   }
 };
+
 export const createPiece = async (newPieceData) => {
   try {
     const response = await axios.post(
@@ -217,6 +218,27 @@ export const createSecteur = async (newSecteurData) => {
     return data;
   } catch (error) {
     alert("Le secteur existe déjà");
+    console.error(error);
+    throw error;
+  }
+};
+
+export const updateDataTables = async (setData, table, piece) => {
+  try {
+    const response = await axios.get(
+      piece === undefined
+        ? `${API_URL}/${table}`
+        : `${API_URL}/${table}/${piece}`,
+      getAuthHeader()
+    );
+    const data = response.data;
+    if (table === "secteur_labels") {
+      setData(data);
+    } else {
+      setData(data.results);
+    }
+    return data;
+  } catch (error) {
     console.error(error);
     throw error;
   }

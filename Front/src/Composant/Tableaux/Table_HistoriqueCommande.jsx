@@ -1,9 +1,7 @@
 import { DataGrid } from "@mui/x-data-grid";
 import CustomToolbar from "./CustomToolBar";
-import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
-import { API_URL } from "../API/api";
-import { getAuthHeader } from "../API/token";
+import { updateDataTables } from "../API/api";
 import {
   dataTableStyle,
   columnGroupingModel,
@@ -17,11 +15,10 @@ const TableArticlesReception = () => {
 
   const updateData = useCallback(async () => {
     try {
-      const response = await axios.get(
-        `${API_URL}/historiqueReception/`,
-        getAuthHeader()
+      const responseData = await updateDataTables(
+        setData,
+        "historiqueReception"
       );
-      const responseData = response.data;
       const dataWithIds = responseData.results.map((row, index) => ({
         ...row,
         id: index,

@@ -349,7 +349,6 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_comma
     return db_commande
 
 def edit_commande_commentaire(db: Session, commande: schemas.edit_demande_commande_reception):
-    print(commande.articleID)
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
     db_article = db.query(models.articles).filter(
@@ -369,7 +368,6 @@ def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demand
     db_commande = db.query(models.commandes).filter(models.commandes.ID == edit_reception.commandeID).scalar()
     db_reception = db.query(models.receptions).filter(models.receptions.ID == edit_reception.receptionID).scalar()
     previous_db_reception = db.query(models.receptions).filter(models.receptions.commande_id == edit_reception.commandeID).order_by(models.receptions.dateReception.desc()).offset(1).first()
-    print(db_reception.dateReception)
     if (db_reception.dateReception is None and edit_reception.editedValue >= db_commande.dateCommande):
         db_reception.dateReception = edit_reception.editedValue
         db.commit()

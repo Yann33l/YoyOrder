@@ -1,8 +1,8 @@
 import { DataGrid } from "@mui/x-data-grid";
 import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
-import { API_URL } from "../API/api";
+import { useEffect, useState } from "react";
+import { API_URL, updateDataTables } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import {
@@ -13,6 +13,14 @@ import {
 import PropTypes from "prop-types";
 
 const TableArticlesReception = ({ pieces }) => {
+  const EDITABLE_COLUMNS = [
+    "date_Reception",
+    "quantité_Reçue",
+    "commentaire_Reception",
+    "En totalité ?",
+  ];
+  const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
+
   const [data, setData] = useState([]);
 
   const handleCheckBoxChange = async (params) => {
@@ -42,7 +50,7 @@ const TableArticlesReception = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await updateDataTables(setData, "articlesReception", pieces);
         return updatedRow;
       }
     } catch (error) {
@@ -50,22 +58,9 @@ const TableArticlesReception = ({ pieces }) => {
     }
   };
 
-  const updateData = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/articlesReception/${pieces}`,
-        getAuthHeader()
-      );
-      const responseData = response.data;
-      setData(responseData.results);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [pieces]);
-
   useEffect(() => {
-    updateData();
-  }, [pieces, updateData]);
+    updateDataTables(setData, "articlesReception", pieces);
+  }, [pieces]);
 
   const handleCellEditCommit = async (params) => {
     const { commande_id } = params;
@@ -102,7 +97,13 @@ const TableArticlesReception = ({ pieces }) => {
             }
           } else if (key === "commentaire_Reception") {
             requestData.commentaire = updatedData[rowIndex][key];
-          } else if (key === "quantité_Reçue") {
+          } else if (
+            key === "quantité_Reçue" &&
+            updatedData[rowIndex][key] <=
+              data[rowIndex]["quantité_En attente"] +
+                data[rowIndex]["quantité_Reçue"] &&
+            updatedData[rowIndex][key] >= 0
+          ) {
             requestData.quantité = updatedData[rowIndex][key];
           } else {
             updatedData[rowIndex][key] === ""
@@ -119,21 +120,13 @@ const TableArticlesReception = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await updateDataTables(setData, "articlesReception", pieces);
         return updatedRow;
       }
     } catch (error) {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
     }
   };
-
-  const EDITABLE_COLUMNS = [
-    "date_Reception",
-    "quantité_Reçue",
-    "commentaire_Reception",
-    "En totalité ?",
-  ];
-  const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
 
   const CALLER = "receptionArticle";
 
