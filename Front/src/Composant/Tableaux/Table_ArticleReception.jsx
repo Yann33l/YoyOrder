@@ -1,15 +1,10 @@
-import { DataGrid } from "@mui/x-data-grid";
-import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { API_URL, updateDataTables } from "../API/api";
+import { API_URL, getDataForTables } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
-import {
-  dataTableStyle,
-  columnGroupingModel,
-  generateColumns,
-} from "./TableStyle";
+import { returnTable } from "./TableStyle";
+
 import PropTypes from "prop-types";
 
 const TableArticlesReception = ({ pieces }) => {
@@ -20,8 +15,13 @@ const TableArticlesReception = ({ pieces }) => {
     "En totalité ?",
   ];
   const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
-
+  const CALLER = "receptionArticle";
+  const RowID = "commande_id";
   const [data, setData] = useState([]);
+
+  useEffect(() => {
+    getDataForTables(setData, "articlesReception", pieces);
+  }, [pieces]);
 
   const handleCheckBoxChange = async (params) => {
     const { commande_id } = params;
@@ -50,17 +50,13 @@ const TableArticlesReception = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await updateDataTables(setData, "articlesReception", pieces);
+        await getDataForTables(setData, "articlesReception", pieces);
         return updatedRow;
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour : ", error);
     }
   };
-
-  useEffect(() => {
-    updateDataTables(setData, "articlesReception", pieces);
-  }, [pieces]);
 
   const handleCellEditCommit = async (params) => {
     const { commande_id } = params;
@@ -120,7 +116,7 @@ const TableArticlesReception = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await updateDataTables(setData, "articlesReception", pieces);
+        await getDataForTables(setData, "articlesReception", pieces);
         return updatedRow;
       }
     } catch (error) {
@@ -128,30 +124,15 @@ const TableArticlesReception = ({ pieces }) => {
     }
   };
 
-  const CALLER = "receptionArticle";
-
-  return (
-    <DataGrid
-      experimentalFeatures={{ columnGrouping: true }}
-      rows={data}
-      columns={generateColumns(
-        data,
-        IGNORED_FIELDS,
-        EDITABLE_COLUMNS,
-        handleCheckBoxChange,
-        null,
-        CALLER
-      )}
-      sx={dataTableStyle}
-      getRowId={(row) => row.commande_id}
-      density="compact"
-      getRowHeight={() => "auto"}
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      processRowUpdate={handleCellEditCommit}
-      columnGroupingModel={columnGroupingModel}
-    />
+  return returnTable(
+    RowID,
+    data,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    handleCellEditCommit,
+    handleCheckBoxChange,
+    null,
+    CALLER
   );
 };
 

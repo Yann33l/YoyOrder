@@ -6,7 +6,7 @@ import {
   GridToolbarDensitySelector,
 } from "@mui/x-data-grid";
 
-export default function CustomToolbar() {
+export default function CustomToolBar() {
   return (
     <GridToolbarContainer>
       <GridToolbarQuickFilter />

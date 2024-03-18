@@ -1,15 +1,10 @@
-import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { API_URL, updateDataTables } from "../API/api";
+import { API_URL, getDataForTables } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
-import {
-  dataTableStyle,
-  columnGroupingModel,
-  generateColumns,
-} from "./TableStyle";
-import CustomToolbar from "./CustomToolBar";
+import { returnTable } from "./TableStyle";
+
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["commande_id", "article_id"];
@@ -17,9 +12,10 @@ const IGNORED_FIELDS = ["commande_id", "article_id"];
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
   const [editableColumns, setEditableColumns] = useState([]);
+  const RowID = "article_id";
 
   useEffect(() => {
-    updateDataTables(setEditableColumns, "secteur_labels");
+    getDataForTables(setEditableColumns, "secteur_labels");
   }, []);
 
   const EDITABLE_COLUMNS = [
@@ -29,7 +25,7 @@ const TableArticlesDemande = ({ pieces }) => {
   ];
 
   useEffect(() => {
-    updateDataTables(setData, "articlesDemande", pieces);
+    getDataForTables(setData, "articlesDemande", pieces);
   }, [pieces]);
 
   const handleCellEditCommit = async (params) => {
@@ -81,7 +77,7 @@ const TableArticlesDemande = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await updateDataTables(setData, "articlesDemande", pieces);
+        await getDataForTables(setData, "articlesDemande", pieces);
         return updatedRow;
       }
     } catch (error) {
@@ -89,21 +85,12 @@ const TableArticlesDemande = ({ pieces }) => {
     }
   };
 
-  return (
-    <DataGrid
-      experimentalFeatures={{ columnGrouping: true }}
-      rows={data}
-      columns={generateColumns(data, IGNORED_FIELDS, EDITABLE_COLUMNS)}
-      sx={dataTableStyle}
-      getRowId={(row) => row.article_id}
-      density="compact"
-      getRowHeight={() => "auto"}
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      processRowUpdate={handleCellEditCommit}
-      columnGroupingModel={columnGroupingModel}
-    />
+  return returnTable(
+    RowID,
+    data,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    handleCellEditCommit
   );
 };
 

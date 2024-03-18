@@ -1,11 +1,9 @@
-import { dataTableStyle, generateColumns } from "./TableStyle";
-import { DataGrid } from "@mui/x-data-grid";
-import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { API_URL, GetFournisseurs } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
+import { returnTable } from "./TableStyle";
 
 const IGNORED_FIELDS = ["ID"];
 const EDITABLE_COLUMNS = [
@@ -17,6 +15,7 @@ const EDITABLE_COLUMNS = [
   "siteWeb",
   "getCertificatAnalyse",
 ];
+const RowID = "ID";
 
 const TableEditionFournisseurs = () => {
   const [fournisseurs, setFournisseurs] = useState([]);
@@ -76,19 +75,12 @@ const TableEditionFournisseurs = () => {
     }
   };
 
-  return (
-    <DataGrid
-      rows={fournisseurs}
-      columns={generateColumns(fournisseurs, IGNORED_FIELDS, EDITABLE_COLUMNS)}
-      sx={dataTableStyle}
-      getRowId={(row) => row.ID}
-      density="compact"
-      getRowHeight={() => "auto"}
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      processRowUpdate={handleCellEditCommit}
-    />
+  return returnTable(
+    RowID,
+    fournisseurs,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    handleCellEditCommit
   );
 };
 

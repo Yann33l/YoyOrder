@@ -1,21 +1,18 @@
-import { DataGrid } from "@mui/x-data-grid";
-import CustomToolbar from "./CustomToolBar";
 import { useCallback, useEffect, useState } from "react";
-import { updateDataTables } from "../API/api";
-import {
-  dataTableStyle,
-  columnGroupingModel,
-  generateColumns,
-} from "./TableStyle";
+import { getDataForTables } from "../API/api";
+import { returnTable } from "./TableStyle";
+
 const IGNORED_FIELDS = ["id", "article_id", "reception_id"];
 const EDITABLE_COLUMNS = [];
+const RowID = "id";
+const CALLER = "historiqueReception";
 
 const TableArticlesReception = () => {
   const [data, setData] = useState([]);
 
   const updateData = useCallback(async () => {
     try {
-      const responseData = await updateDataTables(
+      const responseData = await getDataForTables(
         setData,
         "historiqueReception"
       );
@@ -33,20 +30,15 @@ const TableArticlesReception = () => {
     updateData();
   }, [updateData]);
 
-  return (
-    <DataGrid
-      experimentalFeatures={{ columnGrouping: true }}
-      rows={data}
-      columns={generateColumns(data, IGNORED_FIELDS, EDITABLE_COLUMNS)}
-      sx={dataTableStyle}
-      getRowHeight={() => "auto"}
-      getRowId={(row) => row.id}
-      density="compact"
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      columnGroupingModel={columnGroupingModel}
-    />
+  return returnTable(
+    RowID,
+    data,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    null,
+    null,
+    null,
+    CALLER
   );
 };
 

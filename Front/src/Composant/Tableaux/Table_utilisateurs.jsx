@@ -1,12 +1,10 @@
-import { DataGrid } from "@mui/x-data-grid";
-import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
-import { useEffect, useState } from "react";
-import { API_URL } from "../API/api";
+import { useEffect, useState, useCallback } from "react";
+import { API_URL, GetSecteurs } from "../API/api";
 import { getAuthHeader } from "../API/token";
-import { dataTableStyle } from "./TableStyle";
+import { returnTable } from "./TableStyle";
 
-const IGNORED_FIELDS = ["user_id", "Email", "id"];
+const IGNORED_FIELDS = ["user_id", "id"];
 const STATUS_FIELDS = [
   "Admin",
   "Demandeur",
@@ -14,117 +12,102 @@ const STATUS_FIELDS = [
   "Autorisation",
   "Editeur",
 ];
+const RowID = "id";
+const CALLER = "UserAdmin";
 
 const TableUtilisateurs = () => {
   const [data, setData] = useState([]);
+  const [secteurs, setSecteurs] = useState([]);
+  const [EDITABLE_COLUMNS, setEDITABLE_COLUMNS] = useState([]);
 
-  const getUtilisateurs = async () => {
+  const getUtilisateurs = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/users/`, getAuthHeader());
-      const data = response.data;
-      console.log(data);
-      const dataWithIds = data.results.map((row, index) => ({
-        ...row,
-        id: index + 1,
-      }));
-      setData(dataWithIds);
+      const responseData = response.data;
+      if (responseData.results && responseData.results.length > 0) {
+        const dataWithIds = responseData.results.map((row, index) => ({
+          ...row,
+          id: index + 1,
+          ...STATUS_FIELDS.reduce((acc, field) => {
+            acc[field] = row[field] || false;
+            return acc;
+          }, {}),
+        }));
+        setData(dataWithIds);
+        setEDITABLE_COLUMNS(
+          Object.keys(responseData.results[0]).filter(
+            (key) => !IGNORED_FIELDS.includes(key) && key !== "Email"
+          )
+        );
+      }
     } catch (error) {
       console.error(error);
     }
-  };
-
-  useEffect(() => {
-    getUtilisateurs();
   }, []);
 
-  const handleCheckBoxChange = async (event, params) => {
-    const newValue = event.target.checked;
-    const updatedData = data.map((row) => {
-      if (row.Email === params.row.Email) {
-        return {
-          ...row,
-          [params.field]: newValue,
-        };
-      }
-      return row;
-    });
-
+  const handleCheckBoxChange = useCallback(async (params) => {
+    const newValue = !params.row[params.field];
     try {
+      let requestData;
       if (STATUS_FIELDS.includes(params.field)) {
-        const requestData = {
+        requestData = {
           Email: params.row.Email,
           Status: newValue,
         };
-        await axios.put(
-          `${API_URL}/editUserStatus/${params.field}/`,
-          requestData,
-          getAuthHeader()
-        );
       } else if (!IGNORED_FIELDS.includes(params.field)) {
-        const requestData = {
+        requestData = {
           user_id: params.row.user_id,
           secteur_libelle: params.field,
         };
+      }
+      if (requestData) {
         await axios.put(
-          `${API_URL}/editUserSecteur/`,
+          `${API_URL}/editUser${
+            STATUS_FIELDS.includes(params.field) ? "Status" : "Secteur"
+          }/${STATUS_FIELDS.includes(params.field) ? params.field : ""}`,
           requestData,
           getAuthHeader()
         );
+        setData((prevData) => {
+          const updatedData = [...prevData];
+          const rowIndex = updatedData.findIndex(
+            (row) => row.Email === params.row.Email
+          );
+          if (rowIndex !== -1) {
+            updatedData[rowIndex] = {
+              ...updatedData[rowIndex],
+              [params.field]: newValue,
+            };
+          }
+          return updatedData;
+        });
       }
-      setData(updatedData);
     } catch (error) {
       console.error("Erreur lors de la mise à jour : ", error);
     }
-  };
+  }, []);
 
-  const renderCheckCell = (params) => {
-    return (
-      <input
-        type="checkbox"
-        checked={params.value || false}
-        onChange={(event) => handleCheckBoxChange(event, params)}
-      />
-    );
-  };
+  useEffect(() => {
+    (async () => {
+      setSecteurs(await GetSecteurs());
+    })();
+  }, []);
 
-  const userStatusAndSecteurs =
-    data && data.length > 0
-      ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
-      : [];
+  useEffect(() => {
+    getUtilisateurs();
+  }, [getUtilisateurs]);
 
-  const dynamicColumns = [
-    { field: "Email", headerName: "Email", width: 250 },
-    ...userStatusAndSecteurs.map((label) => ({
-      field: label,
-      headerName: label,
-    })),
-  ];
-
-  // modification des colonnes pour affichage en checkbox
-  const columns = dynamicColumns.map((column) => {
-    if (column.field !== "Email") {
-      return {
-        ...column,
-        renderCell: renderCheckCell,
-        flex: 1,
-      };
-    }
-    return column;
-  });
-
-  // Affichage du tableau
-  return (
-    <DataGrid
-      rows={data}
-      columns={columns}
-      loading={!data.length}
-      sx={dataTableStyle}
-      getRowId={(row) => row.id}
-      density="compact"
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-    />
+  return returnTable(
+    RowID,
+    data,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    null,
+    handleCheckBoxChange,
+    null,
+    CALLER,
+    null,
+    secteurs
   );
 };
 

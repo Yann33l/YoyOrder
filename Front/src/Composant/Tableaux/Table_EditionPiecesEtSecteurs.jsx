@@ -1,11 +1,9 @@
-import { dataTableStyle, generateColumns } from "./TableStyle";
-import { DataGrid } from "@mui/x-data-grid";
-import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { API_URL, GetPieces, GetSecteurs } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
+import { returnTable } from "./TableStyle";
 
 const IGNORED_FIELDS = ["ID"];
 const EDITABLE_COLUMNS = ["libelle", "dateDebutValidite", "dateFinValidite"];
@@ -15,6 +13,7 @@ import PropTypes from "prop-types";
 const TableEditionPiecesEtSecteurs = ({ PieceOuSecteur }) => {
   const [pieces, setPieces] = useState([]);
   const [secteurs, setSecteurs] = useState([]);
+  const RowID = "ID";
 
   useEffect(() => {
     if (PieceOuSecteur === "Piece") {
@@ -84,18 +83,12 @@ const TableEditionPiecesEtSecteurs = ({ PieceOuSecteur }) => {
     }
   };
 
-  return (
-    <DataGrid
-      rows={data}
-      columns={generateColumns(data, IGNORED_FIELDS, EDITABLE_COLUMNS)}
-      sx={dataTableStyle}
-      getRowId={(row) => row.ID}
-      density="compact"
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      processRowUpdate={handleCellEditCommit}
-    />
+  return returnTable(
+    RowID,
+    data,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    handleCellEditCommit
   );
 };
 

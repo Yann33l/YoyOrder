@@ -135,7 +135,6 @@ export const GetFournisseurs = async () => {
   try {
     const response = await axios.get(`${API_URL}/fournisseurs/`);
     const Fournisseurs = response.data;
-    console.log(Fournisseurs);
     return Fournisseurs;
   } catch (error) {
     console.error(
@@ -150,7 +149,6 @@ export const GetActiveFournisseurs = async () => {
   try {
     const response = await axios.get(`${API_URL}/fournisseursActifs/`);
     const Fournisseurs = response.data;
-    console.log(Fournisseurs);
     return Fournisseurs;
   } catch (error) {
     console.error(
@@ -223,7 +221,7 @@ export const createSecteur = async (newSecteurData) => {
   }
 };
 
-export const updateDataTables = async (setData, table, piece) => {
+export const getDataForTables = async (setData, table, piece) => {
   try {
     const response = await axios.get(
       piece === undefined

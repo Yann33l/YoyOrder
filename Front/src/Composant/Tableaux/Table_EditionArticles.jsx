@@ -1,25 +1,19 @@
-import {
-  dataTableStyle,
-  columnGroupingModel,
-  generateColumns,
-} from "./TableStyle";
-import { DataGrid } from "@mui/x-data-grid";
 import { MenuItem, Select } from "@mui/material";
-import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import {
   API_URL,
   GetActiveFournisseurs,
   GetPieces,
-  updateDataTables,
+  getDataForTables,
 } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
+import { returnTable } from "./TableStyle";
 
 const IGNORED_FIELDS = ["article_id"];
 const CALLER = "editionArticle";
-
+const RowID = "article_id";
 const TableEditionArticles = () => {
   const [articles, setArticles] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
@@ -35,7 +29,7 @@ const TableEditionArticles = () => {
 
   useEffect(() => {
     (async () => {
-      const responseData = await updateDataTables(
+      const responseData = await getDataForTables(
         setArticles,
         "getArticleForEdit"
       );
@@ -72,7 +66,7 @@ const TableEditionArticles = () => {
           requestData,
           getAuthHeader()
         );
-        await updateDataTables(setArticles, "getArticleForEdit");
+        await getDataForTables(setArticles, "getArticleForEdit");
       } else {
         console.log("Aucune modification");
       }
@@ -156,7 +150,6 @@ const TableEditionArticles = () => {
       }
 
       if (dataChanged) {
-        console.log("requestData", requestData);
         await axios.put(
           `${API_URL}/editArticle/`,
           requestData,
@@ -169,29 +162,16 @@ const TableEditionArticles = () => {
     }
   };
 
-  return (
-    <DataGrid
-      experimentalFeatures={{ columnGrouping: true }}
-      rows={articles}
-      columns={generateColumns(
-        articles,
-        IGNORED_FIELDS,
-        EDITABLE_COLUMNS,
-        handleCheckBoxChange,
-        renderDropdownCell,
-        CALLER,
-        pieces
-      )}
-      sx={dataTableStyle}
-      getRowId={(row) => row.article_id}
-      density="compact"
-      getRowHeight={() => "auto"}
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      processRowUpdate={handleCellEditCommit}
-      columnGroupingModel={columnGroupingModel}
-    />
+  return returnTable(
+    RowID,
+    articles,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    handleCellEditCommit,
+    handleCheckBoxChange,
+    renderDropdownCell,
+    CALLER,
+    pieces
   );
 };
 
