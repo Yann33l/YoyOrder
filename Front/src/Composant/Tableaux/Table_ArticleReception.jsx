@@ -1,19 +1,27 @@
-import { DataGrid } from "@mui/x-data-grid";
-import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
-import { API_URL } from "../API/api";
+import { useEffect, useState } from "react";
+import { API_URL, getDataForTables } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
-import {
-  dataTableStyle,
-  columnGroupingModel,
-  generateColumns,
-} from "./TableStyle";
+import { returnTable } from "./TableStyle";
+
 import PropTypes from "prop-types";
 
 const TableArticlesReception = ({ pieces }) => {
+  const EDITABLE_COLUMNS = [
+    "date_Reception",
+    "quantité_Reçue",
+    "commentaire_Reception",
+    "En totalité ?",
+  ];
+  const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
+  const CALLER = "receptionArticle";
+  const RowID = "commande_id";
   const [data, setData] = useState([]);
+
+  useEffect(() => {
+    getDataForTables(setData, "articlesReception", pieces);
+  }, [pieces]);
 
   const handleCheckBoxChange = async (params) => {
     const { commande_id } = params;
@@ -42,30 +50,13 @@ const TableArticlesReception = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await getDataForTables(setData, "articlesReception", pieces);
         return updatedRow;
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour : ", error);
     }
   };
-
-  const updateData = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/articlesReception/${pieces}`,
-        getAuthHeader()
-      );
-      const responseData = response.data;
-      setData(responseData.results);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [pieces]);
-
-  useEffect(() => {
-    updateData();
-  }, [pieces, updateData]);
 
   const handleCellEditCommit = async (params) => {
     const { commande_id } = params;
@@ -102,7 +93,13 @@ const TableArticlesReception = ({ pieces }) => {
             }
           } else if (key === "commentaire_Reception") {
             requestData.commentaire = updatedData[rowIndex][key];
-          } else if (key === "quantité_Reçue") {
+          } else if (
+            key === "quantité_Reçue" &&
+            updatedData[rowIndex][key] <=
+              data[rowIndex]["quantité_En attente"] +
+                data[rowIndex]["quantité_Reçue"] &&
+            updatedData[rowIndex][key] >= 0
+          ) {
             requestData.quantité = updatedData[rowIndex][key];
           } else {
             updatedData[rowIndex][key] === ""
@@ -119,7 +116,7 @@ const TableArticlesReception = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await getDataForTables(setData, "articlesReception", pieces);
         return updatedRow;
       }
     } catch (error) {
@@ -127,38 +124,15 @@ const TableArticlesReception = ({ pieces }) => {
     }
   };
 
-  const EDITABLE_COLUMNS = [
-    "date_Reception",
-    "quantité_Reçue",
-    "commentaire_Reception",
-    "En totalité ?",
-  ];
-  const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
-
-  const CALLER = "receptionArticle";
-
-  return (
-    <DataGrid
-      experimentalFeatures={{ columnGrouping: true }}
-      rows={data}
-      columns={generateColumns(
-        data,
-        IGNORED_FIELDS,
-        EDITABLE_COLUMNS,
-        handleCheckBoxChange,
-        null,
-        CALLER
-      )}
-      sx={dataTableStyle}
-      getRowId={(row) => row.commande_id}
-      density="compact"
-      getRowHeight={() => "auto"}
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      processRowUpdate={handleCellEditCommit}
-      columnGroupingModel={columnGroupingModel}
-    />
+  return returnTable(
+    RowID,
+    data,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    handleCellEditCommit,
+    handleCheckBoxChange,
+    null,
+    CALLER
   );
 };
 

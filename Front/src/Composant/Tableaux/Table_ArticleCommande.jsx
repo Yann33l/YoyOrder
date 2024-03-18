@@ -1,35 +1,18 @@
 import { useEffect, useState } from "react";
-import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
-import { API_URL } from "../API/api";
+import { API_URL, getDataForTables } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
-import {
-  dataTableStyle,
-  columnGroupingModel,
-  generateColumns,
-} from "./TableStyle";
-import CustomToolbar from "./CustomToolBar";
+import { returnTable } from "./TableStyle";
+
 const IGNORED_FIELDS = ["commande_id", "article_id"];
 const EDITABLE_COLUMNS = ["date_Commande", "commentaire_Commande"];
-
+const RowID = "commande_id";
 const TableArticlesCommande = () => {
   const [data, setData] = useState([]);
-  const updateData = async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/articlesCommande/`,
-        getAuthHeader()
-      );
-      const responseData = response.data;
-      setData(responseData.results);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   useEffect(() => {
-    updateData();
+    getDataForTables(setData, "articlesCommande");
   }, []);
 
   const handleCellEditCommit = async (params) => {
@@ -80,7 +63,8 @@ const TableArticlesCommande = () => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await getDataForTables(setData, "articlesCommande");
+
         return updatedRow;
       }
     } catch (error) {
@@ -88,21 +72,12 @@ const TableArticlesCommande = () => {
     }
   };
 
-  return (
-    <DataGrid
-      experimentalFeatures={{ columnGrouping: true }}
-      rows={data}
-      columns={generateColumns(data, IGNORED_FIELDS, EDITABLE_COLUMNS)}
-      sx={dataTableStyle}
-      getRowId={(row) => row.commande_id}
-      density="compact"
-      getRowHeight={() => "auto"}
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      processRowUpdate={handleCellEditCommit}
-      columnGroupingModel={columnGroupingModel}
-    />
+  return returnTable(
+    RowID,
+    data,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    handleCellEditCommit
   );
 };
 

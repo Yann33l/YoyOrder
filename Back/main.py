@@ -146,24 +146,18 @@ def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get=None):
     formatted_results = []
     for row in results:
-        print(row)
         formatted_result = {}
         for i, key in enumerate(first_keys_to_get):
             if i < len(row):
                 formatted_result[key] = row[i] if row[i] is not None else (0 if key.startswith('quantité') else None)
-                print(formatted_result)
             else:
                 formatted_result[key] = None
-                print(formatted_result)
         for i in range(len(secteur_labels)):
             formatted_result[secteur_labels[i]] = row[i + len(first_keys_to_get)] if row[i + len(first_keys_to_get)] is not None else None
-            print(formatted_result)
         if second_keys_to_get:
             for i, key in enumerate(second_keys_to_get):
                 formatted_result[key] = row[i + len(first_keys_to_get) + len(secteur_labels)] if row[i + len(first_keys_to_get) + len(secteur_labels)] is not None else None
-                print(formatted_result)
         formatted_results.append(formatted_result)
-    print(formatted_results)
     return formatted_results
 
     # Formatage des résultats de la requête
@@ -371,7 +365,6 @@ def uptdate_reception(edit_reception: schemas.edit_demande_commande_reception,  
             elif isinstance(edit_reception.editedValue, int):
                 CRUD.edit_commande_ReceptionEnTotalite(db, edit_reception)
             elif edit_reception.quantité is not None:
-                print("edit_reception.quantité")
                 CRUD.edit_reception_Quantite(db, edit_reception)
             results = client_repository.get_articles_to_receve("%")
             formatted_results = format_Reception_results(results)

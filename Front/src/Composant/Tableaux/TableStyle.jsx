@@ -1,3 +1,6 @@
+import { DataGrid } from "@mui/x-data-grid"; // Import the DataGrid component
+import CustomToolBar from "./CustomToolBar"; // Import the CustomToolbar component
+
 const dataTableStyle = {
   margin: "auto",
   backgroundColor: "#ffffff",
@@ -16,8 +19,13 @@ const generateColumns = (
   handleCheckBoxChange,
   renderDropdownCell,
   CALLER,
-  pieces
+  pieces,
+  secteurs
 ) => {
+  const columnsWithoutIgnoredFields =
+    data && data.length > 0
+      ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
+      : [];
   const S_SizeColumn = [];
   const M_SizeColumn = [
     "telephone",
@@ -33,13 +41,20 @@ const generateColumns = (
     "Ref",
     "En totalité ?",
     "numero IBF",
+    "Admin",
+    "Demandeur",
+    "Acheteur",
+    "Autorisation",
+    "Editeur",
   ];
   if (CALLER === "editionArticle") {
-    M_SizeColumn.push(...pieces.map((secteur) => secteur.libelle));
+    M_SizeColumn.push(...pieces.map((piece) => piece.libelle));
+  }
+  if (CALLER === "UserAdmin") {
+    S_SizeColumn.push(...secteurs.map((secteur) => secteur.libelle));
   }
 
   const L_SizeColumn = [
-    "email",
     "dateDebutValidite",
     "dateFinValidite",
     "Fournisseur",
@@ -49,6 +64,8 @@ const generateColumns = (
     "commentaire_Demande",
   ];
   const XL_SizeColumn = [
+    "Email",
+    "email",
     "libelle",
     "Article",
     "siteWeb",
@@ -63,20 +80,19 @@ const generateColumns = (
     "dateFinValidite",
   ];
   const textColumns = ["commentaire_Reception"];
-  let checkboxColumns = [];
+  let checkboxColumns = ["En totalité ?"];
 
-  if (CALLER === "receptionArticle") {
-    checkboxColumns = ["En totalité ?"];
-  } else if (CALLER === "editionArticle") {
-    const listePiece = pieces.map((secteur) => secteur.libelle);
-    checkboxColumns = listePiece;
+  if (CALLER === "editionArticle") {
+    const listePiece = pieces.map((piece) => piece.libelle);
+    checkboxColumns = [...checkboxColumns, listePiece];
+  } else if (CALLER === "UserAdmin") {
+    checkboxColumns = [
+      ...checkboxColumns,
+      ...columnsWithoutIgnoredFields.filter((column) => column !== "Email"),
+    ];
   }
-  const dropdownColumns = ["Fournisseur"];
 
-  const columnsWithoutIgnoredFields =
-    data && data.length > 0
-      ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
-      : [];
+  const dropdownColumns = ["Fournisseur"];
 
   const Columns = columnsWithoutIgnoredFields.map((label) => {
     let width = 50;
@@ -90,11 +106,13 @@ const generateColumns = (
       width = 400;
     }
     const renderCheckCell = (params) => {
+      const isReadOnly = CALLER === "historiqueReception";
       return (
         <input
           type="checkbox"
           checked={params.value || false}
-          onChange={() => handleCheckBoxChange(params)}
+          onChange={isReadOnly ? null : () => handleCheckBoxChange(params)}
+          disabled={isReadOnly}
         />
       );
     };
@@ -175,3 +193,40 @@ const columnGroupingModel = [
 ];
 
 export { columnGroupingModel };
+
+export const returnTable = (
+  RowID,
+  data,
+  IGNORED_FIELDS,
+  EDITABLE_COLUMNS,
+  handleCellEditCommit,
+  handleCheckBoxChange,
+  renderDropdownCell,
+  CALLER,
+  pieces,
+  secteurs
+) => (
+  <DataGrid
+    experimentalFeatures={{ columnGrouping: true }}
+    rows={data}
+    columns={generateColumns(
+      data,
+      IGNORED_FIELDS,
+      EDITABLE_COLUMNS,
+      handleCheckBoxChange,
+      renderDropdownCell,
+      CALLER,
+      pieces,
+      secteurs
+    )}
+    sx={dataTableStyle}
+    getRowId={(row) => row[RowID]}
+    density="compact"
+    getRowHeight={() => "auto"}
+    slots={{
+      toolbar: CustomToolBar,
+    }}
+    processRowUpdate={handleCellEditCommit}
+    columnGroupingModel={columnGroupingModel}
+  />
+);

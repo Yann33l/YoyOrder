@@ -1,20 +1,19 @@
-import {
-  dataTableStyle,
-  columnGroupingModel,
-  generateColumns,
-} from "./TableStyle";
-import { DataGrid } from "@mui/x-data-grid";
 import { MenuItem, Select } from "@mui/material";
-import CustomToolbar from "./CustomToolBar";
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
-import { API_URL, GetActiveFournisseurs, GetPieces } from "../API/api";
+import { useEffect, useState } from "react";
+import {
+  API_URL,
+  GetActiveFournisseurs,
+  GetPieces,
+  getDataForTables,
+} from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
+import { returnTable } from "./TableStyle";
 
 const IGNORED_FIELDS = ["article_id"];
 const CALLER = "editionArticle";
-
+const RowID = "article_id";
 const TableEditionArticles = () => {
   const [articles, setArticles] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
@@ -25,6 +24,16 @@ const TableEditionArticles = () => {
     (async () => {
       setFournisseurs(await GetActiveFournisseurs());
       setPieces(await GetPieces());
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const responseData = await getDataForTables(
+        setArticles,
+        "getArticleForEdit"
+      );
+      setEDITABLE_COLUMNS(Object.keys(responseData.results[0]));
     })();
   }, []);
 
@@ -57,7 +66,7 @@ const TableEditionArticles = () => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await getDataForTables(setArticles, "getArticleForEdit");
       } else {
         console.log("Aucune modification");
       }
@@ -65,24 +74,6 @@ const TableEditionArticles = () => {
       console.error("Erreur lors de la mise à jour : ", error);
     }
   };
-
-  const updateData = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/getArticleForEdit/`,
-        getAuthHeader()
-      );
-      const responseData = response.data;
-      setArticles(responseData.results);
-      setEDITABLE_COLUMNS(Object.keys(responseData.results[0]));
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  useEffect(() => {
-    updateData();
-  }, [updateData]);
 
   const renderDropdownCell = (params) => (
     <Select
@@ -131,7 +122,7 @@ const TableEditionArticles = () => {
             requestData[key] = formattedDate;
             dataChanged = true;
           }
-        } else if (key === "fournisseur") {
+        } else if (key === "Fournisseur") {
           if (updatedData[rowIndex][key] !== articles[rowIndex][key]) {
             const fournisseurLabelChanged = updatedData[rowIndex][key];
             for (const fournisseur of fournisseurs) {
@@ -141,18 +132,24 @@ const TableEditionArticles = () => {
             }
             dataChanged = true;
           }
+        } else if (key === "Article") {
+          if (updatedData[rowIndex][key] !== articles[rowIndex][key]) {
+            updatedData[rowIndex][key] === ""
+              ? (requestData[key] = 0)
+              : (requestData["libelle"] = updatedData[rowIndex][key]);
+            dataChanged = true;
+          }
         } else {
           if (updatedData[rowIndex][key] !== articles[rowIndex][key]) {
             updatedData[rowIndex][key] === ""
               ? (requestData[key] = 0)
-              : (requestData[key] = updatedData[rowIndex][key]);
+              : (requestData[key.toLowerCase()] = updatedData[rowIndex][key]);
             dataChanged = true;
           }
         }
       }
 
       if (dataChanged) {
-        console.log("requestData", requestData);
         await axios.put(
           `${API_URL}/editArticle/`,
           requestData,
@@ -165,29 +162,16 @@ const TableEditionArticles = () => {
     }
   };
 
-  return (
-    <DataGrid
-      experimentalFeatures={{ columnGrouping: true }}
-      rows={articles}
-      columns={generateColumns(
-        articles,
-        IGNORED_FIELDS,
-        EDITABLE_COLUMNS,
-        handleCheckBoxChange,
-        renderDropdownCell,
-        CALLER,
-        pieces
-      )}
-      sx={dataTableStyle}
-      getRowId={(row) => row.article_id}
-      density="compact"
-      getRowHeight={() => "auto"}
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      processRowUpdate={handleCellEditCommit}
-      columnGroupingModel={columnGroupingModel}
-    />
+  return returnTable(
+    RowID,
+    articles,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    handleCellEditCommit,
+    handleCheckBoxChange,
+    renderDropdownCell,
+    CALLER,
+    pieces
   );
 };
 

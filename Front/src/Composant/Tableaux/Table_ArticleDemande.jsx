@@ -1,15 +1,10 @@
-import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
-import { API_URL } from "../API/api";
+import { useEffect, useState } from "react";
+import { API_URL, getDataForTables } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
-import {
-  dataTableStyle,
-  columnGroupingModel,
-  generateColumns,
-} from "./TableStyle";
-import CustomToolbar from "./CustomToolBar";
+import { returnTable } from "./TableStyle";
+
 import PropTypes from "prop-types";
 
 const IGNORED_FIELDS = ["commande_id", "article_id"];
@@ -17,18 +12,10 @@ const IGNORED_FIELDS = ["commande_id", "article_id"];
 const TableArticlesDemande = ({ pieces }) => {
   const [data, setData] = useState([]);
   const [editableColumns, setEditableColumns] = useState([]);
+  const RowID = "article_id";
 
   useEffect(() => {
-    const fetchEditableColumns = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/secteur_labels/`);
-        const responseData = response.data;
-        setEditableColumns(responseData);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchEditableColumns();
+    getDataForTables(setEditableColumns, "secteur_labels");
   }, []);
 
   const EDITABLE_COLUMNS = [
@@ -37,22 +24,9 @@ const TableArticlesDemande = ({ pieces }) => {
     ...editableColumns,
   ];
 
-  const updateData = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/articlesDemande/${pieces}`,
-        getAuthHeader()
-      );
-      const responseData = response.data;
-      setData(responseData.results);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [pieces]);
-
   useEffect(() => {
-    updateData();
-  }, [pieces, updateData]);
+    getDataForTables(setData, "articlesDemande", pieces);
+  }, [pieces]);
 
   const handleCellEditCommit = async (params) => {
     const { article_id } = params;
@@ -103,7 +77,7 @@ const TableArticlesDemande = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await updateData();
+        await getDataForTables(setData, "articlesDemande", pieces);
         return updatedRow;
       }
     } catch (error) {
@@ -111,21 +85,12 @@ const TableArticlesDemande = ({ pieces }) => {
     }
   };
 
-  return (
-    <DataGrid
-      experimentalFeatures={{ columnGrouping: true }}
-      rows={data}
-      columns={generateColumns(data, IGNORED_FIELDS, EDITABLE_COLUMNS)}
-      sx={dataTableStyle}
-      getRowId={(row) => row.article_id}
-      density="compact"
-      getRowHeight={() => "auto"}
-      slots={{
-        toolbar: CustomToolbar,
-      }}
-      processRowUpdate={handleCellEditCommit}
-      columnGroupingModel={columnGroupingModel}
-    />
+  return returnTable(
+    RowID,
+    data,
+    IGNORED_FIELDS,
+    EDITABLE_COLUMNS,
+    handleCellEditCommit
   );
 };
 
