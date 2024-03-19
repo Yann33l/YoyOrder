@@ -84,9 +84,11 @@ def edit_user_secteur(db: Session, user_id: int, secteur_id: int):
 
 
 # Articles
-def get_articles(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.articles).offset(skip).limit(limit).all()
+def get_articles(db: Session):
+    return db.query(models.articles).all()
 
+def get_active_articles(db: Session):
+    return db.query(models.articles).filter(models.articles.dateFinValidite >= datetime.now().date()).all()
 
 def get_articles_by_libelle(db: Session, libelle: str):
     return db.query(models.articles).filter(models.articles.libelle == libelle).first()
@@ -147,15 +149,37 @@ def create_article(db: Session, article: schemas.ArticlesCreate):
     db.commit()
     db.refresh(db_article)
 #    liaison_article_lieuxdestockage(db, article)
-    try :liaison_article_piece(db, article)
+    try : liaison_article_piece(db, article)
     except: pass
-
     return db_article
+
+def create_compositionArticle(db: Session, composanteArticle: schemas.SousArticlesCreation):
+    db_sousArticle = models.sous_articles(
+        libelle=composanteArticle.libelle,
+        ref=composanteArticle.ref,
+        conditionnement=composanteArticle.conditionnement,
+        dateDebutValidite=date.today(),
+        dateFinValidite=datetime(3000, 12, 31),)
+    db.add(db_sousArticle)
+    db.commit()
+    for articleLié in composanteArticle.articles_ids :
+        db_r_article_sousArticle = models.r_articles_sous_articles(
+            article_id=articleLié,
+            sous_article_id=db_sousArticle.ID,
+            quantite=composanteArticle.Quantité)
+        db.add(db_r_article_sousArticle)
+        db.commit()
+        db.refresh(db_sousArticle)
+    dataAdded = db_sousArticle
+    dataAdded.articles_ids = composanteArticle.articles_ids
+    dataAdded.Quantité = composanteArticle.Quantité
+    return dataAdded
+
+
 
 def get_pieceID_by_libelle(db: Session, piece_libelle: str):
     piece = db.query(models.pieces).filter(models.pieces.libelle == piece_libelle).scalar()
     return piece.ID
-
 
 def edit_article(db: Session, article: schemas.ArticlesEdit):
     db_article = db.query(models.articles).filter(

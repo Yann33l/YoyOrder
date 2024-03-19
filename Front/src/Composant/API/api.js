@@ -101,6 +101,23 @@ export const GetActivesPieces = async () => {
   }
 };
 
+export const GetActivesArticles = async () => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/get_active_Articles/`,
+      getAuthHeader()
+    );
+    const Articles = response.data;
+    return Articles;
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des pièces depuis l'API :",
+      error
+    );
+    throw error;
+  }
+};
+
 export const GetPieces = async () => {
   try {
     const response = await axios.get(`${API_URL}/get_pieces/`, getAuthHeader());
@@ -111,22 +128,6 @@ export const GetPieces = async () => {
       "Erreur lors de la récupération des pièces depuis l'API :",
       error
     );
-    throw error;
-  }
-};
-
-export const createPiece = async (newPieceData) => {
-  try {
-    const response = await axios.post(
-      `${API_URL}/create_piece/`,
-      newPieceData,
-      getAuthHeader()
-    );
-    const data = response.data;
-    return data;
-  } catch (error) {
-    alert("La pièce existe déjà");
-    console.error(error);
     throw error;
   }
 };
@@ -173,49 +174,30 @@ export const GetSecteurs = async () => {
   }
 };
 
-export const createFournisseur = async (newFournisseurData) => {
+export const createData = async (newData, table) => {
   try {
+    console.log("newData", newData);
     const response = await axios.post(
-      `${API_URL}/create_fournisseur/`,
-      newFournisseurData,
+      `${API_URL}/create_${table}/`,
+      newData,
       getAuthHeader()
     );
-    const data = response.data;
-    return data;
-  } catch (error) {
-    alert("Le fournisseur existe déjà");
-    console.error(error);
-    throw error;
-  }
-};
 
-export const createArticle = async (newArticleData) => {
-  try {
-    const response = await axios.post(
-      `${API_URL}/create_article/`,
-      newArticleData,
-      getAuthHeader()
-    );
     const data = response.data;
     return data;
   } catch (error) {
-    alert("L'article existe déjà");
-    console.error(error);
-    throw error;
-  }
-};
-
-export const createSecteur = async (newSecteurData) => {
-  try {
-    const response = await axios.post(
-      `${API_URL}/create_secteur/`,
-      newSecteurData,
-      getAuthHeader()
-    );
-    const data = response.data;
-    return data;
-  } catch (error) {
-    alert("Le secteur existe déjà");
+    switch (table) {
+      case "fournisseur":
+        alert("Le fournisseur existe déjà");
+        break;
+      default:
+      case "article":
+        alert("L'article existe déjà");
+        break;
+      case "secteur":
+        alert("Le secteur existe déjà");
+        break;
+    }
     console.error(error);
     throw error;
   }

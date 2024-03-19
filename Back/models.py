@@ -32,6 +32,26 @@ class articles(Base):
     secteurs = relationship("secteurs", secondary="r_articles_secteurs")
     pieces = relationship("pieces", secondary="r_articles_pieces")
 
+class sous_articles(Base):
+    __tablename__ = "sous_articles"
+
+    ID = Column(Integer, primary_key=True, index=True)
+    libelle = Column(String(255))
+    ref = Column(String(255))
+    conditionnement = Column(String(255))
+    dateDebutValidite = Column(Date)
+    dateFinValidite = Column(Date)
+    commentaire = Column(String(255))
+
+class r_articles_sous_articles(Base):
+    __tablename__ = "r_articles_sous_articles"
+
+    ID = Column(Integer, primary_key=True, index=True)
+    article_id = Column(Integer, ForeignKey("articles.ID"))
+    sous_article_id = Column(Integer, ForeignKey("sous_articles.ID"))
+    quantite = Column(Integer)
+
+
 class fournisseurs(Base):
     __tablename__ = "fournisseurs"
 

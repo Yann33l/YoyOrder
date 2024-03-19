@@ -81,10 +81,9 @@ const generateColumns = (
   ];
   const textColumns = ["commentaire_Reception"];
   let checkboxColumns = ["En totalité ?"];
-
   if (CALLER === "editionArticle") {
-    const listePiece = pieces.map((piece) => piece.libelle);
-    checkboxColumns = [...checkboxColumns, listePiece];
+    checkboxColumns =
+      [...checkboxColumns] + "," + [pieces.map((piece) => piece.libelle)];
   } else if (CALLER === "UserAdmin") {
     checkboxColumns = [
       ...checkboxColumns,
@@ -204,11 +203,13 @@ export const returnTable = (
   renderDropdownCell,
   CALLER,
   pieces,
-  secteurs
+  secteurs,
+  setSelectedRows
 ) => (
   <DataGrid
     experimentalFeatures={{ columnGrouping: true }}
     rows={data}
+    {...(CALLER === "SelectionArticles" ? { checkboxSelection: true } : {})}
     columns={generateColumns(
       data,
       IGNORED_FIELDS,
@@ -219,6 +220,10 @@ export const returnTable = (
       pieces,
       secteurs
     )}
+    onRowSelectionModelChange={(RowID) => {
+      const selectedIDs = new Set(RowID);
+      setSelectedRows(selectedIDs);
+    }}
     sx={dataTableStyle}
     getRowId={(row) => row[RowID]}
     density="compact"
