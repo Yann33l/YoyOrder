@@ -387,11 +387,12 @@ def update_article(current_user: schemas.UserBase = Depends(get_current_user)):
         formatted_results = format_Article_For_Edit_results(results)
         return {"results": formatted_results}
     
-@app.get("/articles/", response_model=list[schemas.Articles])
-def read_articles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+
+@app.get("/get_active_Articles", response_model=list[schemas.ArticlesWithID])
+def read_active_articles(db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Autorisation is True:
-        articles = CRUD.get_articles(db, skip=skip, limit=limit)
-        return articles
+        actives_articles = CRUD.get_active_articles(db)
+        return actives_articles
 
 
 @app.post("/create_article/", response_model=schemas.ArticlesCreate)
@@ -403,6 +404,12 @@ def create_article(article: schemas.ArticlesCreate, db: Session = Depends(get_db
                 status_code=409, detail="l'article existe deja")
         else:
             return CRUD.create_article(db, article)
+        
+@app.post("/create_compositionArticle/", response_model=schemas.SousArticlesCreation)
+def create_compositionArticle(compositionArticle: schemas.SousArticlesCreation, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Autorisation is True:
+        print(compositionArticle)
+        return CRUD.create_compositionArticle(db, compositionArticle)
         
 
 @app.put("/editArticle/", response_model=schemas.ArticlesEdit)

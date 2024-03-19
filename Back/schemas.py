@@ -57,7 +57,6 @@ class Articles(BaseModel):
     class Config:
         orm_mode = True
 
-
 class ArticlesCreate(Articles):
     temperature: Optional[int] = None
     lieuxDeStockage: Optional[str] = None
@@ -73,6 +72,18 @@ class ArticlesEdit(BaseModel):
     dateFinValidite: Optional[date] = None
     pieceEdited: Optional[str]  = None
     newPieceValue: Optional[int]  = None
+
+class ArticlesWithID(Articles):
+    ID: int
+
+class SousArticlesCreation(BaseModel):
+    libelle: str
+    ref: str
+    conditionnement: Optional[str] = None
+    dateDebutValidite: Optional[date] = datetime.now().date()
+    dateFinValidite: Optional[date] = date(3000,12,31)
+    articles_ids: list[int]
+    Quantité: int
 
 class CreationFournisseurs(BaseModel):
     libelle: str

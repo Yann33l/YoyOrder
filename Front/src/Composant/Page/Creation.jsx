@@ -1,13 +1,8 @@
-import {
-  createArticle,
-  createFournisseur,
-  GetActiveFournisseurs,
-  createPiece,
-  createSecteur,
-} from "../API/api";
+import { createData, GetActiveFournisseurs } from "../API/api";
 import { GetActivesPieces } from "../API/api";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import TableArticles from "../Tableaux/Table_articles";
 
 const Creation = () => {
   const [pieces, setPieces] = useState([]);
@@ -15,35 +10,20 @@ const Creation = () => {
   const { register, handleSubmit, reset } = useForm();
   const [fournisseurs, setFournisseurs] = useState([]);
   const [donneesPrisesEnCompte, setDonneesPrisesEnCompte] = useState(false);
-
-  const fetchPieces = async () => {
-    try {
-      const piecesData = await GetActivesPieces();
-      setPieces(piecesData);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des pièces :", error);
-    }
-  };
-  const fetchFournisseurs = async () => {
-    try {
-      const fournisseursData = await GetActiveFournisseurs();
-      setFournisseurs(fournisseursData);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des fournisseurs :", error);
-    }
-  };
+  const [selectedRows, setSelectedRows] = useState([]);
 
   useEffect(() => {
-    fetchPieces();
+    (async () => {
+      setPieces(await GetActivesPieces());
+    })();
+    (async () => {
+      setFournisseurs(await GetActiveFournisseurs());
+    })();
   }, []);
 
   useEffect(() => {
     reset();
   }, [subContent, reset]);
-
-  useEffect(() => {
-    fetchFournisseurs();
-  }, []);
 
   const mainSubContentCreation = (subContent) => {
     const onSubmit = async (data) => {
@@ -57,18 +37,22 @@ const Creation = () => {
             )
           );
           data.piece_liste = filteredPieceListe;
-          createArticle(data);
+          createData(data, "article");
           break;
+        case "Composition Article":
+          data.articles_ids = Array.from(selectedRows);
+          createData(data, "compositionArticle");
+          break;
+
         case "Fournisseur":
-          await createFournisseur(data);
-          await fetchFournisseurs();
+          await createData(data, "fournisseur");
           break;
         case "Piece":
-          await createPiece(data);
-          await fetchPieces();
+          await createData(data, "piece");
+          setPieces(await GetActivesPieces());
           break;
         case "Secteur":
-          await createSecteur(data);
+          await createData(data, "secteur");
           break;
       }
       setDonneesPrisesEnCompte(true);
@@ -144,6 +128,73 @@ const Creation = () => {
                 ))}
               </div>
 
+              <br />
+              <input
+                className={`submit ${
+                  donneesPrisesEnCompte ? "submited" : "submit"
+                }`}
+                type="submit"
+                value={`${donneesPrisesEnCompte ? "Ajouté !" : "Valider"}`}
+              />
+            </form>
+          </div>
+        );
+        break;
+
+      case "Composition Article":
+        mainSubContent = (
+          <div
+            className={`creation ${
+              donneesPrisesEnCompte ? "created" : "creation"
+            }`}
+          >
+            <p>ici c&#39;est la création {subContent}</p>
+            <p>
+              1- Selectionner les articles qui contiennent l&apos;élément à
+              créer
+            </p>
+            <div>
+              <TableArticles setSelectedRows={setSelectedRows} />
+            </div>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <br />
+              <br />
+              <p>2- Saisir les informations de l&apos;élément à créer</p>
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Nom de l'élément "
+                {...register("libelle", {
+                  required: true,
+                  maxLength: 255,
+                })}
+              />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Réference"
+                {...register("ref", { required: true, maxLength: 255 })}
+              />
+              <br />
+              <input
+                className="custom-input"
+                type="text"
+                placeholder="Conditionnement"
+                {...register("conditionnement", {
+                  required: true,
+                  maxLength: 255,
+                })}
+              />
+              <br />{" "}
+              <input
+                className="custom-input"
+                type="number"
+                step="1"
+                placeholder="Quantité"
+                {...register("Quantité", {
+                  required: true,
+                })}
+              />
               <br />
               <input
                 className={`submit ${
@@ -261,6 +312,12 @@ const Creation = () => {
           <ul>
             <li className="bouton" onClick={() => setSubContent("Article")}>
               Article
+            </li>
+            <li
+              className="bouton"
+              onClick={() => setSubContent("Composition Article")}
+            >
+              Composition Article
             </li>
             <li className="bouton" onClick={() => setSubContent("Fournisseur")}>
               Fournisseur
