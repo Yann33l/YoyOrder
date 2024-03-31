@@ -11,10 +11,17 @@ import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import { returnTable } from "./TableStyle";
 
-const IGNORED_FIELDS = ["article_id"];
-const CALLER = "editionArticle";
-const RowID = "article_id";
-const TableEditionArticles = () => {
+const IGNORED_FIELDS = ["article_id", "sous_article_id", "id"];
+let RowID = "";
+
+const TableEditionArticles = ({ ArticleOuSousArticle }) => {
+  const CALLER = ArticleOuSousArticle;
+  if (ArticleOuSousArticle === "EditArticle") {
+    RowID = "article_id";
+  } else {
+    RowID = "id";
+  }
+
   const [articles, setArticles] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
   const [EDITABLE_COLUMNS, setEDITABLE_COLUMNS] = useState([]);
@@ -23,19 +30,43 @@ const TableEditionArticles = () => {
   useEffect(() => {
     (async () => {
       setFournisseurs(await GetActiveFournisseurs());
-      setPieces(await GetPieces());
+      if (ArticleOuSousArticle === "EditArticle") {
+        setPieces(await GetPieces());
+      }
     })();
-  }, []);
+  }, [ArticleOuSousArticle]);
+
+  const sousArticlesData = async () => {
+    const responseData = await getDataForTables(
+      setArticles,
+      "getSousArticleForEdit"
+    );
+    const dataWithIds = responseData.results.map((row, index) => ({
+      ...row,
+      id: index,
+    }));
+    setArticles(dataWithIds);
+    setEDITABLE_COLUMNS([
+      "Sous article",
+      "Ref",
+      "quantité_Par article",
+      "dateDebutValidite",
+      "dateFinValidite",
+      "Conditionnement",
+    ]);
+  };
 
   useEffect(() => {
     (async () => {
-      const responseData = await getDataForTables(
-        setArticles,
-        "getArticleForEdit"
-      );
-      setEDITABLE_COLUMNS(Object.keys(responseData.results[0]));
+      let responseData;
+      if (ArticleOuSousArticle === "EditArticle") {
+        responseData = await getDataForTables(setArticles, "getArticleForEdit");
+        setEDITABLE_COLUMNS(Object.keys(responseData.results[0]));
+      } else {
+        sousArticlesData();
+      }
     })();
-  }, []);
+  }, [ArticleOuSousArticle]);
 
   const handleCheckBoxChange = async (params) => {
     const article_id = params.row.article_id;
@@ -97,9 +128,10 @@ const TableEditionArticles = () => {
   const handleCellEditCommit = async (params) => {
     const { article_id } = params;
     const updatedData = [...articles];
-    const rowIndex = updatedData.findIndex(
-      (row) => row.article_id === article_id
-    );
+    const rowIndex =
+      ArticleOuSousArticle === "EditArticle"
+        ? updatedData.findIndex((row) => row.article_id === article_id)
+        : updatedData.findIndex((row) => row.id === params.id);
 
     const updatedRow = { ...updatedData[rowIndex] };
     for (const key in params) {
@@ -111,6 +143,7 @@ const TableEditionArticles = () => {
     try {
       const requestData = {
         articleID: updatedData[rowIndex]["article_id"],
+        sousArticleID: updatedData[rowIndex]["sous_article_id"],
       };
       let dataChanged = false;
 
@@ -132,11 +165,18 @@ const TableEditionArticles = () => {
             }
             dataChanged = true;
           }
-        } else if (key === "Article") {
+        } else if (key === "Article" || key === "Sous article") {
           if (updatedData[rowIndex][key] !== articles[rowIndex][key]) {
             updatedData[rowIndex][key] === ""
               ? (requestData[key] = 0)
               : (requestData["libelle"] = updatedData[rowIndex][key]);
+            dataChanged = true;
+          }
+        } else if (key === "quantité_Par article") {
+          if (updatedData[rowIndex][key] !== articles[rowIndex][key]) {
+            updatedData[rowIndex][key] === ""
+              ? (requestData[key] = 0)
+              : (requestData["quantite"] = updatedData[rowIndex][key]);
             dataChanged = true;
           }
         } else {
@@ -148,14 +188,23 @@ const TableEditionArticles = () => {
           }
         }
       }
-
-      if (dataChanged) {
+      if (dataChanged && ArticleOuSousArticle === "EditArticle") {
+        console.log("requestData edit Article", requestData);
         await axios.put(
           `${API_URL}/editArticle/`,
           requestData,
           getAuthHeader()
         );
         return updatedRow;
+      } else if (dataChanged && ArticleOuSousArticle === "EditSousArticle") {
+        console.log("requestData edit Sous", requestData);
+
+        await axios.put(
+          `${API_URL}/editSousArticle/`,
+          requestData,
+          getAuthHeader()
+        );
+        return sousArticlesData(), updatedRow;
       }
     } catch (error) {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);

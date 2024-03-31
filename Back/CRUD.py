@@ -166,13 +166,13 @@ def create_compositionArticle(db: Session, composanteArticle: schemas.SousArticl
         db_r_article_sousArticle = models.r_articles_sous_articles(
             article_id=articleLié,
             sous_article_id=db_sousArticle.ID,
-            quantite=composanteArticle.Quantité)
+            quantite=composanteArticle.quantite)
         db.add(db_r_article_sousArticle)
         db.commit()
         db.refresh(db_sousArticle)
     dataAdded = db_sousArticle
     dataAdded.articles_ids = composanteArticle.articles_ids
-    dataAdded.Quantité = composanteArticle.Quantité
+    dataAdded.quantite = composanteArticle.quantite
     return dataAdded
 
 
@@ -191,6 +191,24 @@ def edit_article(db: Session, article: schemas.ArticlesEdit):
                 db.commit()
                 db.refresh(db_article)
     return db_article
+
+def edit_sous_article(db: Session, sous_article: schemas.SousArticlesEdit):
+    db_sous_article = db.query(models.sous_articles).filter(
+        models.sous_articles.ID == sous_article.sousArticleID).scalar()
+    db_r_article_sous_article = db.query(models.r_articles_sous_articles).filter(
+        models.r_articles_sous_articles.sous_article_id == sous_article.sousArticleID, models.r_articles_sous_articles.article_id == sous_article.articleID).scalar()
+    if db_sous_article:
+        for key, value in sous_article.model_dump().items():
+            if key == "quantite" and value is not None and db_r_article_sous_article is not None:
+                db_r_article_sous_article.quantite = value
+                db.commit()
+                db.refresh(db_r_article_sous_article)
+            if value is not None and key != "ID":
+                setattr(db_sous_article, key, value)
+                db.commit()
+                db.refresh(db_sous_article)
+    return db_sous_article
+
 
 def edit_article_piece(db: Session, piece_id: int, article_id: int):
     db_article = db.query(models.articles).filter(

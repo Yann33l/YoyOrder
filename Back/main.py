@@ -152,8 +152,9 @@ def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_ge
                 formatted_result[key] = row[i] if row[i] is not None else (0 if key.startswith('quantité') else None)
             else:
                 formatted_result[key] = None
-        for i in range(len(secteur_labels)):
-            formatted_result[secteur_labels[i]] = row[i + len(first_keys_to_get)] if row[i + len(first_keys_to_get)] is not None else None
+        if secteur_labels:
+            for i in range(len(secteur_labels)):
+                formatted_result[secteur_labels[i]] = row[i + len(first_keys_to_get)] if row[i + len(first_keys_to_get)] is not None else None
         if second_keys_to_get:
             for i, key in enumerate(second_keys_to_get):
                 formatted_result[key] = row[i + len(first_keys_to_get) + len(secteur_labels)] if row[i + len(first_keys_to_get) + len(secteur_labels)] is not None else None
@@ -164,8 +165,7 @@ def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_ge
 def format_user_results(results):
     secteur_labels = client_repository.get_secteur_labels()
     first_keys_to_get = ["user_id", "Email", "Admin", "Autorisation", "Demandeur", "Acheteur", "Editeur"]
-    second_keys_to_get = None
-    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+    return format_results(results, secteur_labels, first_keys_to_get)
 
     # Récupération de la liste des utilisateurs
 @app.get("/users/")
@@ -376,9 +376,12 @@ def uptdate_reception(edit_reception: schemas.edit_demande_commande_reception,  
 def format_Article_For_Edit_results(results):
     piece_labels = client_repository.get_piece_labels()
     first_keys_to_get = ["article_id","Article", "Ref", "Fournisseur", "Conditionnement", "dateDebutValidite", "dateFinValidite"]
-    second_keys_to_get = []
-    return format_results(results, piece_labels, first_keys_to_get, second_keys_to_get)
+    return format_results(results, piece_labels, first_keys_to_get)
 
+def format_sous_article_for_edit_results(results):
+    first_keys_to_get = ["article_id", "Article", "Ref article", "Fournisseur", "sous_article_id", "Sous article", "Ref", "Conditionnement", "quantité_Par article", "dateDebutValidite",
+    "dateFinValidite"]
+    return format_results(results, None, first_keys_to_get)
 
 @app.get("/getArticleForEdit/")
 def update_article(current_user: schemas.UserBase = Depends(get_current_user)):
@@ -386,7 +389,14 @@ def update_article(current_user: schemas.UserBase = Depends(get_current_user)):
         results = client_repository.get_articles_to_edit()
         formatted_results = format_Article_For_Edit_results(results)
         return {"results": formatted_results}
-    
+
+@app.get("/getSousArticleForEdit/")
+def update_sous_article(current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Editeur is True:
+        results = client_repository.get_sous_articles_to_edit()
+        formatted_results = format_sous_article_for_edit_results(results)
+        print(formatted_results)
+        return {"results": formatted_results}
 
 @app.get("/get_active_Articles", response_model=list[schemas.ArticlesWithID])
 def read_active_articles(db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
@@ -421,6 +431,11 @@ def update_article(article: schemas.ArticlesEdit, db: Session = Depends(get_db),
             return CRUD.edit_article(db, article)
         else:
             return CRUD.edit_article(db, article)
+        
+@app.put("/editSousArticle/", response_model=schemas.SousArticlesEdit)
+def update_sous_article(sous_article: schemas.SousArticlesEdit, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):   
+    if current_user.Editeur is True:
+        return CRUD.edit_sous_article(db, sous_article)
 
 # endregion : Visualisation et création d'un article
 

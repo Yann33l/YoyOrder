@@ -224,7 +224,6 @@ def get_articles_to_buy():
               "GROUP BY c.ID,a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, c.dateDemande, c.dateCommande "
               "ORDER BY a.ID DESC ")
         
-
         result = connection.execute(query)
         return result.fetchall()
 
@@ -246,6 +245,17 @@ def get_articles_to_edit():
               "GROUP BY a.ID, a.libelle, a.ref, f.libelle, a.conditionnement, a.dateDebutValidite, a.dateFinValidite "
               "ORDER BY a.ID DESC ")
         
-
+        result = connection.execute(query)
+        return result.fetchall()
+    
+def get_sous_articles_to_edit():
+    with engine.connect() as connection:
+        query = text(f"SELECT a.ID, a.libelle, a.ref, f.libelle, s_a.ID, s_a.libelle ,s_a.ref ,s_a.conditionnement ,r_a_s.quantite, s_a.dateDebutValidite, s_a.dateFinValidite "
+              "FROM r_articles_sous_articles r_a_s "
+              "INNER join articles a ON a.ID = r_a_s.article_id "
+              "INNER JOIN sous_articles s_a ON s_a.ID = r_a_s.sous_article_id "
+              "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "       
+              "ORDER BY a.ID ASC ")
+        
         result = connection.execute(query)
         return result.fetchall()

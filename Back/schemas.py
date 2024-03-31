@@ -83,7 +83,22 @@ class SousArticlesCreation(BaseModel):
     dateDebutValidite: Optional[date] = datetime.now().date()
     dateFinValidite: Optional[date] = date(3000,12,31)
     articles_ids: list[int]
-    Quantité: int
+    quantite: int
+
+class r_articles_sousArticles(BaseModel):
+    article_id: int
+    sousArticle_id: int
+
+class SousArticlesEdit(BaseModel):
+    articleID : int
+    sousArticleID: int
+    libelle: Optional[str] = None
+    ref: Optional[str] = None
+    conditionnement: Optional[str] = None
+    dateDebutValidite: Optional[date] = None
+    dateFinValidite: Optional[date] = None
+    quantite: Optional[int] = None
+
 
 class CreationFournisseurs(BaseModel):
     libelle: str

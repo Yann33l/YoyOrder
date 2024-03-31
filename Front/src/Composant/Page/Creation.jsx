@@ -191,7 +191,7 @@ const Creation = () => {
                 type="number"
                 step="1"
                 placeholder="Quantité"
-                {...register("Quantité", {
+                {...register("quantite", {
                   required: true,
                 })}
               />

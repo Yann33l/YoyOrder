@@ -10,12 +10,16 @@ const Edition = () => {
   const mainSubContentCreation = (subContent) => {
     let mainSubContent;
     switch (subContent) {
-      case "Article":
       case "default":
+      case "EditArticle":
+      case "EditSousArticle":
+        if (subContent === "default") {
+          subContent = "EditArticle";
+        }
         mainSubContent = (
           <div className="creation">
             <p>ici c&rsquo;est l&apos;édition {subContent}</p>
-            <TableEditionArticles />
+            <TableEditionArticles ArticleOuSousArticle={subContent} />
           </div>
         );
         break;
@@ -55,8 +59,14 @@ const Edition = () => {
       <div>
         <nav className="sous_menu-nav">
           <ul>
-            <li className="bouton" onClick={() => setSubContent("Article")}>
+            <li className="bouton" onClick={() => setSubContent("EditArticle")}>
               Article
+            </li>
+            <li
+              className="bouton"
+              onClick={() => setSubContent("EditSousArticle")}
+            >
+              Composition d&apos;article
             </li>
             <li className="bouton" onClick={() => setSubContent("Fournisseur")}>
               Fournisseur
