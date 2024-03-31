@@ -245,13 +245,13 @@ def format_Commande_results(results):
 
 def format_Reception_results(results):
     secteur_labels = client_repository.get_secteur_labels()
-    first_keys_to_get = ["article_id", "commande_id", "reception_id", "Article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_En attente", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
+    first_keys_to_get = ["article_id", "sous_article_id", "commande_id","sous_commande_id", "reception_id", "Article", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_En attente", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 
 def format_Historique_results(results):
     secteur_labels = client_repository.get_secteur_labels()
-    first_keys_to_get = ["article_id", "commande_id", "reception_id", "Article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
+    first_keys_to_get = ["article_id", "sous_article_id", "commande_id", "sous_commande_id","reception_id", "Article","article ref","article conditionnement", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 
@@ -314,13 +314,18 @@ def read_articles_by_secteur(piece: str, current_user: schemas.UserBase = Depend
     if current_user.Demandeur is True:
         try:
             if piece != "Tous":
-                results = client_repository.get_articles_to_receve(piece_libelle=piece)                
-                formatted_results = format_Reception_results(results)
+                resultsArticles = client_repository.get_articles_to_receve(piece_libelle=piece)     
+                resultsSousArticles = client_repository.get_sous_articles_to_receve(piece_libelle=piece)
+                allResults = resultsArticles + resultsSousArticles
+                formatted_results = format_Reception_results(allResults)
                 return {"results": formatted_results}
             else:
-                results = client_repository.get_articles_to_receve(piece_libelle="%")
-                formatted_results = format_Reception_results(results)
-                return {"results": formatted_results}   
+                resultsArticles = client_repository.get_articles_to_receve(piece_libelle="%")    
+                resultsSousArticles = client_repository.get_sous_articles_to_receve(piece_libelle="%")
+                allResults = resultsArticles + resultsSousArticles
+                formatted_results = format_Reception_results(allResults)
+                return {"results": formatted_results}
+
         except Exception as e:
             return {"error": str(e)}
     else:

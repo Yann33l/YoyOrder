@@ -76,6 +76,15 @@ class commandes(Base):
     commentaireDemandeur = Column(String(255))
     secteurs = relationship("secteurs", secondary="r_secteur_commande")
 
+class sous_commandes(Base):
+    __tablename__ = "sous_commandes"
+
+    ID = Column(Integer, primary_key=True, index=True)
+    commande_id = Column(Integer, ForeignKey("commandes.ID"))
+    sous_article_id = Column(Integer, ForeignKey("sous_articles.ID"))
+    quantite = Column(Integer)
+    enTotalite = Column(Boolean)
+
 class secteurs(Base):
     __tablename__ = "secteurs"
 
@@ -127,6 +136,7 @@ class receptions(Base):
 
     ID = Column(Integer, primary_key=True, index=True)
     commande_id = Column(Integer, ForeignKey("commandes.ID"))
+    sous_commande_id = Column(Integer)
     quantite = Column(Integer)
     dateReception = Column(Date)
     commentaire = Column(String(255))

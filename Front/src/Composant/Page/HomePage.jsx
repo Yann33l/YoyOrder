@@ -1,20 +1,21 @@
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
 import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
 import Edition from "./Edition";
-import mainSubContentReception from "./Reception";
+import TableArticlesReception from "../Tableaux/Table_ArticleReception";
 import { GetActivesPieces } from "../API/api";
 import AcceuilContent from "./Acceuil";
 import Headers from "./BandeauTop";
-import mainSubContentDemande from "./Demande";
-import PropTypes from "prop-types";
+import TableArticlesDemande from "../Tableaux/Table_ArticleDemande";
 import Creation from "./Creation";
-import Historique from "./Historique";
+import TableHistoriqueCommande from "../Tableaux/Table_HistoriqueCommande";
 
 function HomePage({ onLogout }) {
   const [content, setContent] = useState("default");
   const [pieces, setPieces] = useState([]);
-  const [subContent, setSubContent] = useState("default");
+  const [selectedElement, setSelectedElement] = useState("Tous");
+
   const fetchPieces = async () => {
     try {
       const piecesData = await GetActivesPieces();
@@ -23,13 +24,13 @@ function HomePage({ onLogout }) {
       console.error("Erreur lors de la récupération des pièces :", error);
     }
   };
-  const isDemandeContent = content === "Demande";
 
   useEffect(() => {
     fetchPieces();
-  }, [isDemandeContent]);
+  }, []);
 
   let mainContent;
+
   switch (content) {
     case "acceuil":
     case "default":
@@ -38,54 +39,36 @@ function HomePage({ onLogout }) {
     case "Commande":
       mainContent = (
         <div>
-          <p>ici c&#39;est la commande</p>
           <TableArticlesCommande />
         </div>
       );
       break;
-
     case "Demande":
-      mainContent = (
-        <div>
-          <div>
-            <nav className="sous_menu-nav">
-              <ul>
-                <li className="bouton" onClick={() => setSubContent("Tous")}>
-                  Tous
-                </li>
-                {pieces.map((piece) => (
-                  <li
-                    key={piece.ID}
-                    className="bouton"
-                    onClick={() => setSubContent(piece.libelle)}
-                  >
-                    {piece.libelle}
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-          <div>{mainSubContentDemande(subContent, pieces)}</div>
-        </div>
-      );
-      break;
-    case "Creation":
-      mainContent = <Creation />;
-      break;
     case "Reception":
       mainContent = (
         <div>
           <div>
             <nav className="sous_menu-nav">
               <ul>
-                <li className="bouton" onClick={() => setSubContent("Tous")}>
+                <li
+                  className={`bouton ${
+                    selectedElement === "Tous" ? "selected" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedElement("Tous");
+                  }}
+                >
                   Tous
                 </li>
                 {pieces.map((piece) => (
                   <li
                     key={piece.ID}
-                    className="bouton"
-                    onClick={() => setSubContent(piece.libelle)}
+                    className={`bouton ${
+                      selectedElement === piece.libelle ? "selected" : ""
+                    }`}
+                    onClick={() => {
+                      setSelectedElement(piece.libelle);
+                    }}
                   >
                     {piece.libelle}
                   </li>
@@ -93,12 +76,21 @@ function HomePage({ onLogout }) {
               </ul>
             </nav>
           </div>
-          <div>{mainSubContentReception(subContent, pieces)}</div>
+          <div>
+            {content === "Demande" ? (
+              <TableArticlesDemande pieces={selectedElement} />
+            ) : (
+              <TableArticlesReception pieces={selectedElement} />
+            )}
+          </div>
         </div>
       );
       break;
+    case "Creation":
+      mainContent = <Creation />;
+      break;
     case "Historique":
-      mainContent = <Historique />;
+      mainContent = <TableHistoriqueCommande />;
       break;
     case "Edition":
       mainContent = <Edition />;
@@ -106,7 +98,6 @@ function HomePage({ onLogout }) {
     case "Admin":
       mainContent = (
         <div>
-          <h1>Gestion des utilisateurs </h1>
           <TableUtilisateurs />
         </div>
       );

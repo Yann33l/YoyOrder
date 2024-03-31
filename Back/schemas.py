@@ -37,7 +37,7 @@ class UserBase(BaseModel):
     Autorisation: Optional[bool] = False
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserCreate(UserBase):
@@ -55,7 +55,7 @@ class Articles(BaseModel):
     dateFinValidite: Optional[date] = date(3000,12,31)
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ArticlesCreate(Articles):
     temperature: Optional[int] = None
@@ -109,7 +109,7 @@ class CreationFournisseurs(BaseModel):
     dateDebutValidite: Optional[date] = datetime.now().date()
     dateFinValidite: Optional[date] = date(3000,12,31)
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class Fournisseurs(CreationFournisseurs):
     ID: int
@@ -147,6 +147,7 @@ class R_Secteur_Commande(BaseModel):
 class edit_demande_commande_reception(BaseModel):
     commandeID: Optional[int] = None
     receptionID: Optional[int] = None
+    sousCommandeID: Optional[int] = None
     articleID: Optional[int] = None
     editedValue: Optional[Union[int, date]] = None
     commentaire: Optional[str] = None

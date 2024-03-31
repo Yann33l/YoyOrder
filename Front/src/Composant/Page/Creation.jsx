@@ -11,6 +11,15 @@ const Creation = () => {
   const [fournisseurs, setFournisseurs] = useState([]);
   const [donneesPrisesEnCompte, setDonneesPrisesEnCompte] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [selectedElement, setSelectedElement] = useState("Article");
+
+  const menuItems = [
+    { label: "Article", content: "Article" },
+    { label: "Composition Article", content: "Composition Article" },
+    { label: "Fournisseur", content: "Fournisseur" },
+    { label: "Piece", content: "Piece" },
+    { label: "Secteur", content: "Secteur" },
+  ];
 
   useEffect(() => {
     (async () => {
@@ -310,24 +319,20 @@ const Creation = () => {
       <div>
         <nav className="sous_menu-nav">
           <ul>
-            <li className="bouton" onClick={() => setSubContent("Article")}>
-              Article
-            </li>
-            <li
-              className="bouton"
-              onClick={() => setSubContent("Composition Article")}
-            >
-              Composition Article
-            </li>
-            <li className="bouton" onClick={() => setSubContent("Fournisseur")}>
-              Fournisseur
-            </li>
-            <li className="bouton" onClick={() => setSubContent("Piece")}>
-              Piece
-            </li>{" "}
-            <li className="bouton" onClick={() => setSubContent("Secteur")}>
-              Secteur
-            </li>
+            {menuItems.map((item, index) => (
+              <li
+                key={index}
+                className={`bouton ${
+                  selectedElement === item.content ? "selected" : ""
+                }`}
+                onClick={() => {
+                  setSubContent(item.content);
+                  setSelectedElement(item.content);
+                }}
+              >
+                {item.label}
+              </li>
+            ))}
           </ul>
         </nav>
       </div>
