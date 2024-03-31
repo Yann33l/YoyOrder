@@ -14,21 +14,33 @@ const TableArticlesReception = ({ pieces }) => {
     "commentaire_Reception",
     "En totalité ?",
   ];
-  const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id"];
+  const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id", "id"];
   const CALLER = "receptionArticle";
-  const RowID = "commande_id";
+  const RowID = "id";
   const [data, setData] = useState([]);
+  const articlesReceptionData = async (pieces) => {
+    const responseData = await getDataForTables(
+      setData,
+      "articlesReception",
+      pieces
+    );
+    const dataWithIds = responseData.results.map((row, index) => ({
+      ...row,
+      id: index,
+    }));
+    setData(dataWithIds);
+  };
 
   useEffect(() => {
-    getDataForTables(setData, "articlesReception", pieces);
+    (async () => {
+      articlesReceptionData(pieces);
+    })();
   }, [pieces]);
 
   const handleCheckBoxChange = async (params) => {
-    const { commande_id } = params;
+    const { id } = params;
     const updatedData = [...data];
-    const rowIndex = updatedData.findIndex(
-      (row) => row.commande_id === commande_id
-    );
+    const rowIndex = updatedData.findIndex((row) => row.id === id);
     const newValue = !params.row["En totalité ?"];
     const updatedRow = { ...updatedData[rowIndex], "En totalité ?": newValue };
 
@@ -43,6 +55,7 @@ const TableArticlesReception = ({ pieces }) => {
       if (dataChanged) {
         const requestData = {
           commandeID: params.row.commande_id,
+          sousCommandeID: updatedData[rowIndex]["sous_commande_id"],
           editedValue: newValue,
         };
         await axios.put(
@@ -50,8 +63,7 @@ const TableArticlesReception = ({ pieces }) => {
           requestData,
           getAuthHeader()
         );
-        await getDataForTables(setData, "articlesReception", pieces);
-        return updatedRow;
+        return articlesReceptionData(pieces);
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour : ", error);
@@ -59,12 +71,10 @@ const TableArticlesReception = ({ pieces }) => {
   };
 
   const handleCellEditCommit = async (params) => {
-    const { commande_id } = params;
+    const { id } = params;
 
     const updatedData = [...data];
-    const rowIndex = updatedData.findIndex(
-      (row) => row.commande_id === commande_id
-    );
+    const rowIndex = updatedData.findIndex((row) => row.id === id);
     const updatedRow = { ...updatedData[rowIndex] };
 
     for (const key in params) {
@@ -77,6 +87,7 @@ const TableArticlesReception = ({ pieces }) => {
       const requestData = {
         commandeID: updatedData[rowIndex]["commande_id"],
         receptionID: updatedData[rowIndex]["reception_id"],
+        sousCommandeID: updatedData[rowIndex]["sous_commande_id"],
         editedValue: undefined,
         commentaire: undefined,
         quantité: undefined,
@@ -101,7 +112,7 @@ const TableArticlesReception = ({ pieces }) => {
             updatedData[rowIndex][key] >= 0
           ) {
             requestData.quantité = updatedData[rowIndex][key];
-          } else {
+          } else if (key == !"id") {
             updatedData[rowIndex][key] === ""
               ? (requestData.editedValue = "")
               : (requestData.editedValue = updatedData[rowIndex][key]);
@@ -111,12 +122,13 @@ const TableArticlesReception = ({ pieces }) => {
       }
 
       if (dataChanged) {
+        console.log(requestData);
         await axios.put(
           `${API_URL}/editReception/`,
           requestData,
           getAuthHeader()
         );
-        await getDataForTables(setData, "articlesReception", pieces);
+        await articlesReceptionData(pieces);
         return updatedRow;
       }
     } catch (error) {

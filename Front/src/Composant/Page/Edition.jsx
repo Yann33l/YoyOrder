@@ -6,16 +6,28 @@ import { useState } from "react";
 
 const Edition = () => {
   const [subContent, setSubContent] = useState("default");
+  const [selectedElement, setSelectedElement] = useState("EditArticle");
+
+  const menuItems = [
+    { label: "Article", content: "EditArticle" },
+    { label: "Sous article", content: "EditSousArticle" },
+    { label: "Fournisseur", content: "Fournisseur" },
+    { label: "Piece", content: "Piece" },
+    { label: "Secteur", content: "Secteur" },
+  ];
 
   const mainSubContentCreation = (subContent) => {
     let mainSubContent;
     switch (subContent) {
-      case "Article":
       case "default":
+      case "EditArticle":
+      case "EditSousArticle":
+        if (subContent === "default") {
+          subContent = "EditArticle";
+        }
         mainSubContent = (
           <div className="creation">
-            <p>ici c&rsquo;est l&apos;édition {subContent}</p>
-            <TableEditionArticles />
+            <TableEditionArticles ArticleOuSousArticle={subContent} />
           </div>
         );
         break;
@@ -23,28 +35,22 @@ const Edition = () => {
       case "Fournisseur":
         mainSubContent = (
           <div className="creation">
-            <p>ici c&rsquo;est l&apos;édition {subContent}</p>
             <TableEditionFournisseurs />
           </div>
         );
         break;
 
       case "Piece":
-        mainSubContent = (
-          <div className="creation">
-            <p>ici c&#39;est la création {subContent}</p>
-            <TableEditionPiecesEtSecteurs PieceOuSecteur={subContent} />
-          </div>
-        );
-        break;
       case "Secteur":
         mainSubContent = (
           <div className="creation">
-            <p>ici c&#39;est la création {subContent}</p>
             <TableEditionPiecesEtSecteurs PieceOuSecteur={subContent} />
           </div>
         );
         break;
+
+      default:
+        mainSubContent = null;
     }
 
     return mainSubContent;
@@ -55,18 +61,20 @@ const Edition = () => {
       <div>
         <nav className="sous_menu-nav">
           <ul>
-            <li className="bouton" onClick={() => setSubContent("Article")}>
-              Article
-            </li>
-            <li className="bouton" onClick={() => setSubContent("Fournisseur")}>
-              Fournisseur
-            </li>
-            <li className="bouton" onClick={() => setSubContent("Piece")}>
-              Piece
-            </li>
-            <li className="bouton" onClick={() => setSubContent("Secteur")}>
-              Secteur
-            </li>
+            {menuItems.map((item, index) => (
+              <li
+                key={index}
+                className={`bouton ${
+                  selectedElement === item.content ? "selected" : ""
+                }`}
+                onClick={() => {
+                  setSubContent(item.content);
+                  setSelectedElement(item.content);
+                }}
+              >
+                {item.label}
+              </li>
+            ))}
           </ul>
         </nav>
       </div>

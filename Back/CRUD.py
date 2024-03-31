@@ -166,13 +166,13 @@ def create_compositionArticle(db: Session, composanteArticle: schemas.SousArticl
         db_r_article_sousArticle = models.r_articles_sous_articles(
             article_id=articleLié,
             sous_article_id=db_sousArticle.ID,
-            quantite=composanteArticle.Quantité)
+            quantite=composanteArticle.quantite)
         db.add(db_r_article_sousArticle)
         db.commit()
         db.refresh(db_sousArticle)
     dataAdded = db_sousArticle
     dataAdded.articles_ids = composanteArticle.articles_ids
-    dataAdded.Quantité = composanteArticle.Quantité
+    dataAdded.quantite = composanteArticle.quantite
     return dataAdded
 
 
@@ -191,6 +191,24 @@ def edit_article(db: Session, article: schemas.ArticlesEdit):
                 db.commit()
                 db.refresh(db_article)
     return db_article
+
+def edit_sous_article(db: Session, sous_article: schemas.SousArticlesEdit):
+    db_sous_article = db.query(models.sous_articles).filter(
+        models.sous_articles.ID == sous_article.sousArticleID).scalar()
+    db_r_article_sous_article = db.query(models.r_articles_sous_articles).filter(
+        models.r_articles_sous_articles.sous_article_id == sous_article.sousArticleID, models.r_articles_sous_articles.article_id == sous_article.articleID).scalar()
+    if db_sous_article:
+        for key, value in sous_article.model_dump().items():
+            if key == "quantite" and value is not None and db_r_article_sous_article is not None:
+                db_r_article_sous_article.quantite = value
+                db.commit()
+                db.refresh(db_r_article_sous_article)
+            if value is not None and key != "ID":
+                setattr(db_sous_article, key, value)
+                db.commit()
+                db.refresh(db_sous_article)
+    return db_sous_article
+
 
 def edit_article_piece(db: Session, piece_id: int, article_id: int):
     db_article = db.query(models.articles).filter(
@@ -348,19 +366,41 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_comma
         models.commandes.ID == commande.commandeID).scalar()
     db_article = db.query(models.articles).filter(
         models.articles.ID == commande.articleID).scalar()
+    db_r_articles_sous_articles = db.query(models.r_articles_sous_articles).filter(
+        models.r_articles_sous_articles.article_id == commande.articleID).all()
     if db_commande and db_commande.dateDemande <= commande.editedValue:
         if db_commande.dateCommande is None :
-            db_commande2 = models.commandes(
-            article_id = db_commande.article_id,
-            )
-            db_reception = models.receptions(
-                commande_id=commande.commandeID,
-                quantite=None,
-                dateReception=None,
-                commentaire=None,
-            )
-            db.add(db_reception)
+            db_commande2 = models.commandes(article_id = db_commande.article_id,)
             db.add(db_commande2)
+            if db_r_articles_sous_articles:
+                quantite = sum(secteur.quantite for secteur in db.query(models.r_secteur_commande).filter(models.r_secteur_commande.commande_id == commande.commandeID).all())
+                for sous_article in db_r_articles_sous_articles:
+                    db_sous_commandes = models.sous_commandes(
+                        sous_article_id = sous_article.sous_article_id,
+                        commande_id = commande.commandeID,
+                        quantite = sous_article.quantite*quantite,
+                    )
+                    db.add(db_sous_commandes)
+                    db.commit()
+                    if db_sous_commandes.ID is not None:
+                        db_reception = models.receptions(
+                            commande_id=commande.commandeID,
+                            sous_commande_id = db_sous_commandes.ID,
+                            quantite=None,
+                            dateReception=None,
+                            commentaire=None,
+                        )
+                        db.add(db_reception)
+            else :
+                db_reception = models.receptions(
+                    commande_id=commande.commandeID,
+                    quantite=None,
+                    sous_commande_id = None,
+                    dateReception=None,
+                    commentaire=None,
+                )
+                db.add(db_reception)
+
         db_commande.dateCommande = commande.editedValue
     if db_article :
         if db_article.commentaire != db_commande.commentaireDemandeur:
@@ -389,9 +429,12 @@ def edit_commande_commentaire(db: Session, commande: schemas.edit_demande_comman
     return db_commande
 
 def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demande_commande_reception):
-    db_commande = db.query(models.commandes).filter(models.commandes.ID == edit_reception.commandeID).scalar()
     db_reception = db.query(models.receptions).filter(models.receptions.ID == edit_reception.receptionID).scalar()
-    previous_db_reception = db.query(models.receptions).filter(models.receptions.commande_id == edit_reception.commandeID).order_by(models.receptions.dateReception.desc()).offset(1).first()
+    db_commande = db.query(models.commandes).filter(models.commandes.ID == edit_reception.commandeID).scalar()
+    if edit_reception.sousCommandeID:
+        previous_db_reception = db.query(models.receptions).filter(models.receptions.sous_commande_id == edit_reception.sousCommandeID).order_by(models.receptions.dateReception.desc()).offset(1).first()
+    else:
+        previous_db_reception = db.query(models.receptions).filter(models.receptions.commande_id == edit_reception.commandeID).order_by(models.receptions.dateReception.desc()).offset(1).first()
     if (db_reception.dateReception is None and edit_reception.editedValue >= db_commande.dateCommande):
         db_reception.dateReception = edit_reception.editedValue
         db.commit()
@@ -403,6 +446,7 @@ def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demand
     elif (edit_reception.editedValue >= db_commande.dateCommande and edit_reception.editedValue > db_reception.dateReception):
         reception_incomplete = models.receptions(
         commande_id=edit_reception.commandeID,
+        sous_commande_id=edit_reception.sousCommandeID if edit_reception.sousCommandeID else None, 
         quantite=None,
         dateReception=edit_reception.editedValue,
         commentaire=db_reception.commentaire,
@@ -421,26 +465,18 @@ def edit_reception_commentaire(db: Session, receptions: schemas.edit_demande_com
     return db_reception
 
 def edit_commande_ReceptionEnTotalite(db: Session, edition: schemas.edit_demande_commande_reception):
-    db_commande = db.query(models.commandes).filter(
-        models.commandes.ID == edition.commandeID).scalar()
-    db_precedente_reception = db.query(models.receptions).filter(models.receptions.ID != edition.receptionID, models.commandes.ID == edition.commandeID).all()
-    db_reception = db.query(models.receptions).filter(models.receptions.ID == edition.receptionID).scalar()
+    if edition.sousCommandeID:
+        print("sousCommandeID" , edition.sousCommandeID)
+        db_commande = db.query(models.sous_commandes).filter(
+            models.sous_commandes.ID == edition.sousCommandeID).scalar()
+    else:
+        db_commande = db.query(models.commandes).filter(
+            models.commandes.ID == edition.commandeID).scalar()
     if db_commande:
         db_commande.enTotalite = edition.editedValue
         db.commit()
         db.refresh(db_commande)
-    if db_reception :
-        total_precedente_reception = sum(qte.quantite for qte in db_precedente_reception)
-        db_reception.quantite = db_commande.quantite - total_precedente_reception
-        db.commit()
-        db.refresh(db_reception)
-    else :
-        db_reception = models.receptions(
-            commande_id=edition.commandeID,
-            quantite=db_commande.quantite,
-            dateReception=None,
-            commentaire=None,
-        )
+
     return db_commande
 
 def edit_reception_Quantite(db: Session, reception: schemas.edit_demande_commande_reception):

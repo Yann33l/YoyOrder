@@ -37,7 +37,7 @@ class UserBase(BaseModel):
     Autorisation: Optional[bool] = False
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserCreate(UserBase):
@@ -55,7 +55,7 @@ class Articles(BaseModel):
     dateFinValidite: Optional[date] = date(3000,12,31)
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ArticlesCreate(Articles):
     temperature: Optional[int] = None
@@ -83,7 +83,22 @@ class SousArticlesCreation(BaseModel):
     dateDebutValidite: Optional[date] = datetime.now().date()
     dateFinValidite: Optional[date] = date(3000,12,31)
     articles_ids: list[int]
-    Quantité: int
+    quantite: int
+
+class r_articles_sousArticles(BaseModel):
+    article_id: int
+    sousArticle_id: int
+
+class SousArticlesEdit(BaseModel):
+    articleID : int
+    sousArticleID: int
+    libelle: Optional[str] = None
+    ref: Optional[str] = None
+    conditionnement: Optional[str] = None
+    dateDebutValidite: Optional[date] = None
+    dateFinValidite: Optional[date] = None
+    quantite: Optional[int] = None
+
 
 class CreationFournisseurs(BaseModel):
     libelle: str
@@ -94,7 +109,7 @@ class CreationFournisseurs(BaseModel):
     dateDebutValidite: Optional[date] = datetime.now().date()
     dateFinValidite: Optional[date] = date(3000,12,31)
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class Fournisseurs(CreationFournisseurs):
     ID: int
@@ -132,6 +147,7 @@ class R_Secteur_Commande(BaseModel):
 class edit_demande_commande_reception(BaseModel):
     commandeID: Optional[int] = None
     receptionID: Optional[int] = None
+    sousCommandeID: Optional[int] = None
     articleID: Optional[int] = None
     editedValue: Optional[Union[int, date]] = None
     commentaire: Optional[str] = None

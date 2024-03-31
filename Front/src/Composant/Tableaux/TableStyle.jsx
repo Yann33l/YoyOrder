@@ -1,5 +1,5 @@
-import { DataGrid } from "@mui/x-data-grid"; // Import the DataGrid component
-import CustomToolBar from "./CustomToolBar"; // Import the CustomToolbar component
+import { DataGrid } from "@mui/x-data-grid";
+import CustomToolBar from "./CustomToolBar";
 
 const dataTableStyle = {
   margin: "auto",
@@ -36,9 +36,11 @@ const generateColumns = (
     "quantité_Reçue",
     "quantité_En attente",
     "quantité_A commander",
+    "quantité_Par article",
     "dateDebutValidite",
     "dateFinValidite",
     "Ref",
+    "Ref article",
     "En totalité ?",
     "numero IBF",
     "Admin",
@@ -47,7 +49,7 @@ const generateColumns = (
     "Autorisation",
     "Editeur",
   ];
-  if (CALLER === "editionArticle") {
+  if (CALLER === "EditArticle") {
     M_SizeColumn.push(...pieces.map((piece) => piece.libelle));
   }
   if (CALLER === "UserAdmin") {
@@ -68,6 +70,7 @@ const generateColumns = (
     "email",
     "libelle",
     "Article",
+    "Sous article",
     "siteWeb",
     "getCertificatAnalyse",
   ];
@@ -81,9 +84,11 @@ const generateColumns = (
   ];
   const textColumns = ["commentaire_Reception"];
   let checkboxColumns = ["En totalité ?"];
-  if (CALLER === "editionArticle") {
-    checkboxColumns =
-      [...checkboxColumns] + "," + [pieces.map((piece) => piece.libelle)];
+  if (CALLER === "EditArticle") {
+    checkboxColumns = [
+      ...checkboxColumns,
+      ...pieces.map((piece) => piece.libelle),
+    ];
   } else if (CALLER === "UserAdmin") {
     checkboxColumns = [
       ...checkboxColumns,
@@ -98,11 +103,11 @@ const generateColumns = (
     if (S_SizeColumn.includes(label)) {
       width = 50;
     } else if (M_SizeColumn.includes(label)) {
-      width = 110;
+      width = 100;
     } else if (L_SizeColumn.includes(label)) {
       width = 150;
     } else if (XL_SizeColumn.includes(label)) {
-      width = 400;
+      width = 300;
     }
     const renderCheckCell = (params) => {
       const isReadOnly = CALLER === "historiqueReception";
@@ -135,7 +140,12 @@ const generateColumns = (
 
     const column = {
       field: label,
-      headerName: label.substring(label.indexOf("_") + 1),
+      headerName:
+        label === "dateFinValidite"
+          ? "Fin validité"
+          : label === "dateDebutValidite"
+          ? "Début validité"
+          : label.substring(label.indexOf("_") + 1),
       width: width,
       editable: EDITABLE_COLUMNS.includes(label) ? true : false,
       headerClassName: EDITABLE_COLUMNS.includes(label)
@@ -168,6 +178,8 @@ const columnGroupingModel = [
       { field: "date_Reception" },
       { field: "date_Commande" },
       { field: "date_Demande" },
+      { field: "dateDebutValidite" },
+      { field: "dateFinValidite" },
     ],
   },
   {
@@ -178,6 +190,7 @@ const columnGroupingModel = [
       { field: "quantité_Reçue" },
       { field: "quantité_En attente" },
       { field: "quantité_A commander" },
+      { field: "quantité_Par article" },
     ],
   },
   {
@@ -206,32 +219,39 @@ export const returnTable = (
   secteurs,
   setSelectedRows
 ) => (
-  <DataGrid
-    experimentalFeatures={{ columnGrouping: true }}
-    rows={data}
-    {...(CALLER === "SelectionArticles" ? { checkboxSelection: true } : {})}
-    columns={generateColumns(
-      data,
-      IGNORED_FIELDS,
-      EDITABLE_COLUMNS,
-      handleCheckBoxChange,
-      renderDropdownCell,
-      CALLER,
-      pieces,
-      secteurs
-    )}
-    onRowSelectionModelChange={(RowID) => {
-      const selectedIDs = new Set(RowID);
-      setSelectedRows(selectedIDs);
-    }}
-    sx={dataTableStyle}
-    getRowId={(row) => row[RowID]}
-    density="compact"
-    getRowHeight={() => "auto"}
-    slots={{
-      toolbar: CustomToolBar,
-    }}
-    processRowUpdate={handleCellEditCommit}
-    columnGroupingModel={columnGroupingModel}
-  />
+  <div style={{ height: "70vh", width: "100%" }}>
+    <DataGrid
+      experimentalFeatures={{ columnGrouping: true }}
+      rows={data}
+      {...(CALLER === "SelectionArticles"
+        ? {
+            checkboxSelection: true,
+            onRowSelectionModelChange: (RowID) => {
+              const selectedIDs = new Set(RowID);
+              setSelectedRows(selectedIDs);
+            },
+          }
+        : {})}
+      columns={generateColumns(
+        data,
+        IGNORED_FIELDS,
+        EDITABLE_COLUMNS,
+        handleCheckBoxChange,
+        renderDropdownCell,
+        CALLER,
+        pieces,
+        secteurs
+      )}
+      sx={dataTableStyle}
+      getRowId={(row) => row[RowID]}
+      density="compact"
+      h
+      getRowHeight={() => "auto"}
+      slots={{
+        toolbar: CustomToolBar,
+      }}
+      processRowUpdate={handleCellEditCommit}
+      columnGroupingModel={columnGroupingModel}
+    />
+  </div>
 );

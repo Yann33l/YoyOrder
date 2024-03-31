@@ -103,6 +103,13 @@ nav.menu-nav ul li.bouton:hover {
   border-bottom-color: var(--thirdary);
 }
 
+nav.menu-nav ul li.bouton.selected {
+  border-radius: 0 0 15px 0;
+  background-color: var(--secondary);
+  transition: 0.2s;
+  border-bottom-color: var(--thirdary);
+}
+
 nav.sous_menu-nav {
   text-align: center;
 }
@@ -128,6 +135,12 @@ nav.sous_menu-nav ul li.bouton:hover {
   border-radius: 0 0 15px 0;
   background-color: var(--backgroundLight);
   transition: 0.2s;
+  border-bottom-color: var(--background);
+}
+nav.sous_menu-nav ul li.selected {
+  background-color: var(--backgroundLight);
+  border-bottom: solid 2px var(--background);
+  border-radius: 0 0 15px 0;
   border-bottom-color: var(--background);
 }
 

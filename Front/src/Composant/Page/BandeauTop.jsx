@@ -3,26 +3,45 @@ import PropTypes from "prop-types";
 import { getUserInfo } from "../API/api";
 
 const Headers = ({ setContent, onLogout }) => {
-  const [isEditeur, setIsEditeur] = useState(false);
-  const [isDemandeur, setIsDemandeur] = useState(false);
-  const [isAcheteur, setIsAcheteur] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditeur, setIsEditeur] = useState();
+  const [isDemandeur, setIsDemandeur] = useState();
+  const [isAcheteur, setIsAcheteur] = useState();
+  const [isAdmin, setIsAdmin] = useState();
+  const [selectedElement, setSelectedElement] = useState("Acceuil");
+  const [navItems, setNavItems] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const userData = await getUserInfo();
-        setIsAcheteur(userData.Acheteur);
-        setIsAdmin(userData.Admin);
-        setIsDemandeur(userData.Demandeur);
-        setIsEditeur(userData.Editeur);
+        setIsAcheteur(userData.Acheteur || false);
+        setIsAdmin(userData.Admin || false);
+        setIsDemandeur(userData.Demandeur || false);
+        setIsEditeur(userData.Editeur || false);
       } catch (error) {
         console.error(error);
       }
     };
-
     fetchData();
   }, []);
+
+  useEffect(() => {
+    setNavItems([
+      { label: "Acceuil", content: "acceuil", condition: true },
+      { label: "Demandes", content: "Demande", condition: isDemandeur },
+      { label: "Commandes", content: "Commande", condition: isAcheteur },
+      { label: "Réceptions", content: "Reception", condition: isDemandeur },
+      { label: "Historique", content: "Historique", condition: isDemandeur },
+      { label: "Creations", content: "Creation", condition: isEditeur },
+      { label: "Editions", content: "Edition", condition: isEditeur },
+      { label: "Admin", content: "Admin", condition: isAdmin },
+    ]);
+  }, [isDemandeur, isAcheteur, isEditeur, isAdmin]);
+
+  const handleItemClick = (content, element) => {
+    setContent(content);
+    setSelectedElement(element);
+  };
 
   return (
     <header className="BandeauTop">
@@ -36,44 +55,22 @@ const Headers = ({ setContent, onLogout }) => {
           />
         </div>
         <ul>
-          <li className="bouton" onClick={() => setContent("acceuil")}>
-            Acceuil
-          </li>
-          {isDemandeur && (
-            <li className="bouton" onClick={() => setContent("Demande")}>
-              Demandes
-            </li>
-          )}
-          {isAcheteur && (
-            <li className="bouton" onClick={() => setContent("Commande")}>
-              Commandes
-            </li>
-          )}
-          {isDemandeur && (
-            <li className="bouton" onClick={() => setContent("Reception")}>
-              Réceptions
-            </li>
-          )}
-          {isDemandeur && (
-            <li className="bouton" onClick={() => setContent("Historique")}>
-              Historique
-            </li>
-          )}
-          {isEditeur && (
-            <li className="bouton" onClick={() => setContent("Creation")}>
-              Creations
-            </li>
-          )}
-          {isEditeur && (
-            <li className="bouton" onClick={() => setContent("Edition")}>
-              Editions
-            </li>
-          )}
-          {isAdmin && (
-            <li className="bouton" onClick={() => setContent("Admin")}>
-              Admin
-            </li>
-          )}
+          {navItems.map((item, index) => {
+            if (item.condition) {
+              return (
+                <li
+                  key={index}
+                  className={`bouton ${
+                    selectedElement === item.label ? "selected" : ""
+                  }`}
+                  onClick={() => handleItemClick(item.content, item.label)}
+                >
+                  {item.label}
+                </li>
+              );
+            }
+            return null;
+          })}
           <li className="bouton" onClick={() => onLogout()}>
             Déconnexion
           </li>
@@ -82,9 +79,9 @@ const Headers = ({ setContent, onLogout }) => {
     </header>
   );
 };
+
+export default Headers;
 Headers.propTypes = {
   setContent: PropTypes.func.isRequired,
   onLogout: PropTypes.func.isRequired,
 };
-
-export default Headers;
