@@ -67,16 +67,16 @@ const generateColumns = (
     "commentaire_Demande",
     "sous article_Conditionnement",
     "article_Conditionnement",
+    "Sous article",
+    "sous article_Libelle",
   ];
   const XL_SizeColumn = [
     "Email",
     "email",
     "libelle",
     "Article",
-    "Sous article",
     "siteWeb",
     "getCertificatAnalyse",
-    "sous article_Libelle",
     "article_Libelle",
   ];
 
@@ -243,7 +243,7 @@ export const returnTable = (
   secteurs,
   setSelectedRows
 ) => (
-  <div style={{ height: "70vh", width: "100%" }}>
+  <div style={{ height: "75vh", width: "100%" }}>
     <DataGrid
       experimentalFeatures={{ columnGrouping: true }}
       rows={data}

@@ -115,6 +115,7 @@ nav.sous_menu-nav {
 }
 
 nav.sous_menu-nav ul {
+  margin: 0;
   padding: 0;
 }
 
@@ -160,7 +161,6 @@ footer {
   border-radius: 7px;
   color: var(--text);
   width: 100%;
-  padding: 0 0 16px 0;
 }
 
 .created {
@@ -168,7 +168,6 @@ footer {
   border-radius: 7px;
   color: var(--text);
   width: 100%;
-  padding: 0 0 16px 0;
   background-color: var(--background);
   opacity: 0.8;
 }
