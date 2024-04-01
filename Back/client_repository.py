@@ -99,6 +99,8 @@ def get_articles_by_secteur(piece_libelle):
              "FROM commandes c_sub "
              "LEFT JOIN receptions r_sub ON r_sub.commande_id = c_sub.ID "
              "WHERE c_sub.article_id = a.ID "
+            "AND c_sub.dateCommande IS NOT NULL "
+            "AND r_sub.sous_commande_id IS NULL "
              "AND (c_sub.enTotalite is null or c_sub.enTotalite = 0)) ")
 
         select_part = ", ".join(
@@ -143,6 +145,7 @@ def get_articles_to_receve(piece_libelle):
              "LEFT JOIN receptions r_sub ON r_sub.commande_id = c_sub.ID "
              "WHERE c_sub.article_id = a.ID "
              "AND c_sub.id = c.ID  "
+             "AND r_sub.sous_commande_id IS NULL "
              "AND (c_sub.enTotalite is null or c_sub.enTotalite = 0)) ")
         
         query = text(f"SELECT distinct a.ID,NULL, c.ID,NULL, r.ID, a.libelle,NULL, a.ref, f.libelle, a.conditionnement,  "
@@ -155,10 +158,9 @@ def get_articles_to_receve(piece_libelle):
               "LEFT JOIN commandes c ON c.article_id = a.ID "
               "LEFT JOIN receptions r ON r.commande_id = c.ID "
               "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
-              "LEFT JOIN r_articles_sous_articles r_s_a ON a.ID = r_s_a.article_id "
               "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
               "WHERE (p.libelle like :piece_libelle or :piece_libelle='%') "
-              "AND r_s_a.article_id IS NULL "
+              "AND r.sous_commande_id IS NULL "
               "AND ((c.dateDemande and c.dateCommande) IS NOT NULL) "
               "AND (c.commentaire IS not NULL) "
               "AND (r.dateReception IS NULL OR r.dateReception = (SELECT MAX(dateReception) FROM receptions WHERE commande_id = c.ID)) "
@@ -229,20 +231,17 @@ def get_historique_commandes():
             [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
 
         query = text(
-            "SELECT a.ID, s_a.ID, c.ID, s_c.ID, r.ID, a.libelle, a.ref, a.conditionnement, s_a.libelle, s_a.ref, f.libelle, s_a.conditionnement, "
+            "SELECT a.ID, s_a.ID, c.ID, s_c.ID, r.ID, a.libelle, a.ref, a.conditionnement, s_a.libelle, s_a.ref, s_a.conditionnement, f.libelle, "
             "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-            "s_c.quantite, r.quantite, c.dateDemande, c.dateCommande, MAX(r.dateReception), CASE WHEN s_c.enTotalite IS NOT NULL THEN s_c.enTotalite ELSE c.enTotalite END AS enTotalite, "
+            "s_c.quantite, r.quantite, c.dateDemande, c.dateCommande, MAX(r.dateReception), CASE WHEN s_c.id IS NOT NULL THEN s_c.enTotalite ELSE c.enTotalite END AS enTotalite, "
              f"{select_part}, "
             "c.commentaireDemandeur, c.commentaire, r.commentaire "
             "FROM commandes c "
+            "LEFT JOIN receptions r ON r.commande_id = c.ID "
+            "left join sous_commandes s_c on s_c.id = r.sous_commande_id "
             "LEFT JOIN articles a ON c.article_id = a.ID "
-            "left JOIN r_articles_sous_articles r_a_s ON r_a_s.article_id = a.ID "
-            "LEFT JOIN sous_articles s_a ON s_a.ID = r_a_s.sous_article_id "
+            "LEFT JOIN sous_articles s_a ON s_a.ID = s_c.sous_article_id "
             "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
-            "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
-            "LEFT JOIN piece p ON p.ID = r_ap.piece_id "
-            "left join sous_commandes s_c on s_c.commande_id = c.ID "
-            "LEFT JOIN receptions r ON (CASE WHEN s_c.ID IS NOT NULL THEN r.sous_commande_id = s_c.ID ELSE r.commande_id = c.ID END) "
             "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
             "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
            " WHERE (c.dateDemande IS NOT NULL OR c.dateCommande IS NOT NULL OR c.commentaire IS NOT NULL) "

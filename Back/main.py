@@ -251,7 +251,7 @@ def format_Reception_results(results):
 
 def format_Historique_results(results):
     secteur_labels = client_repository.get_secteur_labels()
-    first_keys_to_get = ["article_id", "sous_article_id", "commande_id", "sous_commande_id","reception_id", "Article","article ref","article conditionnement", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
+    first_keys_to_get = ["article_id", "sous_article_id", "commande_id", "sous_commande_id","reception_id", "article_Libelle","article_Ref","article_Conditionnement", "sous article_Libelle", "sous article_Ref",  "sous article_Conditionnement","Fournisseur", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 

@@ -37,12 +37,13 @@ const generateColumns = (
     "quantité_En attente",
     "quantité_A commander",
     "quantité_Par article",
+    "quantité_Sous article",
     "dateDebutValidite",
     "dateFinValidite",
     "Ref",
-    "Ref article",
+    "sous article_Ref",
+    "article_Ref",
     "En totalité ?",
-    "numero IBF",
     "Admin",
     "Demandeur",
     "Acheteur",
@@ -64,6 +65,8 @@ const generateColumns = (
     "commentaire_Reception",
     "commentaire_Commande",
     "commentaire_Demande",
+    "sous article_Conditionnement",
+    "article_Conditionnement",
   ];
   const XL_SizeColumn = [
     "Email",
@@ -73,6 +76,8 @@ const generateColumns = (
     "Sous article",
     "siteWeb",
     "getCertificatAnalyse",
+    "sous article_Libelle",
+    "article_Libelle",
   ];
 
   const dateColumns = [
@@ -191,6 +196,7 @@ const columnGroupingModel = [
       { field: "quantité_En attente" },
       { field: "quantité_A commander" },
       { field: "quantité_Par article" },
+      { field: "quantité_Sous article" },
     ],
   },
   {
@@ -200,6 +206,24 @@ const columnGroupingModel = [
       { field: "commentaire_Reception" },
       { field: "commentaire_Commande" },
       { field: "commentaire_Demande" },
+    ],
+  },
+  {
+    groupId: "Articles",
+    description: "",
+    children: [
+      { field: "article_Libelle" },
+      { field: "article_Ref" },
+      { field: "article_Conditionnement" },
+    ],
+  },
+  {
+    groupId: "Sous articles",
+    description: "",
+    children: [
+      { field: "sous article_Libelle" },
+      { field: "sous article_Ref" },
+      { field: "sous article_Conditionnement" },
     ],
   },
 ];

@@ -369,9 +369,11 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_comma
     db_r_articles_sous_articles = db.query(models.r_articles_sous_articles).filter(
         models.r_articles_sous_articles.article_id == commande.articleID).all()
     if db_commande and db_commande.dateDemande <= commande.editedValue:
+        # si la date de commande est nulle, on crée une nouvelle ligne de commande vide pour l'article
         if db_commande.dateCommande is None :
             db_commande2 = models.commandes(article_id = db_commande.article_id,)
             db.add(db_commande2)
+            # si l'article est composé, on crée une ligne de sous-commande + une ligne de reception pour chaque sous-article et une ligne de reception pour l'article complet (pour trtacer la quantité de kit complet reçu)
             if db_r_articles_sous_articles:
                 quantite = sum(secteur.quantite for secteur in db.query(models.r_secteur_commande).filter(models.r_secteur_commande.commande_id == commande.commandeID).all())
                 for sous_article in db_r_articles_sous_articles:
@@ -382,15 +384,23 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_comma
                     )
                     db.add(db_sous_commandes)
                     db.commit()
-                    if db_sous_commandes.ID is not None:
-                        db_reception = models.receptions(
-                            commande_id=commande.commandeID,
-                            sous_commande_id = db_sous_commandes.ID,
-                            quantite=None,
-                            dateReception=None,
-                            commentaire=None,
-                        )
-                        db.add(db_reception)
+
+                    db_reception_sc = models.receptions(
+                        commande_id=commande.commandeID,
+                        sous_commande_id = db_sous_commandes.ID,
+                        quantite=None,
+                        dateReception=None,
+                        commentaire=None,
+                    )
+                    db.add(db_reception_sc)
+                db_reception_c = models.receptions(
+                    commande_id=commande.commandeID,
+                    quantite=None,
+                    sous_commande_id = None,
+                    dateReception=None,
+                    commentaire=None,
+                )
+                db.add(db_reception_c)
             else :
                 db_reception = models.receptions(
                     commande_id=commande.commandeID,
@@ -428,21 +438,31 @@ def edit_commande_commentaire(db: Session, commande: schemas.edit_demande_comman
             db.refresh(db_article)
     return db_commande
 
+
 def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demande_commande_reception):
     db_reception = db.query(models.receptions).filter(models.receptions.ID == edit_reception.receptionID).scalar()
     db_commande = db.query(models.commandes).filter(models.commandes.ID == edit_reception.commandeID).scalar()
+# sélection de la réception précédente pour vérifier que la date de réception est bien postérieure à la précédente
     if edit_reception.sousCommandeID:
         previous_db_reception = db.query(models.receptions).filter(models.receptions.sous_commande_id == edit_reception.sousCommandeID).order_by(models.receptions.dateReception.desc()).offset(1).first()
     else:
         previous_db_reception = db.query(models.receptions).filter(models.receptions.commande_id == edit_reception.commandeID).order_by(models.receptions.dateReception.desc()).offset(1).first()
+
+# s'il ny as pas de date de réception et que la date de réception est postérieure à la date de commande, on modifie la date de réception
     if (db_reception.dateReception is None and edit_reception.editedValue >= db_commande.dateCommande):
         db_reception.dateReception = edit_reception.editedValue
         db.commit()
         db.refresh(db_commande)
+
+# si la date de réception est inferieur à la date de la réception en cours, 
+# est superieure à la precedente réception (ou s'il n'y en a pas de precedente)
+# et est postérieure à la date de commande, on modifie la date de réception
     elif db_reception.dateReception > edit_reception.editedValue and (previous_db_reception is None or previous_db_reception.dateReception < edit_reception.editedValue) and edit_reception.editedValue >= db_commande.dateCommande:
         db_reception.dateReception = edit_reception.editedValue
         db.commit()
         db.refresh(db_commande)
+
+# si la date de réception est postérieure à la date de commande et à la date de réception en cours, on crée une nouvelle réception
     elif (edit_reception.editedValue >= db_commande.dateCommande and edit_reception.editedValue > db_reception.dateReception):
         reception_incomplete = models.receptions(
         commande_id=edit_reception.commandeID,
