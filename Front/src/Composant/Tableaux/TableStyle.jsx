@@ -26,12 +26,15 @@ const generateColumns = (
     data && data.length > 0
       ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
       : [];
-  const S_SizeColumn = [];
+  const S_SizeColumn = ["COA"];
   const M_SizeColumn = [
     "telephone",
-    "date_Reception",
+    "date_Réception",
     "date_Commande",
     "date_Demande",
+    "date_Péremption",
+    "Lot",
+    "Ref article",
     "quantité_Commandé",
     "quantité_Reçue",
     "quantité_En attente",
@@ -81,7 +84,8 @@ const generateColumns = (
   ];
 
   const dateColumns = [
-    "date_Reception",
+    "date_Réception",
+    "date_Péremption",
     "date_Commande",
     "date_Demande",
     "dateDebutValidite",
@@ -180,7 +184,8 @@ const columnGroupingModel = [
     groupId: "Dates",
     description: "",
     children: [
-      { field: "date_Reception" },
+      { field: "date_Réception" },
+      { field: "date_Péremption" },
       { field: "date_Commande" },
       { field: "date_Demande" },
       { field: "dateDebutValidite" },

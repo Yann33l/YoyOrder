@@ -249,14 +249,19 @@ def format_Commande_results(results):
 
 def format_Reception_results(results):
     secteur_labels = client_repository.get_secteur_labels()
-    first_keys_to_get = ["article_id", "sous_article_id", "commande_id","sous_commande_id", "reception_id", "Article", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_En attente", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
+    first_keys_to_get = [
+        "article_id", "sous_article_id", "commande_id", "sous_commande_id", "reception_id", "Article", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé",
+        "quantité_En attente", "quantité_Reçue", "date_Demande", "date_Commande", "date_Réception", "date_Péremption", "Lot", "COA", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
     order_by = ["date_Commande", "Article"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
 
 def format_Historique_results(results):
     secteur_labels = client_repository.get_secteur_labels()
-    first_keys_to_get = ["article_id", "sous_article_id", "commande_id", "sous_commande_id","reception_id", "article_Libelle","article_Ref","article_Conditionnement", "sous article_Libelle", "sous article_Ref",  "sous article_Conditionnement","Fournisseur", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
+    first_keys_to_get = [
+        "article_id", "sous_article_id", "commande_id", "sous_commande_id","reception_id", "article_Libelle", "article_Ref", "article_Conditionnement", "sous article_Libelle",
+        "sous article_Ref",  "sous article_Conditionnement", "Fournisseur", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande",
+        "date_Commande", "date_Reception", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 
@@ -368,8 +373,10 @@ def uptdate_demande(edited_row, edit_demande: schemas.edit_demande_commande_rece
 def uptdate_reception(edit_reception: schemas.edit_demande_commande_reception,  db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Demandeur is True:
         try:
-            if isinstance(edit_reception.editedValue, date):
-                CRUD.edit_commande_dateReception(db, edit_reception)
+            if edit_reception.date_Réception is not None:
+                CRUD.edit_réception_dateReception(db, edit_reception)
+            elif edit_reception.date_Péremption is not None:
+                CRUD.edit_réception_datePéremption(db, edit_reception)
             elif edit_reception.commentaire is not None:
                 CRUD.edit_reception_commentaire(db, edit_reception)
             elif isinstance(edit_reception.editedValue, int):
@@ -405,7 +412,6 @@ def update_sous_article(current_user: schemas.UserBase = Depends(get_current_use
     if current_user.Editeur is True:
         results = client_repository.get_sous_articles_to_edit()
         formatted_results = format_sous_article_for_edit_results(results)
-        print(formatted_results)
         return {"results": formatted_results}
 
 @app.get("/get_active_Articles", response_model=list[schemas.ArticlesWithID])

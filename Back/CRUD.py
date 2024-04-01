@@ -439,7 +439,7 @@ def edit_commande_commentaire(db: Session, commande: schemas.edit_demande_comman
             db.refresh(db_article)
     return db_commande
 
-def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demande_commande_reception):
+def edit_réception_dateReception(db: Session, edit_reception: schemas.edit_demande_commande_reception):
     db_reception = db.query(models.receptions).filter(models.receptions.ID == edit_reception.receptionID).scalar()
     db_commande = db.query(models.commandes).filter(models.commandes.ID == edit_reception.commandeID).scalar()
 # sélection de la réception précédente pour vérifier que la date de réception est bien postérieure à la précédente
@@ -449,20 +449,21 @@ def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demand
         previous_db_reception = db.query(models.receptions).filter(models.receptions.commande_id == edit_reception.commandeID).order_by(models.receptions.dateReception.desc()).offset(1).first()
 
     # Si la date de réception est superieur à la date de commande
-    if edit_reception.editedValue >= db_commande.dateCommande:
+    print(type(edit_reception.date_Réception), type(db_commande.dateCommande))
+    if edit_reception.date_Réception >= db_commande.dateCommande:
         condition1 = db_reception.dateReception is None
         if not condition1 :
-            condition2 = db_reception.dateReception > edit_reception.editedValue and (previous_db_reception is None or previous_db_reception.dateReception < edit_reception.editedValue)
-            condition3 = edit_reception.editedValue > db_reception.dateReception and db_reception.quantite is None or db_reception.quantite == 0
-            condition4 = edit_reception.editedValue == db_reception.dateReception and db_reception.quantite is not None and db_reception.quantite != 0
-            condition5 = edit_reception.editedValue > db_reception.dateReception
+            condition2 = db_reception.dateReception > edit_reception.date_Réception and (previous_db_reception is None or previous_db_reception.dateReception < edit_reception.date_Réception)
+            condition3 = edit_reception.date_Réception > db_reception.dateReception and db_reception.quantite is None or db_reception.quantite == 0
+            condition4 = edit_reception.date_Réception == db_reception.dateReception and db_reception.quantite is not None and db_reception.quantite != 0
+            condition5 = edit_reception.date_Réception > db_reception.dateReception
      
         # et s'il n'y as pas de date de réception en bd, on modifie la date de réception
         # ou si la date de réception est inferieur à la date de la réception en cours, est superieur à la precedente réception (ou s'il n'y en a pas de precedente)
         # ou si la date de réception est superieur à la date de réception en cours, on modifie la date de réception si la quantité est nulle ou 0
         # alors on modifie la date de réception
         if condition1 or condition2 or condition3:
-            db_reception.dateReception = edit_reception.editedValue
+            db_reception.dateReception = edit_reception.date_Réception
             db.commit()
             db.refresh(db_commande)
 
@@ -474,7 +475,7 @@ def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demand
             commande_id=edit_reception.commandeID,
             sous_commande_id=edit_reception.sousCommandeID if edit_reception.sousCommandeID else None, 
             quantite=None,
-            dateReception=edit_reception.editedValue,
+            dateReception=edit_reception.date_Réception,
             commentaire=db_reception.commentaire,
             )
             db.add(reception_incomplete)
@@ -484,7 +485,30 @@ def edit_commande_dateReception(db: Session, edit_reception: schemas.edit_demand
         print("erreur de saisie de date de réception")
     return db_commande
 
-
+def edit_réception_datePéremption(db: Session, edit_reception: schemas.edit_demande_commande_reception):
+    print("voir comment faire")
+    # db_reception = db.query(models.receptions).filter(models.receptions.ID == edit_reception.receptionID).scalar()
+    # db_r_receptions_stock = db.query(models.r_receptions_stock).filter(models.r_receptions_stock.reception_id == edit_reception.receptionID).scalar()
+    # db_stocks = db.query(models.stocks).filter(models.stocks.ID == db_r_receptions_stock.stock_id).scalar()
+    # if db_r_receptions_stock and db_stocks is None:
+    #     db_stocks = models.stocks(
+    #         quantiteInitiale = db_reception.quantite if db_reception.quantite is not None else 0,
+    #         quantiteRestante = db_reception.quantite if db_reception.quantite is not None else 0,
+    #         lot = None,
+    #         datePeremption = edit_reception.date_Péremption,
+    #         COA = None,
+    #     )
+    #     db.add(db_stocks)
+    #     db.commit()        
+    #     db_r_receptions_stock = models.r_receptions_stock(
+    #         reception_id = edit_reception.receptionID,
+    #         stock_id = db_stocks.ID,
+    #     )
+    #     db.add(db_r_receptions_stock)
+    #     db.commit()
+    # elif db_r_receptions_stock and db_stocks:
+    #     case1 = db_stocks.datePer
+    # return db_reception
 
 def edit_reception_commentaire(db: Session, receptions: schemas.edit_demande_commande_reception):
     db_reception = db.query(models.receptions).filter(models.receptions.ID == receptions.receptionID).scalar()

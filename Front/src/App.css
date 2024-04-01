@@ -228,8 +228,11 @@ footer {
 }
 
 .editableHeader {
-  background-color: var(--backgroundLight);
+  background-color: var(--secondary);
   color: var(--text);
-  border: 1px solid var(--thirdary);
-  border-radius: 7px;
+  margin-top: 2px;
+  border: 2px solid;
+  border-bottom: 0;
+  border-color: var(--background) !important;
+  border-radius: 10px 10px 0 0;
 }
