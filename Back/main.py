@@ -143,7 +143,7 @@ def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
         user.Password = bcrypt.hashpw(user.Password, salt)
         return CRUD.create_user(db, user)
 
-def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get=None):
+def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get=None, order_by=None):
     formatted_results = []
     for row in results:
         formatted_result = {}
@@ -159,6 +159,10 @@ def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_ge
             for i, key in enumerate(second_keys_to_get):
                 formatted_result[key] = row[i + len(first_keys_to_get) + len(secteur_labels)] if row[i + len(first_keys_to_get) + len(secteur_labels)] is not None else None
         formatted_results.append(formatted_result)
+    
+    if order_by:
+        formatted_results.sort(key=lambda x: [x.get(key) for key in order_by])
+    
     return formatted_results
 
     # Formatage des résultats de la requête
@@ -247,11 +251,12 @@ def format_Reception_results(results):
     secteur_labels = client_repository.get_secteur_labels()
     first_keys_to_get = ["article_id", "sous_article_id", "commande_id","sous_commande_id", "reception_id", "Article", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_En attente", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
-    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+    order_by = ["date_Commande", "Article"]
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
 
 def format_Historique_results(results):
     secteur_labels = client_repository.get_secteur_labels()
-    first_keys_to_get = ["article_id", "sous_article_id", "commande_id", "sous_commande_id","reception_id", "Article","article ref","article conditionnement", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
+    first_keys_to_get = ["article_id", "sous_article_id", "commande_id", "sous_commande_id","reception_id", "article_Libelle","article_Ref","article_Conditionnement", "sous article_Libelle", "sous article_Ref",  "sous article_Conditionnement","Fournisseur", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande", "date_Commande", "date_Reception", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 

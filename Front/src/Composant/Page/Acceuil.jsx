@@ -1,33 +1,5 @@
 let AcceuilContent = (
   <div>
-    <h1>Présentation personnelle</h1>
-    <h3>Mon projet professionel</h3>
-    <p>
-      Mon ambition professionnelle est de poursuivre mon apprentissage dans le
-      domaine du développement.
-      <br /> Le choix de changer de métier découle de mon désir de mettre en
-      relation mes compétences actuelles avec une passion grandissante pour le
-      développement et l&#39;analyse de données.
-      <br /> Actuellement, mon expérience dans la gestion de bases de données,
-      la création de requêtes et la réalisation de tests fonctionnels pour les
-      systèmes de gestion de laboratoire (SGL) a été enrichissante, mais je
-      ressens le besoin d&#39;explorer plus en profondeur le domaine du
-      développement informatique.
-      <br /> Je suis déterminé à continuer à acquérir des compétences et à
-      contribuer de manière significative au secteur de la santé. <br />
-      Pour me préparer à cette transition, j&#39;ai suivi une formation en
-      &quot;Bases de données et langage SQL&quot; financée par mon employeur,
-      spécifiquement pour gérer le SGL. En suivant, j&#39;ai investi dans une
-      seconde formation en &quot;Concepteur développeur de solutions
-      digitales&quot; (RNCP36146) grâce à mon CPF, réalisée en dehors de mes
-      heures de travail.
-      <br />
-      Ces formations ont renforcé ma détermination à m&#39;engager pleinement
-      dans cette nouvelle voie, d&#39;où ma volonté de poursuivre ce projet de
-      transition professionnelle à travers une alternance, afin d&#39;assurer un
-      apprentissage optimal.
-    </p>
-    <br />
     <h1>Présentation de l&#39;application</h1>
     <h3>Lien vers le code source de l&#39;application</h3>
     <a

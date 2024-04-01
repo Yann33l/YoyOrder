@@ -55,6 +55,7 @@ const Creation = () => {
 
         case "Fournisseur":
           await createData(data, "fournisseur");
+          setFournisseurs(await GetActiveFournisseurs());
           break;
         case "Piece":
           await createData(data, "piece");
@@ -146,6 +147,7 @@ const Creation = () => {
                 value={`${donneesPrisesEnCompte ? "Ajouté !" : "Valider"}`}
               />
             </form>
+            <br />
           </div>
         );
         break;
@@ -213,6 +215,7 @@ const Creation = () => {
                 value={`${donneesPrisesEnCompte ? "Ajouté !" : "Valider"}`}
               />
             </form>
+            <br />
           </div>
         );
         break;
@@ -275,6 +278,7 @@ const Creation = () => {
                 value={`${donneesPrisesEnCompte ? "Ajouté !" : "Valider"}`}
               />
             </form>
+            <br />
           </div>
         );
         break;
@@ -306,6 +310,7 @@ const Creation = () => {
                 value={`${donneesPrisesEnCompte ? "Ajouté !" : "Valider"}`}
               />
             </form>
+            <br />
           </div>
         );
         break;

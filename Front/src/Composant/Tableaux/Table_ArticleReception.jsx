@@ -14,7 +14,14 @@ const TableArticlesReception = ({ pieces }) => {
     "commentaire_Reception",
     "En totalité ?",
   ];
-  const IGNORED_FIELDS = ["commande_id", "article_id", "reception_id", "id"];
+  const IGNORED_FIELDS = [
+    "commande_id",
+    "article_id",
+    "reception_id",
+    "id",
+    "sous_article_id",
+    "sous_commande_id",
+  ];
   const CALLER = "receptionArticle";
   const RowID = "id";
   const [data, setData] = useState([]);
@@ -99,9 +106,7 @@ const TableArticlesReception = ({ pieces }) => {
           if (key === "date_Reception") {
             const dateObj = new Date(updatedData[rowIndex][key]);
             const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
-            if (formattedDate !== data[rowIndex][key]) {
-              requestData.editedValue = formattedDate;
-            }
+            requestData.editedValue = formattedDate;
           } else if (key === "commentaire_Reception") {
             requestData.commentaire = updatedData[rowIndex][key];
           } else if (

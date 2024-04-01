@@ -39,6 +39,7 @@ function HomePage({ onLogout }) {
     case "Commande":
       mainContent = (
         <div>
+          <div style={{ height: "51px" }} />
           <TableArticlesCommande />
         </div>
       );
@@ -90,7 +91,12 @@ function HomePage({ onLogout }) {
       mainContent = <Creation />;
       break;
     case "Historique":
-      mainContent = <TableHistoriqueCommande />;
+      mainContent = (
+        <div>
+          <div style={{ height: "51px" }} />
+          <TableHistoriqueCommande />;
+        </div>
+      );
       break;
     case "Edition":
       mainContent = <Edition />;
@@ -98,6 +104,7 @@ function HomePage({ onLogout }) {
     case "Admin":
       mainContent = (
         <div>
+          <div style={{ height: "51px" }} />
           <TableUtilisateurs />
         </div>
       );
