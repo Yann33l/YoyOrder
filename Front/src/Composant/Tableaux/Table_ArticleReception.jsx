@@ -98,9 +98,6 @@ const TableArticlesReception = ({ pieces }) => {
         commandeID: updatedData[rowIndex]["commande_id"],
         receptionID: updatedData[rowIndex]["reception_id"],
         sousCommandeID: updatedData[rowIndex]["sous_commande_id"],
-        editedValue: undefined,
-        commentaire: undefined,
-        quantité: undefined,
       };
       let dataChanged = false;
 
@@ -110,8 +107,6 @@ const TableArticlesReception = ({ pieces }) => {
             const dateObj = new Date(updatedData[rowIndex][key]);
             const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             requestData[key] = formattedDate;
-          } else if (key === "commentaire_Reception") {
-            requestData.commentaire = updatedData[rowIndex][key];
           } else if (
             key === "quantité_Reçue" &&
             updatedData[rowIndex][key] <=
@@ -119,8 +114,8 @@ const TableArticlesReception = ({ pieces }) => {
                 data[rowIndex]["quantité_Reçue"] &&
             updatedData[rowIndex][key] >= 0
           ) {
-            requestData.quantité = updatedData[rowIndex][key];
-          } else if (key !== "id") {
+            requestData[key] = updatedData[rowIndex][key];
+          } else if (key !== "id" && key !== "quantité_Reçue") {
             requestData[key] = updatedData[rowIndex][key];
           }
           dataChanged = true;

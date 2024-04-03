@@ -156,8 +156,10 @@ class edit_demande_commande_reception(BaseModel):
     COA: Optional[bytes] = None
     Lot: Optional[str] = None
     editedValue: Optional[Union[int, date]] = None
+    commentaire_Reception: Optional[str] = None
     commentaire: Optional[str] = None
     quantité: Optional[int] = None
+    quantité_Reçue: Optional[int] = None
 
 
 

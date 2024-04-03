@@ -237,19 +237,21 @@ def get_historique_commandes():
         query = text(
             "SELECT a.ID, s_a.ID, c.ID, s_c.ID, r.ID, a.libelle, a.ref, a.conditionnement, s_a.libelle, s_a.ref, s_a.conditionnement, f.libelle, "
             "(SELECT SUM(r_sc_sub.quantite) FROM r_secteur_commande r_sc_sub WHERE r_sc_sub.commande_id = c.ID), "
-            "case WHEN s_c.quantite IS NOT NULL THEN s_c.quantite ELSE '' end, r.quantite, c.dateDemande, c.dateCommande, MAX(r.dateReception), CASE WHEN s_c.id IS NOT NULL THEN s_c.enTotalite ELSE c.enTotalite END AS enTotalite, "
+            "case WHEN s_c.quantite IS NOT NULL THEN s_c.quantite ELSE '' end, r.quantite, c.dateDemande, c.dateCommande, max(r.dateReception), sk.lot, sk.datePeremption,CASE WHEN sk.COA IS NOT NULL THEN 1 ELSE 0 END as COA, CASE WHEN s_c.id IS NOT NULL THEN s_c.enTotalite ELSE c.enTotalite END AS enTotalite, "
              f"{select_part}, "
             "c.commentaireDemandeur, c.commentaire, r.commentaire "
             "FROM commandes c "
             "LEFT JOIN receptions r ON r.commande_id = c.ID "
-            "left join sous_commandes s_c on s_c.id = r.sous_commande_id "
+            "LEFT JOIN r_reception_stock r_rs ON r.ID = r_rs.reception_id "
+            "LEFT JOIN stocks sk ON r_rs.stock_id = sk.ID "
+            "LEFT JOIN sous_commandes s_c on s_c.id = r.sous_commande_id "
             "LEFT JOIN articles a ON c.article_id = a.ID "
             "LEFT JOIN sous_articles s_a ON s_a.ID = s_c.sous_article_id "
             "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "
             "LEFT JOIN r_secteur_commande r_sc ON r_sc.commande_id = c.ID "
             "LEFT JOIN secteurs s ON s.ID = r_sc.secteur_id "
            " WHERE (c.dateDemande IS NOT NULL OR c.dateCommande IS NOT NULL OR c.commentaire IS NOT NULL) "
-           " GROUP BY a.ID, s_a.ID, c.ID, s_c.ID, r.ID, a.libelle, a.ref, a.conditionnement, s_a.libelle, s_a.ref, f.libelle, s_a.conditionnement, s_c.quantite, r.quantite, c.dateDemande, c.dateCommande, s_c.enTotalite, c.commentaireDemandeur, c.commentaire, r.commentaire "
+           " GROUP BY a.ID, s_a.ID, c.ID, s_c.ID, r.ID, a.libelle, a.ref, a.conditionnement, s_a.libelle, s_a.ref, f.libelle, s_a.conditionnement, s_c.quantite, r.quantite, c.dateDemande, c.dateCommande, s_c.enTotalite, c.commentaireDemandeur, c.commentaire, r.commentaire, sk.lot, sk.datePeremption,COA "
             "ORDER BY c.dateDemande DESC,  a.libelle, s_a.libelle  , r.id asc "
         )
         result = connection.execute(
@@ -317,4 +319,24 @@ def get_sous_articles_to_edit():
               "ORDER BY a.ID ASC ")
         
         result = connection.execute(query)
+        return result.fetchall()
+    
+def get_stocks_par_commandeID_ou_sous_commandeID(reception):
+    with engine.connect() as connection:
+        query = text(
+            "SELECT sk.ID, sk.lot "
+            "FROM stocks sk "
+            "LEFT JOIN r_reception_stock r_rs ON r_rs.stock_id = sk.ID "
+            "LEFT JOIN receptions r ON r.ID = r_rs.reception_id "
+            "LEFT JOIN commandes c ON c.ID = r.commande_id "
+            "LEFT JOIN articles a ON a.ID = c.article_id "
+            "LEFT JOIN sous_commandes s_c ON s_c.ID = r.sous_commande_id "
+            "LEFT JOIN sous_articles s_a ON s_a.ID = s_c.sous_article_id "
+            "WHERE "
+            "CASE "
+            "WHEN :sousCommandeID IS NOT NULL THEN s_c.sous_article_id = (SELECT sous_article_id FROM sous_commandes WHERE ID = :sousCommandeID) "
+            "ELSE c.article_id = (SELECT article_id FROM commandes WHERE ID = :commandeID) "
+            "END"
+        )
+        result = connection.execute(query, {"sousCommandeID": reception.sousCommandeID, "commandeID": reception.commandeID})
         return result.fetchall()
