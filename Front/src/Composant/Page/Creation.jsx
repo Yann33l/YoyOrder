@@ -81,7 +81,7 @@ const Creation = () => {
               donneesPrisesEnCompte ? "created" : "creation"
             }`}
           >
-            <p>ici c&#39;est la création {subContent}</p>
+            <br />
             <form onSubmit={handleSubmit(onSubmit)}>
               <input
                 className="custom-input"
@@ -159,7 +159,6 @@ const Creation = () => {
               donneesPrisesEnCompte ? "created" : "creation"
             }`}
           >
-            <p>ici c&#39;est la création {subContent}</p>
             <p>
               1- Selectionner les articles qui contiennent l&apos;élément à
               créer
@@ -168,7 +167,6 @@ const Creation = () => {
               <TableArticles setSelectedRows={setSelectedRows} />
             </div>
             <form onSubmit={handleSubmit(onSubmit)}>
-              <br />
               <br />
               <p>2- Saisir les informations de l&apos;élément à créer</p>
               <input
@@ -227,7 +225,7 @@ const Creation = () => {
               donneesPrisesEnCompte ? "created" : "creation"
             }`}
           >
-            <p>ici c&#39;est la création {subContent}</p>
+            <br />
             <form onSubmit={handleSubmit(onSubmit)}>
               <input
                 className="custom-input"
@@ -290,7 +288,7 @@ const Creation = () => {
               donneesPrisesEnCompte ? "created" : "creation"
             }`}
           >
-            <p>ici c&#39;est la création {subContent}</p>
+            <br />
             <form onSubmit={handleSubmit(onSubmit)}>
               <input
                 className="custom-input"

@@ -141,6 +141,12 @@ class receptions(Base):
     dateReception = Column(Date)
     commentaire = Column(String(255))
                          
+class r_receptions_stock(Base):
+    __tablename__ = "r_reception_stock"
+
+    ID = Column(Integer, primary_key=True, index=True)
+    reception_id = Column(Integer, ForeignKey("receptions.ID"))
+    stock_id = Column(Integer, ForeignKey("stocks.ID"))
 
 # class r_articles_lieux_stockage(Base):
 #     __tablename__ = "r_articles_lieux"
@@ -149,16 +155,15 @@ class receptions(Base):
 #     article_id = Column(Integer)
 #     lieuDeStockage_id = Column(Integer)
 
-# class stocks(Base):
-#     __tablename__ = "stocks"
+class stocks(Base):
+    __tablename__ = "stocks"
 
-#     ID = Column(Integer, primary_key=True, index=True)
-#     commande_id = Column(Integer)
-#     quantiteInitiale = Column(Integer)
-#     quantiteRestante = Column(Integer)
-#     lot = Column(String(255))
-#     datePeremption = Column(DATE)
-#     COA = Column(String(255))
+    ID = Column(Integer, primary_key=True, index=True)
+    quantiteInitiale = Column(Integer)
+    quantiteRestante = Column(Integer)
+    lot = Column(String(255))
+    datePeremption = Column(Date)
+    COA = Column(LargeBinary)
 
 
 # class gestiondescouts(Base):

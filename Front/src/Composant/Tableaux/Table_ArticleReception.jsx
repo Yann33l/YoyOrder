@@ -9,10 +9,13 @@ import PropTypes from "prop-types";
 
 const TableArticlesReception = ({ pieces }) => {
   const EDITABLE_COLUMNS = [
-    "date_Reception",
+    "date_Réception",
     "quantité_Reçue",
     "commentaire_Reception",
     "En totalité ?",
+    "COA",
+    "date_Péremption",
+    "Lot",
   ];
   const IGNORED_FIELDS = [
     "commande_id",
@@ -95,20 +98,15 @@ const TableArticlesReception = ({ pieces }) => {
         commandeID: updatedData[rowIndex]["commande_id"],
         receptionID: updatedData[rowIndex]["reception_id"],
         sousCommandeID: updatedData[rowIndex]["sous_commande_id"],
-        editedValue: undefined,
-        commentaire: undefined,
-        quantité: undefined,
       };
       let dataChanged = false;
 
       for (const key in updatedData[rowIndex]) {
         if (updatedData[rowIndex][key] !== data[rowIndex][key]) {
-          if (key === "date_Reception") {
+          if (key === "date_Réception" || key === "date_Péremption") {
             const dateObj = new Date(updatedData[rowIndex][key]);
             const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
-            requestData.editedValue = formattedDate;
-          } else if (key === "commentaire_Reception") {
-            requestData.commentaire = updatedData[rowIndex][key];
+            requestData[key] = formattedDate;
           } else if (
             key === "quantité_Reçue" &&
             updatedData[rowIndex][key] <=
@@ -116,17 +114,20 @@ const TableArticlesReception = ({ pieces }) => {
                 data[rowIndex]["quantité_Reçue"] &&
             updatedData[rowIndex][key] >= 0
           ) {
-            requestData.quantité = updatedData[rowIndex][key];
-          } else if (key == !"id") {
-            updatedData[rowIndex][key] === ""
-              ? (requestData.editedValue = "")
-              : (requestData.editedValue = updatedData[rowIndex][key]);
+            requestData[key] = updatedData[rowIndex][key];
+          } else if (key !== "id" && key !== "quantité_Reçue") {
+            requestData[key] = updatedData[rowIndex][key];
           }
           dataChanged = true;
         }
       }
 
       if (dataChanged) {
+        for (const key in requestData) {
+          if (requestData[key] === undefined) {
+            delete requestData[key];
+          }
+        }
         console.log(requestData);
         await axios.put(
           `${API_URL}/editReception/`,

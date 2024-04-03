@@ -149,9 +149,17 @@ class edit_demande_commande_reception(BaseModel):
     receptionID: Optional[int] = None
     sousCommandeID: Optional[int] = None
     articleID: Optional[int] = None
+    date_Demande: Optional[date] = None
+    date_Commande: Optional[date] = None
+    date_Réception: Optional[date] = None
+    date_Péremption: Optional[date] = None
+    COA: Optional[bytes] = None
+    Lot: Optional[str] = None
     editedValue: Optional[Union[int, date]] = None
+    commentaire_Reception: Optional[str] = None
     commentaire: Optional[str] = None
     quantité: Optional[int] = None
+    quantité_Reçue: Optional[int] = None
 
 
 
