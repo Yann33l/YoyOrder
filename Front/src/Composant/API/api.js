@@ -29,6 +29,16 @@ export const checkUser = async (Email) => {
   }
 };
 
+export const uploadCOA = async (requestData) => {
+  try {
+    const response = await axios.post(`${API_URL}/uploadCOA/`, requestData);
+    return response;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const createUser = async (Email, Password) => {
   try {
     const response = await axios.post(`${API_URL}/create_user/`, {

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { API_URL, getDataForTables } from "../API/api";
+import { API_URL, getDataForTables, uploadCOA } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import { returnTable } from "./TableStyle";
@@ -142,6 +142,38 @@ const TableArticlesReception = ({ pieces }) => {
     }
   };
 
+  const handleFileChange = async (params, file) => {
+    let dataChanged = false;
+    const { id } = params;
+    console.log("params", params);
+    const updatedData = [...data];
+    const rowIndex = updatedData.findIndex((row) => row.id === id);
+    const updatedRow = { ...updatedData[rowIndex] };
+    updatedRow["COA"] = file;
+    const requestData = {
+      commandeID: updatedData[rowIndex]["commande_id"],
+      receptionID: updatedData[rowIndex]["reception_id"],
+      sousCommandeID: updatedData[rowIndex]["sous_commande_id"],
+      Lot: updatedData[rowIndex]["Lot"],
+      COA: file,
+    };
+    dataChanged = true;
+
+    if (dataChanged) {
+      try {
+        const fileUrl = URL.createObjectURL(file);
+        console.log("requestData", requestData);
+        setTimeout(() => {
+          window.open(fileUrl, "_blank");
+        }, 100);
+        uploadCOA(requestData);
+        await articlesReceptionData(pieces);
+      } catch (error) {
+        console.error("erreur sur l'api lors de l'édition des valeurs:", error);
+      }
+    }
+  };
+
   return returnTable(
     RowID,
     data,
@@ -150,7 +182,11 @@ const TableArticlesReception = ({ pieces }) => {
     handleCellEditCommit,
     handleCheckBoxChange,
     null,
-    CALLER
+    CALLER,
+    null,
+    null,
+    null,
+    handleFileChange
   );
 };
 

@@ -20,15 +20,17 @@ const generateColumns = (
   renderDropdownCell,
   CALLER,
   pieces,
-  secteurs
+  secteurs,
+  handleFileChange
 ) => {
   const columnsWithoutIgnoredFields =
     data && data.length > 0
       ? Object.keys(data[0]).filter((key) => !IGNORED_FIELDS.includes(key))
       : [];
-  const S_SizeColumn = ["COA"];
+  const S_SizeColumn = [];
   const M_SizeColumn = [
     "telephone",
+    "COA",
     "date_Réception",
     "date_Commande",
     "date_Demande",
@@ -105,6 +107,8 @@ const generateColumns = (
     ];
   }
 
+  const fileColumns = ["COA"];
+
   const dropdownColumns = ["Fournisseur"];
 
   const Columns = columnsWithoutIgnoredFields.map((label) => {
@@ -130,6 +134,17 @@ const generateColumns = (
       );
     };
 
+    const renderFileCell = (params) => {
+      return (
+        <input
+          type="file"
+          onChange={(e) => {
+            handleFileChange(params, e.target.files[0]);
+          }}
+        />
+      );
+    };
+
     let valueGetter;
     if (dateColumns.includes(label)) {
       valueGetter = (params) => (params.value ? new Date(params.value) : "");
@@ -140,6 +155,9 @@ const generateColumns = (
       renderCell = (params) => (params.row[label] ? params.row[label] : "");
     } else if (checkboxColumns.includes(label)) {
       renderCell = renderCheckCell;
+    }
+    if (fileColumns.includes(label)) {
+      renderCell = renderFileCell;
     }
 
     let renderEditCell;
@@ -246,7 +264,8 @@ export const returnTable = (
   CALLER,
   pieces,
   secteurs,
-  setSelectedRows
+  setSelectedRows,
+  handleFileChange
 ) => (
   <div style={{ height: "75vh", width: "100%" }}>
     <DataGrid
@@ -269,7 +288,8 @@ export const returnTable = (
         renderDropdownCell,
         CALLER,
         pieces,
-        secteurs
+        secteurs,
+        handleFileChange
       )}
       sx={dataTableStyle}
       getRowId={(row) => row[RowID]}
