@@ -1,5 +1,6 @@
 import { DataGrid } from "@mui/x-data-grid";
 import CustomToolBar from "./CustomToolBar";
+import { getCOA } from "../API/api";
 
 const dataTableStyle = {
   margin: "auto",
@@ -135,14 +136,46 @@ const generateColumns = (
     };
 
     const renderFileCell = (params) => {
-      return (
-        <input
-          type="file"
-          onChange={(e) => {
-            handleFileChange(params, e.target.files[0]);
-          }}
-        />
-      );
+      if (params.value) {
+        return (
+          <button
+            onClick={async () => {
+              const responseData = await getCOA(params.row.stock_id);
+              var pdfData = responseData["COA"];
+              var mimeType = pdfData.split(",")[0].split(":")[1].split(";")[0];
+
+              var byteCharacters = atob(pdfData.split(",")[1]);
+              var byteNumbers = new Array(byteCharacters.length);
+              for (var i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              var byteArray = new Uint8Array(byteNumbers);
+              var blob = new Blob([byteArray], { type: mimeType });
+
+              // Créer une URL objet à partir du Blob
+              var blobUrl = URL.createObjectURL(blob);
+
+              // Ouvrir une nouvelle fenêtre avec l'URL du Blob
+              window.open(blobUrl, "_blank");
+            }}
+          >
+            Ouvrir
+          </button>
+        );
+      } else {
+        if (params.row.Lot) {
+          return (
+            <input
+              type="file"
+              onChange={(e) => {
+                handleFileChange(params, e.target.files[0]);
+              }}
+            />
+          );
+        } else {
+          return <span></span>;
+        }
+      }
     };
 
     let valueGetter;

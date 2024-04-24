@@ -24,6 +24,7 @@ const TableArticlesReception = ({ pieces }) => {
     "id",
     "sous_article_id",
     "sous_commande_id",
+    "stock_id",
   ];
   const CALLER = "receptionArticle";
   const RowID = "id";
@@ -148,14 +149,21 @@ const TableArticlesReception = ({ pieces }) => {
     console.log("params", params);
     const updatedData = [...data];
     const rowIndex = updatedData.findIndex((row) => row.id === id);
-    const updatedRow = { ...updatedData[rowIndex] };
-    updatedRow["COA"] = file;
+
+    const fileToBase64 = async (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+      });
+    };
+    const base64String = await fileToBase64(file);
+
     const requestData = {
-      commandeID: updatedData[rowIndex]["commande_id"],
-      receptionID: updatedData[rowIndex]["reception_id"],
-      sousCommandeID: updatedData[rowIndex]["sous_commande_id"],
-      Lot: updatedData[rowIndex]["Lot"],
-      COA: file,
+      stockID: updatedData[rowIndex]["stock_id"],
+      lot: updatedData[rowIndex]["Lot"],
+      COA: base64String,
     };
     dataChanged = true;
 
@@ -166,8 +174,8 @@ const TableArticlesReception = ({ pieces }) => {
         setTimeout(() => {
           window.open(fileUrl, "_blank");
         }, 100);
-        uploadCOA(requestData);
-        await articlesReceptionData(pieces);
+        await uploadCOA(requestData);
+        articlesReceptionData(pieces);
       } catch (error) {
         console.error("erreur sur l'api lors de l'édition des valeurs:", error);
       }

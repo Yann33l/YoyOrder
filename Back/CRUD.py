@@ -636,6 +636,7 @@ def edit_reception_Lot(db: Session, reception: schemas.edit_demande_commande_rec
         db.refresh(db_r_receptions_stock)
         return db_r_receptions_stock
     def vérfication_de_l_existance_du_lot_saisie(db_r_receptions_stock):
+
         for db_lot in db_lots_existants_pour_cet_article :
             # si provient du cas ou il y a un lot déjà renseigné pour cette réception et que le lot existe, on modifie la relation entre la réception et le lot
             # on retire la quantité au lot précédent
@@ -679,11 +680,11 @@ def edit_reception_Lot(db: Session, reception: schemas.edit_demande_commande_rec
                 db_nouveaux_stocks.quantiteRestante += db_reception.quantite if db_reception.quantite is not None else 0,
                 return db_r_receptions_stock
             
-    def le_lot_modifié_n_existera_plus(db_stock):
-        db.delete(db_stock)
+    def le_lot_modifié_n_existera_plus(db_stocks_a_supprimer):
+        db.delete(db_stocks_a_supprimer)
         db.commit()
-        db.refresh(db_stock)
-        return db_stock
+        db.refresh(db_stocks_a_supprimer)
+        return db_stocks_a_supprimer
     # si il y a un lot déjà renseigné pour cette réception
     if db_r_receptions_stock:
         # le lot est il utilisé pour une autre réception ?
@@ -692,14 +693,16 @@ def edit_reception_Lot(db: Session, reception: schemas.edit_demande_commande_rec
         if len(réception_utilisant_ce_lot) == 1:
             # on cherche si le lot existe déjà pour cet article si oui => on lie le lot à la réception
             if vérfication_de_l_existance_du_lot_saisie(db_r_receptions_stock):
+
                 le_lot_modifié_n_existera_plus(db_stock)
                 return db_r_receptions_stock
             # si le lot n'existe pas, on crée un nouveau lot
-            le_lot_modifié_n_existera_plus(db_stock)
+            db_stocks_a_supprimer = db_stock
             db_stocks = db.query(models.stocks).filter(models.stocks.ID == db_r_receptions_stock.stock_id).scalar()
             db_stocks.lot = reception.Lot
             db.commit()
             db.refresh(db_stocks)
+            le_lot_modifié_n_existera_plus(db_stocks_a_supprimer)
             return db_stocks
         
         # si oui, 
@@ -786,3 +789,15 @@ def edit_secteur(db: Session, secteur: schemas.edit_piece_or_secteur):
                 db.commit()
                 db.refresh(db_secteur)
     return db_secteur
+
+
+def uploadCOA(db: Session, COA: schemas.COA):
+    db_stock = db.query(models.stocks).filter(models.stocks.ID == COA.stockID).scalar()
+    if db_stock:
+        db_stock.COA = COA.COA
+        db.commit()
+        db.refresh(db_stock)
+    return db_stock
+
+def getCOA(db: Session, stockID: int):
+    return db.query(models.stocks).filter(models.stocks.ID == stockID).scalar().COA

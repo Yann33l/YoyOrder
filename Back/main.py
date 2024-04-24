@@ -162,7 +162,7 @@ def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_ge
     
     if order_by:
         formatted_results.sort(key=lambda x: [x.get(key) for key in order_by])
-    
+
     return formatted_results
 
     # Formatage des résultats de la requête
@@ -250,7 +250,7 @@ def format_Commande_results(results):
 def format_Reception_results(results):
     secteur_labels = client_repository.get_secteur_labels()
     first_keys_to_get = [
-        "article_id", "sous_article_id", "commande_id", "sous_commande_id", "reception_id", "Article", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé",
+        "article_id", "sous_article_id", "commande_id", "sous_commande_id", "reception_id", "stock_id", "Article", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé",
         "quantité_En attente", "quantité_Reçue", "date_Demande", "date_Commande", "date_Réception", "Lot", "date_Péremption", "COA", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
     order_by = ["date_Commande", "Article"]
@@ -259,7 +259,7 @@ def format_Reception_results(results):
 def format_Historique_results(results):
     secteur_labels = client_repository.get_secteur_labels()
     first_keys_to_get = [
-        "article_id", "sous_article_id", "commande_id", "sous_commande_id","reception_id", "article_Libelle", "article_Ref", "article_Conditionnement", "sous article_Libelle",
+        "article_id", "sous_article_id", "commande_id", "sous_commande_id","reception_id", "stock_id", "article_Libelle", "article_Ref", "article_Conditionnement", "sous article_Libelle",
         "sous article_Ref",  "sous article_Conditionnement", "Fournisseur", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande",
         "date_Commande", "date_Réception", "Lot", "date_Péremption", "COA", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
@@ -531,6 +531,19 @@ def create_secteur(secteur: schemas.Secteurs, db: Session = Depends(get_db), cur
                 status_code=409, detail="le secteur existe deja")
         else:
             return CRUD.create_secteur(db, secteur)
+        
+@app.put("/uploadCOA/")
+def upload_COA(COA: schemas.editCOA, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Autorisation is True:
+        return CRUD.uploadCOA(db, COA)
+        
+@app.get("/getCOA/{stockID}/", response_model=schemas.COA)
+def get_COA(stockID: int, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Autorisation is True:
+        COA = {"COA" : CRUD.getCOA(db, stockID)}
+        print(COA)
+        return COA
+
 
 
 # @app.get("/stocks/", response_model=list[schemas.Stocks])

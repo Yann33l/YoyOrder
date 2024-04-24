@@ -99,6 +99,13 @@ class SousArticlesEdit(BaseModel):
     dateFinValidite: Optional[date] = None
     quantite: Optional[int] = None
 
+class COA(BaseModel):
+    COA: bytes
+
+class editCOA(BaseModel):
+    stockID: int
+    lot: str
+    COA: Optional[bytes] = None
 
 class CreationFournisseurs(BaseModel):
     libelle: str
