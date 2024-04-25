@@ -9,6 +9,7 @@ const IGNORED_FIELDS = [
   "commande_id",
   "sous_commande_id",
   "reception_id",
+  "stock_id",
 ];
 const EDITABLE_COLUMNS = [];
 const RowID = "id";
