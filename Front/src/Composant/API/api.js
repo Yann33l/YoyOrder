@@ -29,6 +29,20 @@ export const checkUser = async (Email) => {
   }
 };
 
+export const uploadCOA = async (requestData) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/uploadCOA/`,
+      requestData,
+      getAuthHeader()
+    );
+    return response;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const createUser = async (Email, Password) => {
   try {
     const response = await axios.post(`${API_URL}/create_user/`, {
@@ -212,11 +226,26 @@ export const getDataForTables = async (setData, table, piece) => {
       getAuthHeader()
     );
     const data = response.data;
+    console.log("data", data);
     if (table === "secteur_labels") {
       setData(data);
     } else {
       setData(data.results);
     }
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const getCOA = async (stockID) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/getCOA/${stockID}`,
+      getAuthHeader()
+    );
+    const data = response.data;
     return data;
   } catch (error) {
     console.error(error);

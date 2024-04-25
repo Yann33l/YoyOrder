@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { API_URL, getDataForTables } from "../API/api";
+import { API_URL, getDataForTables, uploadCOA } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import dayjs from "dayjs";
 import { returnTable } from "./TableStyle";
@@ -24,6 +24,7 @@ const TableArticlesReception = ({ pieces }) => {
     "id",
     "sous_article_id",
     "sous_commande_id",
+    "stock_id",
   ];
   const CALLER = "receptionArticle";
   const RowID = "id";
@@ -142,6 +143,45 @@ const TableArticlesReception = ({ pieces }) => {
     }
   };
 
+  const handleFileChange = async (params, file) => {
+    let dataChanged = false;
+    const { id } = params;
+    console.log("params", params);
+    const updatedData = [...data];
+    const rowIndex = updatedData.findIndex((row) => row.id === id);
+
+    const fileToBase64 = async (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+      });
+    };
+    const base64String = await fileToBase64(file);
+
+    const requestData = {
+      stockID: updatedData[rowIndex]["stock_id"],
+      lot: updatedData[rowIndex]["Lot"],
+      COA: base64String,
+    };
+    dataChanged = true;
+
+    if (dataChanged) {
+      try {
+        const fileUrl = URL.createObjectURL(file);
+        console.log("requestData", requestData);
+        setTimeout(() => {
+          window.open(fileUrl, "_blank");
+        }, 100);
+        await uploadCOA(requestData);
+        articlesReceptionData(pieces);
+      } catch (error) {
+        console.error("erreur sur l'api lors de l'édition des valeurs:", error);
+      }
+    }
+  };
+
   return returnTable(
     RowID,
     data,
@@ -150,7 +190,11 @@ const TableArticlesReception = ({ pieces }) => {
     handleCellEditCommit,
     handleCheckBoxChange,
     null,
-    CALLER
+    CALLER,
+    null,
+    null,
+    null,
+    handleFileChange
   );
 };
 
