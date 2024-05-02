@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getDataForTables } from "../API/api";
+import { getDataForTables, uploadCOA } from "../API/api";
 import { returnTable } from "./TableStyle";
 
 const IGNORED_FIELDS = [
@@ -34,6 +34,45 @@ const TableArticlesReception = () => {
     }
   }, []);
 
+  const handleFileChange = async (params, file) => {
+    let dataChanged = false;
+    const { id } = params;
+    console.log("params", params);
+    const updatedData = [...data];
+    const rowIndex = updatedData.findIndex((row) => row.id === id);
+
+    const fileToBase64 = async (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+      });
+    };
+    const base64String = await fileToBase64(file);
+
+    const requestData = {
+      stockID: updatedData[rowIndex]["stock_id"],
+      lot: updatedData[rowIndex]["Lot"],
+      COA: base64String,
+    };
+    dataChanged = true;
+
+    if (dataChanged) {
+      try {
+        const fileUrl = URL.createObjectURL(file);
+        console.log("requestData", requestData);
+        setTimeout(() => {
+          window.open(fileUrl, "_blank");
+        }, 100);
+        await uploadCOA(requestData);
+        updateData();
+      } catch (error) {
+        console.error("erreur sur l'api lors de l'édition des valeurs:", error);
+      }
+    }
+  };
+
   useEffect(() => {
     updateData();
   }, [updateData]);
@@ -46,7 +85,11 @@ const TableArticlesReception = () => {
     null,
     null,
     null,
-    CALLER
+    CALLER,
+    null,
+    null,
+    null,
+    handleFileChange
   );
 };
 
