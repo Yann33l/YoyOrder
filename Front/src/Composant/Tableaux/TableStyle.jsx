@@ -44,8 +44,12 @@ const generateColumns = (
     "quantité_A commander",
     "quantité_Par article",
     "quantité_Sous article",
+    "quantité_Restante",
+    "quantité_Initiale",
     "dateDebutValidite",
     "dateFinValidite",
+    "date_FinUtilisation",
+    "date_DebutUtilisation",
     "Ref",
     "sous article_Ref",
     "article_Ref",
@@ -93,6 +97,8 @@ const generateColumns = (
     "date_Demande",
     "dateDebutValidite",
     "dateFinValidite",
+    "date_FinUtilisation",
+    "date_DebutUtilisation",
   ];
   const textColumns = ["commentaire_Reception"];
   let checkboxColumns = ["En totalité ?"];
@@ -165,12 +171,19 @@ const generateColumns = (
       } else {
         if (params.row.Lot) {
           return (
-            <input
-              type="file"
-              onChange={(e) => {
-                handleFileChange(params, e.target.files[0]);
-              }}
-            />
+            <div>
+              <input
+                id="files"
+                style={{ display: "none" }}
+                type="file"
+                onChange={(e) => {
+                  handleFileChange(params, e.target.files[0]);
+                }}
+              />
+              <label className="button-upload" htmlFor="files">
+                Ajouter
+              </label>
+            </div>
           );
         } else {
           return <span></span>;
@@ -205,6 +218,10 @@ const generateColumns = (
           ? "Fin validité"
           : label === "dateDebutValidite"
           ? "Début validité"
+          : label === "date_DebutUtilisation"
+          ? "Début d'utilisation"
+          : label === "date_FinUtilisation"
+          ? "Fin d'utilisation"
           : label.substring(label.indexOf("_") + 1),
       width: width,
       editable: EDITABLE_COLUMNS.includes(label) ? true : false,
@@ -253,6 +270,8 @@ const columnGroupingModel = [
       { field: "quantité_A commander" },
       { field: "quantité_Par article" },
       { field: "quantité_Sous article" },
+      { field: "quantité_Initiale" },
+      { field: "quantité_Restante" },
     ],
   },
   {
@@ -300,7 +319,13 @@ export const returnTable = (
   setSelectedRows,
   handleFileChange
 ) => (
-  <div style={{ height: "75vh", width: "100%" }}>
+  <div
+    style={
+      CALLER === "SelectionArticles"
+        ? { height: "60vh", width: "100%" }
+        : { height: "80vh", width: "100%" }
+    }
+  >
     <DataGrid
       experimentalFeatures={{ columnGrouping: true }}
       rows={data}

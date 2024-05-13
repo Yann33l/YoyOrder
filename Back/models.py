@@ -140,6 +140,8 @@ class receptions(Base):
     quantite = Column(Integer)
     dateReception = Column(Date)
     commentaire = Column(String(255))
+    dateDebutUtilisation = Column(Date)
+    dateFinUtilisation = Column(Date)
                          
 class r_receptions_stock(Base):
     __tablename__ = "r_reception_stock"

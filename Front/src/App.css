@@ -158,7 +158,7 @@ footer {
 
 .creation {
   border: 2px solid var(--thirdary);
-  border-radius: 7px;
+  border-radius: 20px;
   color: var(--text);
   width: 100%;
 }
@@ -235,4 +235,12 @@ footer {
   border-bottom: 0;
   border-color: var(--background) !important;
   border-radius: 10px 10px 0 0;
+}
+
+.button-upload {
+  cursor: pointer;
+  border-radius: 3px;
+  border: 1px solid #6c6c6c;
+  background-color: #f0f0f0;
+  padding: 0 5px;
 }
