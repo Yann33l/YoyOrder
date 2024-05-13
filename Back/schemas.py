@@ -170,15 +170,11 @@ class edit_demande_commande_reception(BaseModel):
 
 
 
-# class Stocks(BaseModel):
-#     ID: int
-#     article_id: int
-#     quantiteInitiale: Optional[int] = None
-#     quantiteRestante: Optional[int] = None
-#     lot: Optional[str] = None
-#     datePeremption: Optional[date] = None
-#     dateReception: Optional[date] = None
-#     COA: Optional[bytes] = None
+class edit_stock(BaseModel):
+    stockID: int
+    quantite: Optional[int] = None
+    date_DebutUtilisation: Optional[date] = None
+    date_FinUtilisation: Optional[date] = None
 
 
 # class GestionDesCouts(BaseModel):

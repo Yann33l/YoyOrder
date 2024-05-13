@@ -340,3 +340,22 @@ def get_stocks_par_commandeID_ou_sous_commandeID(reception):
         )
         result = connection.execute(query, {"sousCommandeID": reception.sousCommandeID, "commandeID": reception.commandeID})
         return result.fetchall()
+
+def get_stocks(piece_libelle):
+    with engine.connect() as connection:
+        query = text(
+            "SELECT distinct sk.ID, sk.lot, sk.datePeremption, r.dateDebutUtilisation, r.dateFinUtilisation, sk.COA, sk.quantiteRestante, sk.quantiteInitiale, r.dateReception, a.libelle, s_a.libelle "
+            "FROM stocks sk "
+            "LEFT JOIN r_reception_stock r_rs ON r_rs.stock_id = sk.ID "
+            "LEFT JOIN receptions r ON r.ID = r_rs.reception_id "
+            "LEFT JOIN commandes c ON c.ID = r.commande_id "
+            "LEFT JOIN articles a ON a.ID = c.article_id "
+            "LEFT JOIN sous_commandes s_c ON s_c.ID = r.sous_commande_id "
+            "LEFT JOIN sous_articles s_a ON s_a.ID = s_c.sous_article_id "
+            "LEFT JOIN r_articles_pieces r_ap ON r_ap.article_id = a.ID "
+            "LEFT JOIN piece p ON p.ID = r_ap.piece_id "
+            "WHERE (p.libelle like :piece_libelle or :piece_libelle='%')  "
+            "AND (sk.quantiteRestante > 0 OR r.dateDebutUtilisation IS NULL OR r.dateFinUtilisation IS NULL) "
+        )
+        result = connection.execute(query, {"piece_libelle": piece_libelle})
+        return result.fetchall()

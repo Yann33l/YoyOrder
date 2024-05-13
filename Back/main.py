@@ -265,6 +265,14 @@ def format_Historique_results(results):
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 
+def format_Stock_results(results):
+    secteur_labels = []
+    first_keys_to_get = [
+        "stock_id", "Lot", "date_Péremption", "date_DebutUtilisation", "date_FinUtilisation" ,"COA","quantité_Restante", "quantité_Initiale", "date_Réception", "article_Libelle", "sous article_Libelle"
+      ]
+    second_keys_to_get = []
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+
 @app.get("/articlesCommande/")
 def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Acheteur is True:
@@ -544,8 +552,23 @@ def get_COA(stockID: int, db: Session = Depends(get_db), current_user: schemas.U
         print(COA)
         return COA
 
+@app.get("/stock/{piece}/")
+def get_stocks(piece: str, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if piece == "Tous" :
+        piece = "%"   
+    if current_user.Autorisation is True:
+        stocks = client_repository.get_stocks(piece)
+        formatted_results = format_Stock_results(stocks)
 
+        print(formatted_results)
+        return formatted_results
 
+@app.put("/editStockQuantite/")
+def update_stock(edit_stock: schemas.edit_stock, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Autorisation is True:
+        CRUD.edit_stock_quantite(db, edit_stock)
+        return edit_stock
+    
 # @app.get("/stocks/", response_model=list[schemas.Stocks])
 # def read_stocks(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
 #     if current_user.Autorisation is True:

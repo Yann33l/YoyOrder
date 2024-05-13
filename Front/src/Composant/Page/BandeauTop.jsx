@@ -31,6 +31,7 @@ const Headers = ({ setContent, onLogout }) => {
       { label: "Demandes", content: "Demande", condition: isDemandeur },
       { label: "Commandes", content: "Commande", condition: isAcheteur },
       { label: "Réceptions", content: "Reception", condition: isDemandeur },
+      { label: "Stocks", content: "Stocks", condition: isDemandeur },
       { label: "Historique", content: "Historique", condition: isDemandeur },
       { label: "Creations", content: "Creation", condition: isEditeur },
       { label: "Editions", content: "Edition", condition: isEditeur },

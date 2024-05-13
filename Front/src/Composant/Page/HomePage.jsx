@@ -10,6 +10,7 @@ import Headers from "./BandeauTop";
 import TableArticlesDemande from "../Tableaux/Table_ArticleDemande";
 import Creation from "./Creation";
 import TableHistoriqueCommande from "../Tableaux/Table_HistoriqueCommande";
+import TableArticlesEnStock from "../Tableaux/Table_SuiviQuantite";
 
 function HomePage({ onLogout }) {
   const [content, setContent] = useState("default");
@@ -46,6 +47,7 @@ function HomePage({ onLogout }) {
       break;
     case "Demande":
     case "Reception":
+    case "Stocks":
       mainContent = (
         <div>
           <div>
@@ -80,13 +82,16 @@ function HomePage({ onLogout }) {
           <div>
             {content === "Demande" ? (
               <TableArticlesDemande pieces={selectedElement} />
-            ) : (
+            ) : content === "Reception" ? (
               <TableArticlesReception pieces={selectedElement} />
+            ) : (
+              <TableArticlesEnStock pieces={selectedElement} />
             )}
           </div>
         </div>
       );
       break;
+
     case "Creation":
       mainContent = <Creation />;
       break;
