@@ -172,7 +172,8 @@ class edit_demande_commande_reception(BaseModel):
 
 class edit_stock(BaseModel):
     stockID: int
-    quantite: Optional[int] = None
+    receptionID: Optional[int] = None
+    quantité_ReceptionRestante: Optional[int] = None
     date_DebutUtilisation: Optional[date] = None
     date_FinUtilisation: Optional[date] = None
 

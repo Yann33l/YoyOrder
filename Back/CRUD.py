@@ -521,8 +521,10 @@ def edit_reception_Quantite(db: Session, reception: schemas.edit_demande_command
                 précédente_quantité = 0
             else:
                    précédente_quantité = db_reception.quantite
+                   précédente_quantitéRestante = db_reception.quantiteRestante
             # on ajoute la quantité dans le lot et dans la réception
             db_reception.quantite = reception.quantité_Reçue
+            db_reception.quantiteRestante += reception.quantité_Reçue - précédente_quantitéRestante
             db_stock.quantiteRestante += db_reception.quantite - précédente_quantité
             db_stock.quantiteInitiale += db_reception.quantite - précédente_quantité
             db.commit()
@@ -534,6 +536,7 @@ def edit_reception_Quantite(db: Session, reception: schemas.edit_demande_command
     elif db_reception :
         # on ajoute la quantité dans la réception
         db_reception.quantite = reception.quantité_Reçue
+        db_reception.quantiteRestante = reception.quantité_Reçue
         db.commit()
         # on vérifie si le lot existe en bd
         db_lots_existants_pour_cet_article = client_repository.get_stocks_par_commandeID_ou_sous_commandeID(reception)
@@ -797,3 +800,25 @@ def uploadCOA(db: Session, COA: schemas.COA):
 
 def getCOA(db: Session, stockID: int):
     return db.query(models.stocks).filter(models.stocks.ID == stockID).scalar().COA
+
+def edit_stock_quantite(db: Session, stock: schemas.edit_stock):
+    db_stock = db.query(models.stocks).filter(models.stocks.ID == stock.stockID).scalar()
+    db_reception = db.query(models.receptions).filter(models.receptions.ID == stock.receptionID).scalar()
+    if db_stock:
+        db_stock.quantiteRestante -= (db_reception.quantiteRestante - stock.quantité_ReceptionRestante)
+        db_reception.quantiteRestante = stock.quantité_ReceptionRestante
+        db.commit()
+        db.refresh(db_stock)
+    return db_stock
+
+def edit_stock_date(db: Session, stock: schemas.edit_stock):
+    db_reception = db.query(models.receptions).filter(models.receptions.ID == stock.receptionID).scalar()
+    if db_reception and stock.date_DebutUtilisation: 
+        db_reception.dateDebutUtilisation = stock.date_DebutUtilisation
+        print(db_reception.dateDebutUtilisation)
+    else:
+        db_reception.dateFinUtilisation = stock.date_FinUtilisation
+        print(db_reception.dateFinUtilisation)
+    db.commit()
+    db.refresh(db_reception)
+    return db_reception

@@ -11,7 +11,7 @@ import PropTypes from "prop-types";
 const IGNORED_FIELDS = ["id", "stock_id"];
 const RowID = "id";
 const EDITABLE_COLUMNS = [
-  "quantité_Restante",
+  "quantité_ReceptionRestante",
   "date_FinUtilisation",
   "date_DebutUtilisation",
 ];
@@ -49,6 +49,7 @@ const TableArticlesEnStock = ({ pieces }) => {
     try {
       const requestData = {
         stockID: updatedData[rowIndex]["stock_id"],
+        receptionID: updatedData[rowIndex]["recaption_id"],
       };
       let dataChanged = false;
 
@@ -62,10 +63,10 @@ const TableArticlesEnStock = ({ pieces }) => {
             const formattedDate = dayjs(dateObj).format("YYYY-MM-DD");
             requestData[key] = formattedDate;
           } else if (
-            key === "quantité_Restante" &&
+            key === "quantité_ReceptionRestante" &&
             parseInt(updatedData[rowIndex][key]) !== data[rowIndex][key] &&
             parseInt(updatedData[rowIndex][key]) <=
-              data[rowIndex]["quantité_Initiale"] &&
+              data[rowIndex]["quantité_Reçue"] &&
             parseInt(updatedData[rowIndex][key]) >= 0
           ) {
             requestData[key] = updatedData[rowIndex][key];
@@ -81,11 +82,19 @@ const TableArticlesEnStock = ({ pieces }) => {
           }
         }
         console.log("requestData", requestData);
-        await axios.put(
-          `${API_URL}/editStockQuantite/`,
-          requestData,
-          getAuthHeader()
-        );
+        if (requestData["quantité_ReceptionRestante"]) {
+          await axios.put(
+            `${API_URL}/editStockQuantite/`,
+            requestData,
+            getAuthHeader()
+          );
+        } else {
+          await axios.put(
+            `${API_URL}/editStockDate/`,
+            requestData,
+            getAuthHeader()
+          );
+        }
         await articlesEnStock(pieces);
         return updatedRow;
       }

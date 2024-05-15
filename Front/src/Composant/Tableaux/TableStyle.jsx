@@ -40,12 +40,13 @@ const generateColumns = (
     "Ref article",
     "quantité_Commandé",
     "quantité_Reçue",
+    "quantité_ReceptionRestante",
     "quantité_En attente",
     "quantité_A commander",
     "quantité_Par article",
     "quantité_Sous article",
-    "quantité_Restante",
-    "quantité_Initiale",
+    "quantité_LotRestante",
+    "quantité_LotTotal",
     "dateDebutValidite",
     "dateFinValidite",
     "date_FinUtilisation",
@@ -222,6 +223,12 @@ const generateColumns = (
           ? "Début d'utilisation"
           : label === "date_FinUtilisation"
           ? "Fin d'utilisation"
+          : label === "quantité_LotTotal"
+          ? "Lot total"
+          : label === "quantité_LotRestante"
+          ? "Lot restant"
+          : label === "quantité_ReceptionRestante"
+          ? "Restante"
           : label.substring(label.indexOf("_") + 1),
       width: width,
       editable: EDITABLE_COLUMNS.includes(label) ? true : false,
@@ -258,6 +265,8 @@ const columnGroupingModel = [
       { field: "date_Demande" },
       { field: "dateDebutValidite" },
       { field: "dateFinValidite" },
+      { field: "date_DebutUtilisation" },
+      { field: "date_FinUtilisation" },
     ],
   },
   {
@@ -270,8 +279,9 @@ const columnGroupingModel = [
       { field: "quantité_A commander" },
       { field: "quantité_Par article" },
       { field: "quantité_Sous article" },
-      { field: "quantité_Initiale" },
-      { field: "quantité_Restante" },
+      { field: "quantité_LotTotal" },
+      { field: "quantité_LotRestante" },
+      { field: "quantité_ReceptionRestante" },
     ],
   },
   {

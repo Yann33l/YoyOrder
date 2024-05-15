@@ -268,8 +268,8 @@ def format_Historique_results(results):
 def format_Stock_results(results):
     secteur_labels = []
     first_keys_to_get = [
-        "stock_id", "Lot", "date_Péremption", "date_DebutUtilisation", "date_FinUtilisation" ,"COA","quantité_Restante", "quantité_Initiale", "date_Réception", "article_Libelle", "sous article_Libelle"
-      ]
+        "stock_id", "recaption_id", "article_Libelle", "sous article_Libelle", "Lot" ,"COA", "date_Péremption", "date_Réception", "date_DebutUtilisation", "date_FinUtilisation", "quantité_LotTotal", "quantité_LotRestante", "quantité_Reçue", "quantité_ReceptionRestante"]
+
     second_keys_to_get = []
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
 
@@ -567,6 +567,12 @@ def get_stocks(piece: str, db: Session = Depends(get_db), current_user: schemas.
 def update_stock(edit_stock: schemas.edit_stock, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Autorisation is True:
         CRUD.edit_stock_quantite(db, edit_stock)
+        return edit_stock
+    
+@app.put("/editStockDate/")
+def update_stock_date(edit_stock: schemas.edit_stock, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Autorisation is True:
+        CRUD.edit_stock_date(db, edit_stock)
         return edit_stock
     
 # @app.get("/stocks/", response_model=list[schemas.Stocks])
