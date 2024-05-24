@@ -226,7 +226,6 @@ export const getDataForTables = async (setData, table, piece) => {
       getAuthHeader()
     );
     const data = response.data;
-    console.log("data", data);
     if (table === "secteur_labels") {
       setData(data);
     } else {

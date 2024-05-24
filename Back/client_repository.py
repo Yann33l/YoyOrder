@@ -320,6 +320,19 @@ def get_sous_articles_to_edit():
         
         result = connection.execute(query)
         return result.fetchall()
+
+def get_active_sous_articles():
+    with engine.connect() as connection:
+        query = text(f"SELECT a.ID, a.libelle, a.ref, a.conditionnement, f.libelle, s_a.ID, s_a.libelle ,s_a.ref ,s_a.conditionnement "
+              "FROM articles a "
+              "LEFT join r_articles_sous_articles r_a_s ON a.ID = r_a_s.article_id "
+              "LEFT JOIN sous_articles s_a ON s_a.ID = r_a_s.sous_article_id "
+              "LEFT JOIN fournisseurs f ON a.fournisseur_id = f.ID "   
+              "WHERE a.dateFinValidite >= NOW() and (s_a.dateFinValidite is null or s_a.dateFinValidite >= NOW()) "    
+              "ORDER BY a.ID ASC ")
+        
+        result = connection.execute(query)
+        return result.fetchall()
     
 def get_stocks_par_commandeID_ou_sous_commandeID(reception):
     with engine.connect() as connection:

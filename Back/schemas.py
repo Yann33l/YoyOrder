@@ -121,6 +121,13 @@ class CreationFournisseurs(BaseModel):
 class Fournisseurs(CreationFournisseurs):
     ID: int
 
+class ReceptionHorsCommande(BaseModel):
+    article_ids: list[int]
+    dateDemande: Optional[date]
+    dateCommande: Optional[date]
+    dateReception: Optional[date]
+    quantite: int
+    commentaire: Optional[str] = None
 
 class FournisseursEdit(BaseModel):
     ID: int
@@ -168,22 +175,12 @@ class edit_demande_commande_reception(BaseModel):
     quantité: Optional[int] = None
     quantité_Reçue: Optional[int] = None
 
-
-
 class edit_stock(BaseModel):
     stockID: int
     receptionID: Optional[int] = None
     quantité_ReceptionRestante: Optional[int] = None
     date_DebutUtilisation: Optional[date] = None
     date_FinUtilisation: Optional[date] = None
-
-
-# class GestionDesCouts(BaseModel):
-#     ID: int
-#     article_id: int
-#     prixUnitaire: Optional[float] = None
-#     dateDebutValidite: Optional[date] = None
-#     dateFinValidite: Optional[date] = 31-12-3000
 
 
 # class LieuxDeStockage(BaseModel):

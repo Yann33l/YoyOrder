@@ -11,6 +11,7 @@ import TableArticlesDemande from "../Tableaux/Table_ArticleDemande";
 import Creation from "./Creation";
 import TableHistoriqueCommande from "../Tableaux/Table_HistoriqueCommande";
 import TableArticlesEnStock from "../Tableaux/Table_SuiviQuantite";
+import PageAjoutLigneReception from "./AjoutLigneReception";
 
 function HomePage({ onLogout }) {
   const [content, setContent] = useState("default");
@@ -76,12 +77,27 @@ function HomePage({ onLogout }) {
                     {piece.libelle}
                   </li>
                 ))}
+                {content === "Reception" && (
+                  <li
+                    className={`bouton ${
+                      content === "Demande" ? "selected" : ""
+                    }`}
+                    onClick={() => setSelectedElement("Ajout")}
+                  >
+                    Récep. (rempl./suppl.)
+                  </li>
+                )}
               </ul>
             </nav>
           </div>
           <div>
             {content === "Demande" ? (
               <TableArticlesDemande pieces={selectedElement} />
+            ) : content === "Reception" && selectedElement == "Ajout" ? (
+              <div>
+                <p>Ajout de reception (remplacement/supplement)</p>
+                <PageAjoutLigneReception />
+              </div>
             ) : content === "Reception" ? (
               <TableArticlesReception pieces={selectedElement} />
             ) : (
