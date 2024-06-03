@@ -11,14 +11,11 @@ from . import client_repository, models, schemas
 def get_user_by_ID(db: Session, user_id: int):
     return db.query(models.users).filter(models.users.ID == user_id).first()
 
-
 def get_user_by_email(db: Session, email: str):
     return db.query(models.users).filter(models.users.Email == email).scalar()
 
-
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.users).offset(skip).limit(limit).all()
-
 
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.users(
@@ -80,8 +77,6 @@ def edit_user_secteur(db: Session, user_id: int, secteur_id: int):
         db.refresh(db_user)
         return db_user
 
-    # sinon on l'ajoute
-
 
 # Articles
 def get_articles(db: Session):
@@ -95,20 +90,6 @@ def get_articles_by_libelle(db: Session, libelle: str):
 
 def get_articles_by_ref(db: Session, ref: str):
     return db.query(models.articles).filter(models.articles.ref == ref).first()
-
-#def liaison_article_lieuxdestockage(db: Session, article: schemas.ArticlesCreate):
-#    article_id = client_repository.get_articleID_by_data(
-#        article_libelle=article.libelle, article_ref=article.ref, article_fournisseur_id=article.fournisseur_id)
-#    lieuxdestockage_id = client_repository.get_stockageID_by_emplacement_and_temperature(
-#        article.lieuxDeStockage, article.temperature)
-#    db_r_article_lieuxdestockage = models.r_articles_lieux(
-#        article_id=article_id,
-#        lieuDeStockage_id=lieuxdestockage_id)
-#    db.add(db_r_article_lieuxdestockage)
-#    db.commit()
-#    db.refresh(db_r_article_lieuxdestockage)
-#    return db_r_article_lieuxdestockage
-
 
 def liaison_article_to_secteur(db: Session, article_id: int, secteur_liste: list):
     for secteur in secteur_liste:
@@ -134,8 +115,7 @@ def liaison_article_piece(db: Session, article: schemas.ArticlesCreate):
             db.refresh(db_r_article_piece)
         return db_r_article_piece
     except:
-        raise HTTPException(status_code=404, detail="Piece non selectionnée")
-    
+        raise HTTPException(status_code=404, detail="Piece non selectionnée")   
     
 def create_article(db: Session, article: schemas.ArticlesCreate):
     db_article = models.articles(
@@ -175,8 +155,6 @@ def create_compositionArticle(db: Session, composanteArticle: schemas.SousArticl
     dataAdded.quantite = composanteArticle.quantite
     return dataAdded
 
-
-
 def get_pieceID_by_libelle(db: Session, piece_libelle: str):
     piece = db.query(models.pieces).filter(models.pieces.libelle == piece_libelle).scalar()
     return piece.ID
@@ -209,7 +187,6 @@ def edit_sous_article(db: Session, sous_article: schemas.SousArticlesEdit):
                 db.refresh(db_sous_article)
     return db_sous_article
 
-
 def edit_article_piece(db: Session, piece_id: int, article_id: int):
     db_article = db.query(models.articles).filter(
         models.articles.ID == article_id).scalar()
@@ -230,7 +207,6 @@ def edit_article_piece(db: Session, piece_id: int, article_id: int):
         db.commit()
         db.refresh(db_article)
         return db_article
- 
 
 def get_fournisseurs(db: Session):
     return db.query(models.fournisseurs).all()
@@ -251,7 +227,6 @@ def create_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
     db.add(db_fournisseur)
     db.commit()
     return db_fournisseur
-
 
 def edit_fournisseur(db: Session, fournisseur: schemas.FournisseursEdit):
     db_fournisseur = db.query(models.fournisseurs).filter(
@@ -274,7 +249,6 @@ def get_pieces(db: Session, skip: int = 0, limit: int = 100):
 def get_secteurs(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.secteurs).offset(skip).limit(limit).all()
 
-
 def create_secteur(db: Session, secteur: schemas.Secteurs):
     db_secteur = models.secteurs(
         libelle=secteur.libelle,
@@ -286,7 +260,6 @@ def create_secteur(db: Session, secteur: schemas.Secteurs):
 
 def get_secteur_by_libelle(db: Session, libelle: str):
     return db.query(models.secteurs).filter(models.secteurs.libelle == libelle).scalar()
-
 
 # Commandes
 
@@ -305,7 +278,6 @@ def edit_demmande_dateDemande(db: Session, commande: schemas.edit_demande_comman
         db_commande.dateDemande = commande.editedValue
         db.commit()
         db.refresh(db_commande)
-
     return db_commande
 
 def edit_article_commentaire(db: Session, demande: schemas.edit_demande_commande_reception):
@@ -317,11 +289,8 @@ def edit_article_commentaire(db: Session, demande: schemas.edit_demande_commande
         db.refresh(db_article)
     return db_article
 
-
-
 def get_secteurID_by_libelle(db: Session, secteur_libelle: str):
     return db.query(models.secteurs).filter(models.secteurs.libelle == secteur_libelle).scalar().ID
-
 
 def edit_demmande_quantite(db: Session, commande: schemas.edit_demande_commande_reception, secteur_libelle):
     db_r_secteur_commande = db.query(models.r_secteur_commande).filter(
@@ -358,8 +327,7 @@ def edit_demmande_quantite(db: Session, commande: schemas.edit_demande_commande_
             db.refresh(db_r_secteur_commande)
             return db_r_secteur_commande
     except: 
-        raise HTTPException(status_code=404, detail="Secteur not found")
-    
+        raise HTTPException(status_code=404, detail="Secteur not found") 
 
 def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(
@@ -376,7 +344,7 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_comma
         if db_commande.dateCommande is None :
             db_commande2 = models.commandes(article_id = db_commande.article_id,)
             db.add(db_commande2)
-            # si l'article est composé, on crée une ligne de reception pour l'article complet (pour trtacer la quantité de kit complet reçu) et une ligne de sous-commande + une ligne de reception pour chaque sous-article 
+            # si l'article est composé, on crée une ligne de reception pour l'article complet (pour tracer la quantité de kit complet reçu) et une ligne de sous-commande + une ligne de reception pour chaque sous-article 
             if db_r_articles_sous_articles_valides:
                 quantite = sum(secteur.quantite for secteur in db.query(models.r_secteur_commande).filter(models.r_secteur_commande.commande_id == commande.commandeID).all())
                 db_reception_c = models.receptions(
@@ -789,7 +757,6 @@ def edit_secteur(db: Session, secteur: schemas.edit_piece_or_secteur):
                 db.refresh(db_secteur)
     return db_secteur
 
-
 def uploadCOA(db: Session, COA: schemas.COA):
     db_stock = db.query(models.stocks).filter(models.stocks.ID == COA.stockID).scalar()
     if db_stock:
@@ -821,4 +788,51 @@ def edit_stock_date(db: Session, stock: schemas.edit_stock):
         print(db_reception.dateFinUtilisation)
     db.commit()
     db.refresh(db_reception)
+    return db_reception
+
+def create_ReceptionHorsCommande(db: Session, reception: schemas.ReceptionHorsCommande):
+    for article in reception.articles_ids:
+        print(article)
+        db_commande = models.commandes(
+            article_id=article[0],
+            dateDemande= reception.dateDemande,
+            dateCommande= reception.dateCommande,
+            commentaireDemandeur= reception.commentaire,
+            commentaire= "Récep. (rempl./suppl.)",
+        )
+        db.add(db_commande)
+        db.commit()
+        db.refresh(db_commande)
+        if article[1] is not None:
+            db_sous_commande = models.sous_commandes(
+                commande_id=db_commande.ID,
+                sous_article_id=article[1],
+                quantite=reception.quantite
+            )
+            db.add(db_sous_commande)
+            db.commit()
+            db.refresh(db_sous_commande)
+            db_reception = models.receptions(
+                sous_commande_id=db_sous_commande.ID,
+                commande_id=db_commande.ID,
+                quantiteRestante=reception.quantite
+            )
+
+        else:
+            db_reception = models.receptions(
+                commande_id=db_commande.ID,
+                quantiteRestante=reception.quantite
+            )
+        db.add(db_reception)
+        db.commit()
+        db.refresh(db_reception)
+        db_r_secteur_commande = models.r_secteur_commande(
+            commande_id=db_commande.ID,
+            secteur_id=reception.secteurID,
+            quantite=reception.quantite
+        )
+        db.add(db_r_secteur_commande)
+        db.commit()
+        db.refresh(db_r_secteur_commande)
+
     return db_reception

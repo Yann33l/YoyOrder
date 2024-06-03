@@ -331,9 +331,10 @@ export const returnTable = (
 ) => (
   <div
     style={
-      CALLER === "SelectionArticles"
+      CALLER === "SelectionArticles" ||
+      CALLER === "SelectionArticlesOuSousArticles"
         ? { height: "60vh", width: "100%" }
-        : { height: "80vh", width: "100%" }
+        : { height: "78vh", width: "100%" }
     }
   >
     <DataGrid
@@ -344,6 +345,21 @@ export const returnTable = (
             checkboxSelection: true,
             onRowSelectionModelChange: (RowID) => {
               const selectedIDs = new Set(RowID);
+              setSelectedRows(selectedIDs);
+            },
+          }
+        : {})}
+      {...(CALLER === "SelectionArticlesOuSousArticles"
+        ? {
+            checkboxSelection: true,
+            onRowSelectionModelChange: (RowIDs) => {
+              const selectedIDs = new Set();
+              for (const row of RowIDs) {
+                selectedIDs.add([
+                  data[row].article_id,
+                  data[row].sous_article_id,
+                ]);
+              }
               setSelectedRows(selectedIDs);
             },
           }

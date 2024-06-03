@@ -130,7 +130,6 @@ class pieces(Base):
     dateDebutValidite = Column(Date)
     dateFinValidite = Column(Date)
 
-
 class receptions(Base):
     __tablename__ = "receptions"
 
@@ -151,13 +150,6 @@ class r_receptions_stock(Base):
     reception_id = Column(Integer, ForeignKey("receptions.ID"))
     stock_id = Column(Integer, ForeignKey("stocks.ID"))
 
-# class r_articles_lieux_stockage(Base):
-#     __tablename__ = "r_articles_lieux"
-
-#     ID = Column(Integer, primary_key=True, index=True)
-#     article_id = Column(Integer)
-#     lieuDeStockage_id = Column(Integer)
-
 class stocks(Base):
     __tablename__ = "stocks"
 
@@ -169,22 +161,19 @@ class stocks(Base):
     COA = Column(LargeBinary)
 
 
-# class gestiondescouts(Base):
-#     __tablename__ = "gestiondescouts"
-
-#     ID = Column(Integer, primary_key=True, index=True)
-#     article_id = Column(Integer)
-#     prixUnitaire = Column(Integer)
-#     dateDebutValidite = Column(DATE)
-#     dateFinValidite = Column(DATE)
-
-
 # class lieux_de_stockage(Base):
 #     __tablename__ = "lieuxdestockage"
 
 #     ID = Column(Integer, primary_key=True, index=True)
 #     libelle = Column(String(255))
 #     temperature = Column(Integer)
+
+# class r_articles_lieux_stockage(Base):
+#     __tablename__ = "r_articles_lieux"
+
+#     ID = Column(Integer, primary_key=True, index=True)
+#     article_id = Column(Integer)
+#     lieuDeStockage_id = Column(Integer)
 
 # class r_user_stock(Base):
 #     __tablename__ = "r_user_stock"
@@ -194,7 +183,6 @@ class stocks(Base):
 #     stock_id = Column(Integer)
 #     quantiteUpdate = Column(Integer)
 #     dateUpdate = Column(DATE)
-
 
 # class r_user_commande(Base):
 #     __tablename__ = "r_user_commande"

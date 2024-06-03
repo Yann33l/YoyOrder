@@ -269,9 +269,22 @@ def format_Stock_results(results):
     secteur_labels = []
     first_keys_to_get = [
         "stock_id", "recaption_id", "article_Libelle", "sous article_Libelle", "Lot" ,"COA", "date_Péremption", "date_Réception", "date_DebutUtilisation", "date_FinUtilisation", "quantité_LotTotal", "quantité_LotRestante", "quantité_Reçue", "quantité_ReceptionRestante"]
-
     second_keys_to_get = []
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+
+def format_Article_For_Edit_results(results):
+    piece_labels = client_repository.get_piece_labels()
+    first_keys_to_get = ["article_id","Article", "Ref", "Fournisseur", "Conditionnement", "dateDebutValidite", "dateFinValidite"]
+    return format_results(results, piece_labels, first_keys_to_get)
+
+def format_sous_article_for_edit_results(results):
+    first_keys_to_get = ["article_id", "Article", "Ref article", "Fournisseur", "sous_article_id", "Sous article", "Ref", "Conditionnement", "quantité_Par article", "dateDebutValidite",
+    "dateFinValidite"]
+    return format_results(results, None, first_keys_to_get)
+
+def format_active_sous_article(results):
+    first_keys_to_get = ["article_id", "Article", "Ref article","Conditionnement article", "Fournisseur", "sous_article_id", "Sous article", "Ref", "Conditionnement"]
+    return format_results(results, None, first_keys_to_get)
 
 @app.get("/articlesCommande/")
 def read_articles_by_secteur(current_user: schemas.UserBase = Depends(get_current_user)):
@@ -400,15 +413,7 @@ def uptdate_reception(edit_reception: schemas.edit_demande_commande_reception,  
         except Exception as e:
             print(f"error: {e}")
 
-def format_Article_For_Edit_results(results):
-    piece_labels = client_repository.get_piece_labels()
-    first_keys_to_get = ["article_id","Article", "Ref", "Fournisseur", "Conditionnement", "dateDebutValidite", "dateFinValidite"]
-    return format_results(results, piece_labels, first_keys_to_get)
 
-def format_sous_article_for_edit_results(results):
-    first_keys_to_get = ["article_id", "Article", "Ref article", "Fournisseur", "sous_article_id", "Sous article", "Ref", "Conditionnement", "quantité_Par article", "dateDebutValidite",
-    "dateFinValidite"]
-    return format_results(results, None, first_keys_to_get)
 
 @app.get("/getArticleForEdit/")
 def update_article(current_user: schemas.UserBase = Depends(get_current_user)):
@@ -430,6 +435,12 @@ def read_active_articles(db: Session = Depends(get_db), current_user: schemas.Us
         actives_articles = CRUD.get_active_articles(db)
         return actives_articles
 
+@app.get("/get_active_Sous_Articles")
+def get_active_sous_articles(current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Editeur is True:
+        results = client_repository.get_active_sous_articles()
+        formatted_results = format_active_sous_article(results)
+        return {"results": formatted_results}
 
 @app.post("/create_article/", response_model=schemas.ArticlesCreate)
 def create_article(article: schemas.ArticlesCreate, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
@@ -574,7 +585,13 @@ def update_stock_date(edit_stock: schemas.edit_stock, db: Session = Depends(get_
     if current_user.Autorisation is True:
         CRUD.edit_stock_date(db, edit_stock)
         return edit_stock
-    
+
+@app.post("/create_ReceptionHorsCommande/")
+def create_ReceptionHorsCommande(reception: schemas.ReceptionHorsCommande, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Autorisation is True:
+        CRUD.create_ReceptionHorsCommande(db, reception)
+        return reception
+
 # @app.get("/stocks/", response_model=list[schemas.Stocks])
 # def read_stocks(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
 #     if current_user.Autorisation is True:
