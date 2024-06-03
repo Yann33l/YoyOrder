@@ -344,7 +344,7 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_comma
         if db_commande.dateCommande is None :
             db_commande2 = models.commandes(article_id = db_commande.article_id,)
             db.add(db_commande2)
-            # si l'article est composé, on crée une ligne de reception pour l'article complet (pour trtacer la quantité de kit complet reçu) et une ligne de sous-commande + une ligne de reception pour chaque sous-article 
+            # si l'article est composé, on crée une ligne de reception pour l'article complet (pour tracer la quantité de kit complet reçu) et une ligne de sous-commande + une ligne de reception pour chaque sous-article 
             if db_r_articles_sous_articles_valides:
                 quantite = sum(secteur.quantite for secteur in db.query(models.r_secteur_commande).filter(models.r_secteur_commande.commande_id == commande.commandeID).all())
                 db_reception_c = models.receptions(
@@ -788,4 +788,51 @@ def edit_stock_date(db: Session, stock: schemas.edit_stock):
         print(db_reception.dateFinUtilisation)
     db.commit()
     db.refresh(db_reception)
+    return db_reception
+
+def create_ReceptionHorsCommande(db: Session, reception: schemas.ReceptionHorsCommande):
+    for article in reception.articles_ids:
+        print(article)
+        db_commande = models.commandes(
+            article_id=article[0],
+            dateDemande= reception.dateDemande,
+            dateCommande= reception.dateCommande,
+            commentaireDemandeur= reception.commentaire,
+            commentaire= "Récep. (rempl./suppl.)",
+        )
+        db.add(db_commande)
+        db.commit()
+        db.refresh(db_commande)
+        if article[1] is not None:
+            db_sous_commande = models.sous_commandes(
+                commande_id=db_commande.ID,
+                sous_article_id=article[1],
+                quantite=reception.quantite
+            )
+            db.add(db_sous_commande)
+            db.commit()
+            db.refresh(db_sous_commande)
+            db_reception = models.receptions(
+                sous_commande_id=db_sous_commande.ID,
+                commande_id=db_commande.ID,
+                quantiteRestante=reception.quantite
+            )
+
+        else:
+            db_reception = models.receptions(
+                commande_id=db_commande.ID,
+                quantiteRestante=reception.quantite
+            )
+        db.add(db_reception)
+        db.commit()
+        db.refresh(db_reception)
+        db_r_secteur_commande = models.r_secteur_commande(
+            commande_id=db_commande.ID,
+            secteur_id=reception.secteurID,
+            quantite=reception.quantite
+        )
+        db.add(db_r_secteur_commande)
+        db.commit()
+        db.refresh(db_r_secteur_commande)
+
     return db_reception

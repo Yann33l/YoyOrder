@@ -586,7 +586,7 @@ def update_stock_date(edit_stock: schemas.edit_stock, db: Session = Depends(get_
         CRUD.edit_stock_date(db, edit_stock)
         return edit_stock
 
-@app.put("/create_ReceptionHorsCommande/")
+@app.post("/create_ReceptionHorsCommande/")
 def create_ReceptionHorsCommande(reception: schemas.ReceptionHorsCommande, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Autorisation is True:
         CRUD.create_ReceptionHorsCommande(db, reception)

@@ -122,12 +122,13 @@ class Fournisseurs(CreationFournisseurs):
     ID: int
 
 class ReceptionHorsCommande(BaseModel):
-    article_ids: list[int]
+    articles_ids: list[list[Optional[int]]]
     dateDemande: Optional[date]
     dateCommande: Optional[date]
     dateReception: Optional[date]
     quantite: int
     commentaire: Optional[str] = None
+    secteurID: int
 
 class FournisseursEdit(BaseModel):
     ID: int
