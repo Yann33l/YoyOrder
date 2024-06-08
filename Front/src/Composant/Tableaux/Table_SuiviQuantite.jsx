@@ -1,5 +1,5 @@
 import { returnTable } from "./TableStyle";
-import { getDataForTables } from "../API/api";
+import { getDataForTables, uploadCOA } from "../API/api";
 import { useEffect, useState } from "react";
 import { getAuthHeader } from "../API/token";
 import axios from "axios";
@@ -14,6 +14,7 @@ const EDITABLE_COLUMNS = [
   "quantité_ReceptionRestante",
   "date_FinUtilisation",
   "date_DebutUtilisation",
+  "COA",
 ];
 
 const TableArticlesEnStock = ({ pieces }) => {
@@ -81,7 +82,6 @@ const TableArticlesEnStock = ({ pieces }) => {
             delete requestData[key];
           }
         }
-        console.log("requestData", requestData);
         if (requestData["quantité_ReceptionRestante"]) {
           await axios.put(
             `${API_URL}/editStockQuantite/`,
@@ -102,13 +102,65 @@ const TableArticlesEnStock = ({ pieces }) => {
       console.error("erreur sur l'api lors de l'édition des valeurs:", error);
     }
   };
+  const handleFileChange = async (params, file, droped) => {
+    let dataChanged = false;
+    const { id } = params;
+    console.log("params", params);
+    const updatedData = [...data];
+    const rowIndex = updatedData.findIndex((row) => row.id === id);
 
+    if (file === null || droped === true) {
+      dataChanged = true;
+      updatedData[rowIndex]["COA"] = null;
+      setData(updatedData);
+    } else {
+      const fileToBase64 = async (file) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = (error) => reject(error);
+        });
+      };
+      const base64String = await fileToBase64(file);
+
+      const requestData = {
+        stockID: updatedData[rowIndex]["stock_id"],
+        lot: updatedData[rowIndex]["Lot"],
+        COA: base64String,
+      };
+      dataChanged = true;
+
+      if (dataChanged) {
+        try {
+          const fileUrl = URL.createObjectURL(file);
+          setTimeout(() => {
+            window.open(fileUrl, "_blank");
+          }, 100);
+          await uploadCOA(requestData);
+          articlesEnStock(pieces);
+        } catch (error) {
+          console.error(
+            "erreur sur l'api lors de l'édition des valeurs:",
+            error
+          );
+        }
+      }
+    }
+  };
   return returnTable(
     RowID,
     data,
     IGNORED_FIELDS,
     EDITABLE_COLUMNS,
-    handleCellEditCommit
+    handleCellEditCommit,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    handleFileChange
   );
 };
 

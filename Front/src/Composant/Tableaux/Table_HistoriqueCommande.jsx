@@ -34,41 +34,49 @@ const TableArticlesReception = () => {
     }
   }, []);
 
-  const handleFileChange = async (params, file) => {
+  const handleFileChange = async (params, file, droped) => {
     let dataChanged = false;
     const { id } = params;
     console.log("params", params);
     const updatedData = [...data];
     const rowIndex = updatedData.findIndex((row) => row.id === id);
 
-    const fileToBase64 = async (file) => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-      });
-    };
-    const base64String = await fileToBase64(file);
+    if (file === null || droped === true) {
+      dataChanged = true;
+      updatedData[rowIndex]["COA"] = null;
+      setData(updatedData);
+    } else {
+      const fileToBase64 = async (file) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = (error) => reject(error);
+        });
+      };
+      const base64String = await fileToBase64(file);
 
-    const requestData = {
-      stockID: updatedData[rowIndex]["stock_id"],
-      lot: updatedData[rowIndex]["Lot"],
-      COA: base64String,
-    };
-    dataChanged = true;
+      const requestData = {
+        stockID: updatedData[rowIndex]["stock_id"],
+        lot: updatedData[rowIndex]["Lot"],
+        COA: base64String,
+      };
+      dataChanged = true;
 
-    if (dataChanged) {
-      try {
-        const fileUrl = URL.createObjectURL(file);
-        console.log("requestData", requestData);
-        setTimeout(() => {
-          window.open(fileUrl, "_blank");
-        }, 100);
-        await uploadCOA(requestData);
-        updateData();
-      } catch (error) {
-        console.error("erreur sur l'api lors de l'édition des valeurs:", error);
+      if (dataChanged) {
+        try {
+          const fileUrl = URL.createObjectURL(file);
+          setTimeout(() => {
+            window.open(fileUrl, "_blank");
+          }, 100);
+          await uploadCOA(requestData);
+          updateData();
+        } catch (error) {
+          console.error(
+            "erreur sur l'api lors de l'édition des valeurs:",
+            error
+          );
+        }
       }
     }
   };

@@ -239,13 +239,15 @@ def format_demmande_results(results):
     secteur_labels = client_repository.get_secteur_labels()
     first_keys_to_get = ["article_id", "commande_id", "Article", "Ref", "Fournisseur", "Conditionnement", "quantité_En attente", "quantité_A commander", "date_Demande"]
     second_keys_to_get = ["commentaire_Demande"]
-    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+    order_by = ["Fournisseur", "Article"]
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
 
 def format_Commande_results(results):
     secteur_labels = client_repository.get_secteur_labels()
     first_keys_to_get = ["article_id", "commande_id", "Article", "Ref", "Fournisseur", "Conditionnement", "quantité_A commander", "date_Demande", "date_Commande"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande"]
-    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+    order_by = ["Fournisseur", "Article"]
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
 
 def format_Reception_results(results):
     secteur_labels = client_repository.get_secteur_labels()
@@ -253,7 +255,7 @@ def format_Reception_results(results):
         "article_id", "sous_article_id", "commande_id", "sous_commande_id", "reception_id", "stock_id", "Article", "Sous article", "Ref", "Fournisseur", "Conditionnement", "quantité_Commandé",
         "quantité_En attente", "quantité_Reçue", "date_Demande", "date_Commande", "date_Réception", "Lot", "date_Péremption", "COA", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
-    order_by = ["date_Commande", "Article"]
+    order_by = ["Article","date_Commande" ]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
 
 def format_Historique_results(results):
@@ -263,24 +265,28 @@ def format_Historique_results(results):
         "sous article_Ref",  "sous article_Conditionnement", "Fournisseur", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande",
         "date_Commande", "date_Réception", "Lot", "date_Péremption", "COA", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
-    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+    order_by = ["article_Libelle", "date_Commande"]
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
 
 def format_Stock_results(results):
     secteur_labels = []
     first_keys_to_get = [
         "stock_id", "recaption_id", "article_Libelle", "sous article_Libelle", "Lot" ,"COA", "date_Péremption", "date_Réception", "date_DebutUtilisation", "date_FinUtilisation", "quantité_LotTotal", "quantité_LotRestante", "quantité_Reçue", "quantité_ReceptionRestante"]
     second_keys_to_get = []
-    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get)
+    order_by = ["article_Libelle", "date_Péremption"]
+    return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
 
 def format_Article_For_Edit_results(results):
     piece_labels = client_repository.get_piece_labels()
     first_keys_to_get = ["article_id","Article", "Ref", "Fournisseur", "Conditionnement", "dateDebutValidite", "dateFinValidite"]
-    return format_results(results, piece_labels, first_keys_to_get)
+    order_by = ["Fournisseur", "Article"]
+    return format_results(results, piece_labels, first_keys_to_get, None, order_by)
 
 def format_sous_article_for_edit_results(results):
     first_keys_to_get = ["article_id", "Article", "Ref article", "Fournisseur", "sous_article_id", "Sous article", "Ref", "Conditionnement", "quantité_Par article", "dateDebutValidite",
     "dateFinValidite"]
-    return format_results(results, None, first_keys_to_get)
+    order_by = ["Fournisseur", "Article", "Sous article"]
+    return format_results(results, None, first_keys_to_get, None, order_by)
 
 def format_active_sous_article(results):
     first_keys_to_get = ["article_id", "Article", "Ref article","Conditionnement article", "Fournisseur", "sous_article_id", "Sous article", "Ref", "Conditionnement"]
@@ -562,6 +568,12 @@ def get_COA(stockID: int, db: Session = Depends(get_db), current_user: schemas.U
         COA = {"COA" : CRUD.getCOA(db, stockID)}
         print(COA)
         return COA
+
+@app.delete("/dropCOA/{stockID}/")
+def drop_COA(stockID: int, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Autorisation is True:
+        return CRUD.dropCOA(db, stockID)
+    
 
 @app.get("/stock/{piece}/")
 def get_stocks(piece: str, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):

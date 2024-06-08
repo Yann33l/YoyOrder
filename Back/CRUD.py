@@ -209,10 +209,10 @@ def edit_article_piece(db: Session, piece_id: int, article_id: int):
         return db_article
 
 def get_fournisseurs(db: Session):
-    return db.query(models.fournisseurs).all()
+    return db.query(models.fournisseurs).order_by(models.fournisseurs.libelle).all()
 
 def get_fournisseurs_actifs(db: Session):
-    return db.query(models.fournisseurs).where(models.fournisseurs.dateFinValidite >= date.today()).all()
+    return db.query(models.fournisseurs).where(models.fournisseurs.dateFinValidite >= date.today()).order_by(models.fournisseurs.libelle).all()
 
 def create_fournisseur(db: Session, fournisseur: schemas.Fournisseurs):
     db_fournisseur = models.fournisseurs(
@@ -763,6 +763,14 @@ def uploadCOA(db: Session, COA: schemas.COA):
 
 def getCOA(db: Session, stockID: int):
     return db.query(models.stocks).filter(models.stocks.ID == stockID).scalar().COA
+
+def dropCOA(db: Session, stockID: int):
+    db_stock = db.query(models.stocks).filter(models.stocks.ID == stockID).scalar()
+    if db_stock:
+        db_stock.COA = None
+        db.commit()
+        db.refresh(db_stock)
+    return db_stock
 
 def edit_stock_quantite(db: Session, stock: schemas.edit_stock):
     db_stock = db.query(models.stocks).filter(models.stocks.ID == stock.stockID).scalar()

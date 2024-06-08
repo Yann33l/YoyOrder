@@ -1,6 +1,6 @@
 import { DataGrid } from "@mui/x-data-grid";
 import CustomToolBar from "./CustomToolBar";
-import { getCOA } from "../API/api";
+import { getCOA, dropCOA } from "../API/api";
 
 const dataTableStyle = {
   margin: "auto",
@@ -145,43 +145,80 @@ const generateColumns = (
     const renderFileCell = (params) => {
       if (params.value) {
         return (
-          <button
-            onClick={async () => {
-              const responseData = await getCOA(params.row.stock_id);
-              var pdfData = responseData["COA"];
-              var mimeType = pdfData.split(",")[0].split(":")[1].split(";")[0];
+          <div>
+            <button
+              onClick={async () => {
+                try {
+                  const responseData = await getCOA(params.row.stock_id);
+                  const pdfData = responseData["COA"];
+                  const mimeType = pdfData
+                    .split(",")[0]
+                    .split(":")[1]
+                    .split(";")[0];
+                  const byteCharacters = atob(pdfData.split(",")[1]);
+                  const byteNumbers = new Array(byteCharacters.length);
 
-              var byteCharacters = atob(pdfData.split(",")[1]);
-              var byteNumbers = new Array(byteCharacters.length);
-              for (var i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-              }
-              var byteArray = new Uint8Array(byteNumbers);
-              var blob = new Blob([byteArray], { type: mimeType });
+                  for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                  }
 
-              // Créer une URL objet à partir du Blob
-              var blobUrl = URL.createObjectURL(blob);
+                  const byteArray = new Uint8Array(byteNumbers);
+                  const blob = new Blob([byteArray], { type: mimeType });
+                  const blobUrl = URL.createObjectURL(blob);
 
-              // Ouvrir une nouvelle fenêtre avec l'URL du Blob
-              window.open(blobUrl, "_blank");
-            }}
-          >
-            Ouvrir
-          </button>
+                  window.open(blobUrl, "_blank");
+                } catch (error) {
+                  console.error("Error opening COA: ", error);
+                }
+              }}
+              disabled={!params.row.stock_id}
+            >
+              Ouvrir
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const responseData = await dropCOA(params.row.stock_id);
+                  if (responseData.COA === null) {
+                    handleFileChange(params, null, true); // Ajoute le 3ème argument pour indiquer que le fichier a été supprimé
+                  } else {
+                    alert(
+                      "Une erreur est survenue lors de la suppression du COA"
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error dropping COA: ", error);
+                }
+              }}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = "red";
+                e.target.style.border = "1px solid grey";
+                e.target.style.borderRadius = "2px";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = "lightgray";
+              }}
+            >
+              X
+            </button>
+          </div>
         );
       } else {
         if (params.row.Lot) {
           return (
             <div>
               <input
-                id="files"
+                id={`files-${params.row.stock_id}`} // Donne un id unique basé sur le stock_id
                 style={{ display: "none" }}
                 type="file"
                 onChange={(e) => {
                   handleFileChange(params, e.target.files[0]);
                 }}
               />
-              <label className="button-upload" htmlFor="files">
+              <label
+                className="button-upload"
+                htmlFor={`files-${params.row.stock_id}`}
+              >
                 Ajouter
               </label>
             </div>
