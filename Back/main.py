@@ -42,7 +42,7 @@ else:
         CORSMiddleware,
         allow_origins=["https://yoy-order.vercel.app"],
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT"],
+        allow_methods=["*"],
         allow_headers=["*"],)
 
 
