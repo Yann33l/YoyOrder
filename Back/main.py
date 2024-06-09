@@ -161,7 +161,8 @@ def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_ge
         formatted_results.append(formatted_result)
     
     if order_by:
-        formatted_results.sort(key=lambda x: [x.get(key) for key in order_by])
+        formatted_results.sort(key=lambda x: [x.get(key) if x.get(key) is not None else 
+                                      date(2000, 1, 1) if key.startswith('date') else "" for key in order_by])
 
     return formatted_results
 

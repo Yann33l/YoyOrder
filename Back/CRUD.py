@@ -328,7 +328,7 @@ def edit_demmande_quantite(db: Session, commande: schemas.edit_demande_commande_
             return db_r_secteur_commande
     except: 
         raise HTTPException(status_code=404, detail="Secteur not found") 
-
+    
 def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_commande_reception):
     db_commande = db.query(models.commandes).filter(
         models.commandes.ID == commande.commandeID).scalar()
@@ -355,15 +355,15 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_comma
                     commentaire=None,
                 )
                 db.add(db_reception_c)
-                for sous_article in db_r_articles_sous_articles_valides:
 
+                for sous_article in db_r_articles_sous_articles_valides:
                     db_sous_commandes = models.sous_commandes(
                         sous_article_id = sous_article.sous_article_id,
                         commande_id = commande.commandeID,
                         quantite = sous_article.quantite*quantite,
                     )
                     db.add(db_sous_commandes)
-                    db.commit()
+                    db.flush()
 
                     db_reception_sc = models.receptions(
                         commande_id=commande.commandeID,
@@ -385,14 +385,11 @@ def edit_commande_dateCommande(db: Session, commande: schemas.edit_demande_comma
                 db.add(db_reception)
 
         db_commande.dateCommande = commande.editedValue
-    if db_article :
-        if db_article.commentaire != db_commande.commentaireDemandeur:
+
+    if db_article and db_article.commentaire != db_commande.commentaireDemandeur:
             db_commande.commentaireDemandeur = db_article.commentaire
-            db.commit()
-            db.refresh(db_article)
     db.commit()
     db.refresh(db_commande)
-    db.refresh(db_reception)
     return db_commande
 
 def edit_commande_commentaire(db: Session, commande: schemas.edit_demande_commande_reception):
@@ -402,13 +399,12 @@ def edit_commande_commentaire(db: Session, commande: schemas.edit_demande_comman
         models.articles.ID == commande.articleID).scalar()
     if db_commande:
         db_commande.commentaire = commande.commentaire
-        db.commit()
-        db.refresh(db_commande)
-    if db_article :
-        if db_article.commentaire != db_commande.commentaireDemandeur:
+
+    if db_article and db_article.commentaire != db_commande.commentaireDemandeur:
             db_commande.commentaireDemandeur = db_article.commentaire
-            db.commit()
-            db.refresh(db_article)
+
+    db.commit()
+    db.refresh(db_commande)
     return db_commande
 
 def edit_réception_dateReception(db: Session, edit_reception: schemas.edit_demande_commande_reception):
@@ -435,8 +431,6 @@ def edit_réception_dateReception(db: Session, edit_reception: schemas.edit_dema
         # alors on modifie la date de réception
         if condition1 or condition2 or condition3:
             db_reception.dateReception = edit_reception.date_Réception
-            db.commit()
-            db.refresh(db_commande)
 
         # si la date de réception est égale à la date de réception en cours, on crée une nouvelle réception uniquement si la quantité est différente de null ou 0
         # ou si la date de réception est superieur à la date de réception en cours
@@ -450,10 +444,11 @@ def edit_réception_dateReception(db: Session, edit_reception: schemas.edit_dema
             commentaire=db_reception.commentaire,
             )
             db.add(reception_incomplete)
-            db.commit()
-            db.refresh(db_commande)
     else:
         print("erreur de saisie de date de réception")
+        return None
+    db.commit()
+    db.refresh(db_commande)
     return db_commande
 
 def edit_reception_commentaire(db: Session, receptions: schemas.edit_demande_commande_reception):
@@ -481,18 +476,16 @@ def edit_commande_ReceptionEnTotalite(db: Session, edition: schemas.edit_demande
 def edit_reception_Quantite(db: Session, reception: schemas.edit_demande_commande_reception):
     db_reception = db.query(models.receptions).filter(models.receptions.ID == reception.receptionID).scalar()
     db_r_receptions_stock = db.query(models.r_receptions_stock).filter(models.r_receptions_stock.reception_id == reception.receptionID).scalar()
+
+    if not db_reception:
+        return None
+    
     # si la réception existe et qu'il y a un lien entre la réception et le stock
-    if db_r_receptions_stock is not None:
-
+    if db_r_receptions_stock:
         db_stock = db.query(models.stocks).filter(models.stocks.ID == db_r_receptions_stock.stock_id).scalar()
-        if db_reception and db_stock is not None:
-
-            if db_reception.quantite is None:
-                précédente_quantité = 0
-            else:
-                précédente_quantité = db_reception.quantite
-            if db_reception.quantiteRestante is None:
-                db_reception.quantiteRestante = 0
+        if db_stock:
+            précédente_quantité = db_reception.quantite or 0
+            db_reception.quantiteRestante = db_reception.quantiteRestante or 0
 
             # on ajoute la quantité dans le lot et dans la réception
             db_reception.quantite = reception.quantité_Reçue
@@ -501,15 +494,13 @@ def edit_reception_Quantite(db: Session, reception: schemas.edit_demande_command
             db_stock.quantiteInitiale += db_reception.quantite - précédente_quantité
             db.commit()
             db.refresh(db_reception)
-            db.refresh(db_stock)
             return db_reception
         
     # s'il n'y a pas de lien entre la réception et le stock
-    elif db_reception :
+    else :
         # on ajoute la quantité dans la réception
         db_reception.quantite = reception.quantité_Reçue
         db_reception.quantiteRestante = reception.quantité_Reçue
-        db.commit()
         # on vérifie si le lot existe en bd
         db_lots_existants_pour_cet_article = client_repository.get_stocks_par_commandeID_ou_sous_commandeID(reception)
         # si il y a des lots pour cet article en bd
@@ -572,6 +563,8 @@ def edit_reception_Quantite(db: Session, reception: schemas.edit_demande_command
             db.commit()
             db.refresh(db_r_receptions_stock)
         return db_r_receptions_stock
+    
+
 
 def edit_reception_Lot(db: Session, reception: schemas.edit_demande_commande_reception):
     db_reception = db.query(models.receptions).filter(models.receptions.ID == reception.receptionID).scalar()
@@ -582,11 +575,11 @@ def edit_reception_Lot(db: Session, reception: schemas.edit_demande_commande_rec
         
     def création_stocks(): 
         db_stock = models.stocks(
-            quantiteInitiale=db_reception.quantite if db_reception.quantite is not None else 0,
-            quantiteRestante=db_reception.quantite if db_reception.quantite is not None else 0,
-            lot=reception.Lot,
-            datePeremption=None,
-            COA=None,
+            quantiteInitiale = db_reception.quantite or 0,
+            quantiteRestante = db_reception.quantite or 0,
+            lot = reception.Lot,
+            datePeremption = None,
+            COA = None,
         )
         db.add(db_stock)
         db.commit()
@@ -612,10 +605,8 @@ def edit_reception_Lot(db: Session, reception: schemas.edit_demande_commande_rec
             # si provient du cas ou il y a un lot déjà renseigné pour cette réception et que le nouveau lot existe, on modifie la relation entre la réception et le lot
             if db_lot[1] == reception.Lot and db_r_receptions_stock :  
                 if db_reception and db_stock:
-                    if db_reception.quantite is None:
-                        précédente_quantité = 0
-                    else:
-                        précédente_quantité = db_reception.quantite
+                    précédente_quantité = db_reception.quantite or 0
+
                     # on retire la quantité au lot précédent
                 db_stock.quantiteRestante -= précédente_quantité
                 db_stock.quantiteInitiale -= précédente_quantité
@@ -648,8 +639,8 @@ def edit_reception_Lot(db: Session, reception: schemas.edit_demande_commande_rec
                 db.commit()
                 db.refresh(db_r_receptions_stock)
                 db_nouveaux_stocks = db.query(models.stocks).filter(models.stocks.ID == db_r_receptions_stock.stock_id).scalar()
-                db_nouveaux_stocks.quantiteInitiale += db_reception.quantite if db_reception.quantite is not None else 0,
-                db_nouveaux_stocks.quantiteRestante += db_reception.quantite if db_reception.quantite is not None else 0,
+                db_nouveaux_stocks.quantiteInitiale += db_reception.quantite or 0,
+                db_nouveaux_stocks.quantiteRestante += db_reception.quantite or 0,
                 return db_r_receptions_stock
             
 
@@ -680,10 +671,7 @@ def edit_reception_Lot(db: Session, reception: schemas.edit_demande_commande_rec
             # on ajoute la quantité dans le nouveau lot
             else :
                 if db_reception and db_stock:
-                    if db_reception.quantite is None:
-                        précédente_quantité = 0
-                    else:
-                        précédente_quantité = db_reception.quantite
+                    précédente_quantité = db_reception.quantite or 0
                 db_stock.quantiteRestante -= précédente_quantité
                 db_stock.quantiteInitiale -= précédente_quantité
                 db_stock = création_stocks()
