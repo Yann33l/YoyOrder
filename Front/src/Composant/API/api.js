@@ -251,3 +251,17 @@ export const getCOA = async (stockID) => {
     throw error;
   }
 };
+
+export const dropCOA = async (stockID) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/dropCOA/${stockID}`,
+      getAuthHeader()
+    );
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
