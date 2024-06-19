@@ -1,6 +1,6 @@
 import { DataGrid } from "@mui/x-data-grid";
+import { dropCOA, getCOA } from "../API/api";
 import CustomToolBar from "./CustomToolBar";
-import { getCOA, dropCOA } from "../API/api";
 
 const dataTableStyle = {
   margin: "auto",

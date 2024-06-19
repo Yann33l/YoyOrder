@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import { useEffect, useState } from "react";
 import { getUserInfo } from "../API/api";
 
 const Headers = ({ setContent, onLogout }) => {
@@ -66,6 +66,7 @@ const Headers = ({ setContent, onLogout }) => {
                   }`}
                   onClick={() => handleItemClick(item.content, item.label)}
                 >
+                  {" "}
                   {item.label}
                 </li>
               );

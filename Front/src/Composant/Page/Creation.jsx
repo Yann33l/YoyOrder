@@ -1,7 +1,10 @@
-import { createData, GetActiveFournisseurs } from "../API/api";
-import { GetActivesPieces } from "../API/api";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import {
+  createData,
+  GetActiveFournisseurs,
+  GetActivesPieces,
+} from "../API/api";
 import TableArticles from "../Tableaux/Table_articles";
 
 const Creation = () => {

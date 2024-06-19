@@ -272,7 +272,7 @@ def format_Historique_results(results):
 def format_Stock_results(results):
     secteur_labels = []
     first_keys_to_get = [
-        "stock_id", "recaption_id", "article_Libelle", "sous article_Libelle", "Lot" ,"COA", "date_Péremption", "date_Réception", "date_DebutUtilisation", "date_FinUtilisation", "quantité_LotTotal", "quantité_LotRestante", "quantité_Reçue", "quantité_ReceptionRestante"]
+        "stock_id", "reception_id", "article_Libelle", "sous article_Libelle", "Lot" ,"COA", "date_Péremption", "date_Réception", "date_DebutUtilisation", "date_FinUtilisation", "quantité_LotTotal", "quantité_LotRestante", "quantité_Reçue", "quantité_ReceptionRestante"]
     second_keys_to_get = []
     order_by = ["article_Libelle", "date_Péremption"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
@@ -375,6 +375,18 @@ def read_historique_commandes(current_user: schemas.UserBase = Depends(get_curre
         try:
             results = client_repository.get_historique_commandes()
             formatted_results = format_Historique_results(results)
+            return {"results": formatted_results}
+        except Exception as e:
+            return {"error": str(e)}
+    else:
+        raise HTTPException(status_code=400, detail="l'utilisateur n'est pas un demandeur")
+    
+@app.get("/historiqueStock/")
+def read_historique_commandes(current_user: schemas.UserBase = Depends(get_current_user)):
+    if current_user.Demandeur is True or current_user.Acheteur is True:
+        try:
+            results = client_repository.get_historique_stock()
+            formatted_results = format_Stock_results(results)
             return {"results": formatted_results}
         except Exception as e:
             return {"error": str(e)}

@@ -1,6 +1,6 @@
-import { returnTable } from "./TableStyle";
-import { getDataForTables } from "../API/api";
 import { useEffect, useState } from "react";
+import { getDataForTables } from "../API/api";
+import { returnTable } from "./TableStyle";
 
 const IGNORED_FIELDS = ["article_id", "id"];
 const RowID = "id";

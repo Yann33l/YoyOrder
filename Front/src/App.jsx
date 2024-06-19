@@ -45,7 +45,7 @@ function App() {
     const ConfirmPassword = event.target.elements.ConfirmPassword.value;
 
     // Vérification de l'email
-    if (Email.endsWith("@a")) {
+    if (Email.endsWith(import.meta.env.VITE_EMAIL_FINI_PAR)) {
       try {
         // Vérification de l'existence de l'utilisateur
         const response = await checkUser(Email);
@@ -72,7 +72,9 @@ function App() {
         }
       }
     } else {
-      alert("Vous devez utiliser un email @a");
+      alert(
+        "Vous devez utiliser un email" + import.meta.env.VITE_EMAIL_FINI_PAR
+      );
     }
   };
 
