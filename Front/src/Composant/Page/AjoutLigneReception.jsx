@@ -1,9 +1,7 @@
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { GetSecteurs, createData } from "../API/api";
 import Table_SousArticles from "../Tableaux/Table_SousArticles";
-import { createData } from "../API/api";
-import { useEffect } from "react";
-import { GetSecteurs } from "../API/api";
 
 const PageAjoutLigneReception = () => {
   const { register, handleSubmit, getValues } = useForm();

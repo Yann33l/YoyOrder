@@ -1,22 +1,24 @@
-import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
-import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
-import Edition from "./Edition";
-import TableArticlesReception from "../Tableaux/Table_ArticleReception";
+import { useEffect, useState } from "react";
 import { GetActivesPieces } from "../API/api";
-import AcceuilContent from "./Acceuil";
-import Headers from "./BandeauTop";
+import TableArticlesCommande from "../Tableaux/Table_ArticleCommande";
 import TableArticlesDemande from "../Tableaux/Table_ArticleDemande";
-import Creation from "./Creation";
+import TableArticlesReception from "../Tableaux/Table_ArticleReception";
 import TableHistoriqueCommande from "../Tableaux/Table_HistoriqueCommande";
+import TableHistoriqueStock from "../Tableaux/Table_HistoriqueStock";
 import TableArticlesEnStock from "../Tableaux/Table_SuiviQuantite";
+import TableUtilisateurs from "../Tableaux/Table_utilisateurs";
+import AcceuilContent from "./Acceuil";
 import PageAjoutLigneReception from "./AjoutLigneReception";
+import Headers from "./BandeauTop";
+import Creation from "./Creation";
+import Edition from "./Edition";
 
 function HomePage({ onLogout }) {
   const [content, setContent] = useState("default");
   const [pieces, setPieces] = useState([]);
   const [selectedElement, setSelectedElement] = useState("Tous");
+  const [selectedItem, setSelectedItem] = useState("HistoriqueCommande");
 
   const fetchPieces = async () => {
     try {
@@ -32,6 +34,21 @@ function HomePage({ onLogout }) {
   }, []);
 
   let mainContent;
+  const menuItems = [
+    { label: "Commandes et receptions", content: "HistoriqueCommande" },
+    { label: "Stocks", content: "HistoriqueStock" },
+  ];
+
+  const [subContent, setSubContent] = useState("HistoriqueCommande");
+  const mainSubContent = (selectedItem) => {
+    switch (selectedItem) {
+      case "HistoriqueCommande":
+      case "default":
+        return <TableHistoriqueCommande />;
+      case "HistoriqueStock":
+        return <TableHistoriqueStock />;
+    }
+  };
 
   switch (content) {
     case "acceuil":
@@ -107,15 +124,34 @@ function HomePage({ onLogout }) {
         </div>
       );
       break;
-
     case "Creation":
       mainContent = <Creation />;
       break;
     case "Historique":
       mainContent = (
         <div>
-          <div style={{ height: "51px" }} />
-          <TableHistoriqueCommande />;
+          {" "}
+          <div>
+            <nav className="sous_menu-nav">
+              <ul>
+                {menuItems.map((item, index) => (
+                  <li
+                    key={index}
+                    className={`bouton ${
+                      selectedItem === item.content ? "selected" : ""
+                    }`}
+                    onClick={() => {
+                      setSubContent(item.content);
+                      setSelectedItem(item.content);
+                    }}
+                  >
+                    {item.label}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+          <div>{mainSubContent(subContent)}</div>
         </div>
       );
       break;

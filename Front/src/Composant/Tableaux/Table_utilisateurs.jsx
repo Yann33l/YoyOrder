@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API_URL, GetSecteurs } from "../API/api";
 import { getAuthHeader } from "../API/token";
 import { returnTable } from "./TableStyle";

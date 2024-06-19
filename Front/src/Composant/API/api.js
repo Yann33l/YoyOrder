@@ -1,5 +1,5 @@
 import axios from "axios";
-import { setAuthHeader, getAuthHeader } from "./token";
+import { getAuthHeader, setAuthHeader } from "./token";
 
 export let API_URL;
 

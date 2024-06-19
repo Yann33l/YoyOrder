@@ -1,14 +1,13 @@
-import { returnTable } from "./TableStyle";
-import { getDataForTables, uploadCOA } from "../API/api";
-import { useEffect, useState } from "react";
-import { getAuthHeader } from "../API/token";
 import axios from "axios";
-import { API_URL } from "../API/api";
 import dayjs from "dayjs";
+import { useEffect, useState } from "react";
+import { API_URL, getDataForTables, uploadCOA } from "../API/api";
+import { getAuthHeader } from "../API/token";
+import { returnTable } from "./TableStyle";
 
 import PropTypes from "prop-types";
 
-const IGNORED_FIELDS = ["id", "stock_id"];
+const IGNORED_FIELDS = ["id", "stock_id", "reception_id"];
 const RowID = "id";
 const EDITABLE_COLUMNS = [
   "quantité_ReceptionRestante",
