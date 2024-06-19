@@ -8,10 +8,10 @@ if (
   window.location.hostname === "localhost"
 ) {
   // Environnement local
-  API_URL = "http://127.0.0.1:8000";
+  API_URL = import.meta.env.VITE_API_LOCAL_URL;
 } else {
   // Environnement en ligne
-  API_URL = "https://yoyorder.osc-fr1.scalingo.io";
+  API_URL = import.meta.env.VITE_API_ONLINE_URL;
 }
 
 export const checkUser = async (Email) => {
