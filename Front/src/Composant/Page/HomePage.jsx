@@ -53,7 +53,7 @@ function HomePage({ onLogout }) {
   switch (content) {
     case "acceuil":
     case "default":
-      mainContent = AcceuilContent;
+      mainContent = <AcceuilContent />;
       break;
     case "Commande":
       mainContent = (
@@ -97,7 +97,7 @@ function HomePage({ onLogout }) {
                 {content === "Reception" && (
                   <li
                     className={`bouton ${
-                      content === "Demande" ? "selected" : ""
+                      selectedElement === "Ajout" ? "selected" : ""
                     }`}
                     onClick={() => setSelectedElement("Ajout")}
                   >
