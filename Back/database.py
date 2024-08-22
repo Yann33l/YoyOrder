@@ -19,7 +19,7 @@ SCALINGO_MYSQL_URL = f"mysql://{Login}:{Password}@{Server_Host}:{Port}/{Database
 # Local
 SQLALCHEMY_DATABASE_URL = f"mysql+mysqlconnector://{Login}:{Password}@{Server_Host}:{Port}/{Database}"
 
-if Env == "dev":
+if Env == "local":
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 else:

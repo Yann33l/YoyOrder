@@ -83,8 +83,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
 
 
-
-
 @app.post("/token/", response_model=schemas.Token)
 async def login_for_access_token_docs(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = CRUD.get_user_by_email(db, form_data.username)
@@ -185,14 +183,6 @@ def read_users(current_user: schemas.UserBase = Depends(get_current_user)):
             return {"error": str(e)}
     else:
         raise HTTPException(status_code=400, detail="Inactive user")
-
-    # Récupération d'un utilisateur par son email
-# @app.get("/userByEmail/", response_model=schemas.UserBase)
-# def read_user_email(email: str, db: Session = Depends(get_db)):
-#     db_user = CRUD.get_user_by_email(db, email)
-#     if db_user is None:
-#         raise HTTPException(status_code=404, detail="User not found")
-#     return db_user
 
     # Mise à jour du status d'un utilisateur
 @router.put("/editUserStatus/{status}/", response_model=schemas.UserBase)
@@ -587,7 +577,7 @@ def drop_COA(stockID: int, db: Session = Depends(get_db), current_user: schemas.
     
 
 @app.get("/stock/{piece}/")
-def get_stocks(piece: str, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
+def get_stocks(piece: str, current_user: schemas.UserBase = Depends(get_current_user)):
     if piece == "Tous" :
         piece = "%"   
     if current_user.Autorisation is True:
@@ -613,56 +603,5 @@ def create_ReceptionHorsCommande(reception: schemas.ReceptionHorsCommande, db: S
     if current_user.Autorisation is True:
         CRUD.create_ReceptionHorsCommande(db, reception)
         return reception
-
-# @app.get("/stocks/", response_model=list[schemas.Stocks])
-# def read_stocks(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-#     if current_user.Autorisation is True:
-#         stocks = CRUD.get_stocks(db, skip=skip, limit=limit)
-#         return stocks
-
-
-# @app.post("/create_stock/", response_model=schemas.Stocks)
-# def create_stock(stock: schemas.Stocks, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-#     if current_user.Autorisation is True:
-#         return CRUD.create_stock(db, stock)
-
-
-# @app.get("/gestiondescouts/", response_model=list[schemas.GestionDesCouts])
-# def read_gestiondescouts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-#     if current_user.Autorisation is True:
-#         gestiondescouts = CRUD.get_gestiondescouts(db, skip=skip, limit=limit)
-#         return gestiondescouts
-
-
-# @app.post("/create_gestiondescout/", response_model=schemas.GestionDesCouts)
-# def create_gestiondescout(gestiondescout: schemas.GestionDesCouts, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_active_user)):
-#     if current_user.Autorisation is True:
-#         return CRUD.create_gestiondescout(db, gestiondescout)
-
-
-# @app.get("/lieuxdestockage/", response_model=list[schemas.LieuxDeStockage])
-# def read_lieuxdestockage(skip: int = 0, limit: int = 100,db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
-#     if current_user.Autorisation is True:
-#         LieuxDeStockage = CRUD.get_lieuxdestockage(db, skip=skip, limit=limit)
-#         return LieuxDeStockage
-
-
-# @app.post("/create_lieuxdestockage/", response_model=schemas.LieuxDeStockage)
-# def create_lieuxdestockage(LieuxDeStockage: schemas.LieuxDeStockage, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
-#     if current_user.Autorisation is True:
-#         return CRUD.create_lieuxdestockage(db, LieuxDeStockage)
-
-
-# @app.get("/usersdates/", response_model=list[schemas.usersdates])
-# def read_usersdates(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     usersdates = CRUD.get_usersdates(db, skip=skip, limit=limit)
-#     return usersdates
-
-
-# @app.post("/create_usersdate/", response_model=schemas.usersdates)
-# def create_userdate(userdate: schemas.usersdates, db: Session = Depends(get_db)):
-#     return CRUD.create_userdate(db, userdate)
-
-
 
 app.include_router(router)
