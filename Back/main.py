@@ -474,7 +474,6 @@ def create_article(article: schemas.ArticlesCreate, db: Session = Depends(get_db
 @app.post("/create_compositionArticle/", response_model=schemas.SousArticlesCreation)
 def create_compositionArticle(compositionArticle: schemas.SousArticlesCreation, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Autorisation is True:
-        print(compositionArticle)
         return CRUD.create_compositionArticle(db, compositionArticle)
         
 
@@ -579,7 +578,6 @@ def upload_COA(COA: schemas.editCOA, db: Session = Depends(get_db), current_user
 def get_COA(stockID: int, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Autorisation is True:
         COA = {"COA" : CRUD.getCOA(db, stockID)}
-        print(COA)
         return COA
 
 @app.delete("/dropCOA/{stockID}/")
@@ -596,7 +594,6 @@ def get_stocks(piece: str, db: Session = Depends(get_db), current_user: schemas.
         stocks = client_repository.get_stocks(piece)
         formatted_results = format_Stock_results(stocks)
 
-        print(formatted_results)
         return formatted_results
 
 @app.put("/editStockQuantite/")
