@@ -425,14 +425,14 @@ def edit_réception_dateReception(db: Session, edit_reception: schemas.edit_dema
             condition4 = edit_reception.date_Réception == db_reception.dateReception and db_reception.quantite is not None and db_reception.quantite != 0
             condition5 = edit_reception.date_Réception > db_reception.dateReception
      
-        # et s'il n'y as pas de date de réception en bd, on modifie la date de réception
+        # et s'il n'y as pas de date de réception en bd
         # ou si la date de réception est inferieur à la date de la réception en cours, est superieur à la precedente réception (ou s'il n'y en a pas de precedente)
         # ou si la date de réception est superieur à la date de réception en cours, on modifie la date de réception si la quantité est nulle ou 0
         # alors on modifie la date de réception
         if condition1 or condition2 or condition3:
             db_reception.dateReception = edit_reception.date_Réception
 
-        # si la date de réception est égale à la date de réception en cours, on crée une nouvelle réception uniquement si la quantité est différente de null ou 0
+        # si la date de réception est égale à la date de réception en cours et si la quantité est différente de null ou 0
         # ou si la date de réception est superieur à la date de réception en cours
         # alors on crée une nouvelle réception
         elif condition4 or condition5:

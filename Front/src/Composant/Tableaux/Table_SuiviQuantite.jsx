@@ -49,7 +49,7 @@ const TableArticlesEnStock = ({ pieces }) => {
     try {
       const requestData = {
         stockID: updatedData[rowIndex]["stock_id"],
-        receptionID: updatedData[rowIndex]["recaption_id"],
+        receptionID: updatedData[rowIndex]["reception_id"],
       };
       let dataChanged = false;
 
