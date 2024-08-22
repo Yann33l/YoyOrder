@@ -97,7 +97,7 @@ function HomePage({ onLogout }) {
                 {content === "Reception" && (
                   <li
                     className={`bouton ${
-                      content === "Demande" ? "selected" : ""
+                      selectedElement === "Ajout" ? "selected" : ""
                     }`}
                     onClick={() => setSelectedElement("Ajout")}
                   >
