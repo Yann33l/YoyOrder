@@ -375,6 +375,7 @@ export const returnTable = (
     }
   >
     <DataGrid
+      style={{ borderRadius: "8px" }}
       experimentalFeatures={{ columnGrouping: true }}
       rows={data}
       {...(CALLER === "SelectionArticles"
@@ -415,7 +416,6 @@ export const returnTable = (
       sx={dataTableStyle}
       getRowId={(row) => row[RowID]}
       density="compact"
-      h
       getRowHeight={() => "auto"}
       slots={{
         toolbar: CustomToolBar,

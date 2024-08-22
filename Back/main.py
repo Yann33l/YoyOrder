@@ -30,7 +30,7 @@ app = FastAPI()
 router = APIRouter()
 
 
-if Env == "dev":
+if Env == "local":
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

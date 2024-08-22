@@ -1,6 +1,6 @@
 :root {
   --text: #000000;
-  --backgroundLight: #f0f0f0;
+  --backgroundLight: rgba(255, 255, 255);
   --validated: #59d155;
   --background: #3e8b86;
   --secondary: #d7e1e1;
@@ -18,7 +18,7 @@ body::-webkit-scrollbar {
 /* app */
 body {
   color: var(--text);
-  font-weight: bold;
+
   margin: 0;
   font-family: "Montserrat_Alternates_Medium";
   background-color: var(--secondary);
@@ -78,6 +78,7 @@ header {
 
 nav.menu-nav {
   display: flex;
+  font-weight: bold;
   align-items: center;
   justify-content: center;
 }
@@ -112,6 +113,7 @@ nav.menu-nav ul li.bouton.selected {
 
 nav.sous_menu-nav {
   text-align: center;
+  font-weight: bold;
 }
 
 nav.sous_menu-nav ul {
@@ -243,4 +245,48 @@ footer {
   border: 1px solid #6c6c6c;
   background-color: #f0f0f0;
   padding: 0 5px;
+}
+
+/* Page acceuil */
+.acceuil {
+  height: "78vh";
+  margin: auto;
+  margin-top: 50px;
+  background-color: var(--backgroundLight);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.75);
+  font-family: Arial, sans-serif;
+}
+
+.acceuil h1 {
+  text-align: center;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+.acceuil h2 {
+  color: var(--text);
+  margin-top: 30px;
+}
+
+.acceuil h3 {
+  color: var(--text);
+  margin-top: 20px;
+}
+
+.acceuil p {
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+.acceuil ul {
+  color: var(--text);
+  list-style-type: disc;
+  margin-left: 20px;
+}
+
+.acceuil ul ul {
+  list-style-type: circle;
+  margin-left: 20px;
 }

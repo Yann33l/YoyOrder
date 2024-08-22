@@ -53,7 +53,7 @@ function HomePage({ onLogout }) {
   switch (content) {
     case "acceuil":
     case "default":
-      mainContent = AcceuilContent;
+      mainContent = <AcceuilContent />;
       break;
     case "Commande":
       mainContent = (
