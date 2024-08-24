@@ -101,7 +101,7 @@ const generateColumns = (
     "date_FinUtilisation",
     "date_DebutUtilisation",
   ];
-  const textColumns = ["commentaire_Reception"];
+
   let checkboxColumns = ["En totalité ?"];
   if (CALLER === "EditArticle") {
     checkboxColumns = [
@@ -118,6 +118,40 @@ const generateColumns = (
   const fileColumns = ["COA"];
 
   const dropdownColumns = ["Fournisseur"];
+
+  const calculateDaysDifference = (date) => {
+    const currentDate = new Date();
+    const targetDate = new Date(date);
+    const differenceInTime = targetDate.getTime() - currentDate.getTime();
+    return Math.floor(differenceInTime / (1000 * 3600 * 24));
+  };
+
+  const renderIsExpired = (params) => {
+    const daysDifference = calculateDaysDifference(params.value);
+    let backgroundColor = "transparent";
+
+    if (daysDifference < -1) {
+      backgroundColor = "red"; // Date de péremption dépassée
+    } else if (daysDifference < 30) {
+      console.log(daysDifference);
+      backgroundColor = "orange"; // Date de péremption proche
+    }
+
+    return (
+      <div
+        style={{
+          backgroundColor,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {params.value ? new Date(params.value).toLocaleDateString() : ""}
+      </div>
+    );
+  };
 
   const Columns = columnsWithoutIgnoredFields.map((label) => {
     let width = 50;
@@ -235,17 +269,14 @@ const generateColumns = (
     }
 
     let renderCell;
-    if (textColumns.includes(label)) {
-      renderCell = (params) => (params.row[label] ? params.row[label] : "");
+    let renderEditCell;
+    if (label === "date_Péremption") {
+      renderCell = renderIsExpired;
     } else if (checkboxColumns.includes(label)) {
       renderCell = renderCheckCell;
-    }
-    if (fileColumns.includes(label)) {
+    } else if (fileColumns.includes(label)) {
       renderCell = renderFileCell;
-    }
-
-    let renderEditCell;
-    if (dropdownColumns.includes(label)) {
+    } else if (dropdownColumns.includes(label)) {
       renderEditCell = renderDropdownCell;
     }
 
@@ -274,6 +305,10 @@ const generateColumns = (
         : "notEditableHeader",
       type: dateColumns.includes(label) ? "date" : undefined,
     };
+
+    if (label === "date_Péremption") {
+      column.renderCell = renderIsExpired;
+    }
     if (valueGetter) {
       column.valueGetter = valueGetter;
     }

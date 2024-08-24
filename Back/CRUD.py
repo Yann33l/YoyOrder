@@ -53,6 +53,17 @@ def edit_user_status(db: Session, email: str, admin: bool = None, autorisation: 
 
     raise HTTPException(status_code=404, detail="User not found")
 
+def edit_user_password(db: Session, email: str, password: str):
+        db_user = db.query(models.users).filter(
+            models.users.Email == email).scalar()
+        if db_user:
+            db_user.Password = password
+            db.commit()
+            db.refresh(db_user)
+            return db_user
+        raise HTTPException(status_code=404, detail="User not found")
+
+
 def edit_user_secteur(db: Session, user_id: int, secteur_id: int):
     db_user = db.query(models.users).filter(
         models.users.ID == user_id).scalar()

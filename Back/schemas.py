@@ -43,6 +43,10 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     Password: bytes
 
+class EditPassword(BaseModel):
+    Email: str
+    Password: str
+
 # --------------------------------------------------------------------------------
 
 
