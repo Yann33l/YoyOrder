@@ -1,5 +1,7 @@
 # Présentation de l'application Yoyorder
 
+=======
+
 **Yoyorder** est une application conçue pour optimiser la gestion des commandes et des stocks dans un laboratoire comportant plusieurs unités. Cette plateforme centralisée permet de suivre et de réaliser l'ensemble des processus liés à l'acquisition, au stockage, et à la consommation des articles. Grâce à des rôles distincts, Yoyorder assure une gestion efficace et fluide des ressources du laboratoire.
 
 ## Les rôles et fonctionnalités
@@ -28,7 +30,7 @@ Les **Éditeurs** ont un rôle crucial dans la structuration et la mise à jour 
   - Des secteurs (les différentes unités ou divisions du laboratoire)
   - Des fournisseurs (les partenaires commerciaux)
   - Des articles (les produits ou matériaux nécessaires)
-  - Des sous-articles (les composantes spécifiques des articles principaux)
+  - Des sous-articles (les variantes spécifiques des articles principaux)
 - **Éditer** :
   - Les pièces
   - Les secteurs
@@ -51,6 +53,7 @@ En plus des fonctionnalités principales, Yoyorder propose des outils avancés p
 - **Gestion des certificats d'analyses** : L'application permet également de gérer les certificats d'analyses pour garantir que les produits reçus respectent les normes de qualité requises.
 
 **Yoyorder** se positionne ainsi comme une solution complète et intégrée pour la gestion des commandes et des stocks au sein des laboratoires, offrant des outils dédiés à chaque rôle et des fonctionnalités avancées pour un suivi rigoureux et une traçabilité optimale.
+
 
 ---
 
