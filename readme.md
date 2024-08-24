@@ -1,6 +1,8 @@
 # Présentation de l'application Yoyorder
 
-**Yoyorder** est une application innovante conçue pour optimiser la gestion des commandes et des stocks dans un laboratoire comportant plusieurs unités. Cette plateforme centralisée permet de suivre et de réaliser l'ensemble des processus liés à l'acquisition, au stockage, et à la consommation des articles. Grâce à des rôles distincts, Yoyorder assure une gestion efficace et fluide des ressources du laboratoire.
+=======
+
+**Yoyorder** est une application conçue pour optimiser la gestion des commandes et des stocks dans un laboratoire comportant plusieurs unités. Cette plateforme centralisée permet de suivre et de réaliser l'ensemble des processus liés à l'acquisition, au stockage, et à la consommation des articles. Grâce à des rôles distincts, Yoyorder assure une gestion efficace et fluide des ressources du laboratoire.
 
 ## Les rôles et fonctionnalités
 
@@ -53,13 +55,11 @@ En plus des fonctionnalités principales, Yoyorder propose des outils avancés p
 **Yoyorder** se positionne ainsi comme une solution complète et intégrée pour la gestion des commandes et des stocks au sein des laboratoires, offrant des outils dédiés à chaque rôle et des fonctionnalités avancées pour un suivi rigoureux et une traçabilité optimale.
 
 
-
-
+---
 
 # Variables d'environement à creer :
-## exemple
 
----
+## exemple
 
 ### Back
 
@@ -73,9 +73,13 @@ En plus des fonctionnalités principales, Yoyorder propose des outils avancés p
 
 **Database** = "yoyo"
 
-**Env** = "local"   => SQLALCHEMY_DATABASE_URL = f"mysql+mysqlconnector://{Login}:{Password}@{Server_Host}:{Port}/{Database}"
+**Env** = "local" => SQLALCHEMY_DATABASE_URL = f"mysql+mysqlconnector://{Login}:{Password}@{Server_Host}:{Port}/{Database}"
 
-autre     => SCALINGO_MYSQL_URL = f"mysql://{Login}:{Password}@{Server_Host}:{Port}/{Database}"
+autre => SCALINGO_MYSQL_URL = f"mysql://{Login}:{Password}@{Server_Host}:{Port}/{Database}"
+
+**local_allow_origins** = ["*"]
+
+**allow_origins** = ["https://yoyo.vercel.app"]
 
 **SECRET_KEY** = "F6K6L6M2C1D9E2B4A6F8C6D5B6A0E6C6"
 
@@ -83,10 +87,10 @@ autre     => SCALINGO_MYSQL_URL = f"mysql://{Login}:{Password}@{Server_Host}:{Po
 
 **ACCESS_TOKEN_EXPIRE_MINUTES** = 180
 
----
-
 ### Front
 
 **VITE_API_LOCAL_URL** = "http://127.0.0.1:8000"
 
 **VITE_API_ONLINE_URL** = "https://yoyo.scalo.io"
+
+**VITE_EMAIL_FINI_PAR** = "@ab"

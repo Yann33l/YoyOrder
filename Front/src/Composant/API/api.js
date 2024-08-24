@@ -57,6 +57,20 @@ export const createUser = async (Email, Password) => {
   }
 };
 
+export const editPassword = async (Email, newPassword) => {
+  try {
+    const response = await axios.post(`${API_URL}/edit_password/`, {
+      Email: Email,
+      Password: newPassword,
+    });
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const getUserInfo = async () => {
   try {
     const response = await axios.post(

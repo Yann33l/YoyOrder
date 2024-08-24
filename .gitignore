@@ -28,3 +28,5 @@ Brand files/
 Front/.eslintrc.cjs
 .env
 process.env
+
+Dockerfile

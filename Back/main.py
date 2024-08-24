@@ -33,14 +33,14 @@ router = APIRouter()
 if Env == "local":
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=os.getenv("local_allow_origins"),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],)
 else:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["https://yoy-order.vercel.app"],
+        allow_origins=os.getenv("allow_origins"),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],)
@@ -99,6 +99,15 @@ async def login_for_access_token_docs(form_data: OAuth2PasswordRequestForm = Dep
             raise HTTPException(
                 status_code=404, detail="Mot de passe incorrect")
 
+user_error_counters = {}
+   # Récupération d'un utilisateur par son email
+@app.get("/userByEmail/", response_model=schemas.UserBase)
+def read_user_email(email: str, db: Session = Depends(get_db)):
+     db_user = CRUD.get_user_by_email(db, email)
+     if db_user is None:
+         raise HTTPException(status_code=404, detail="User not found")
+     return db_user
+
 
 @app.post("/Connexion/", response_model=schemas.Token)
 async def login_for_access_token(current_user: schemas.UserForm, db: Session = Depends(get_db)):
@@ -106,15 +115,27 @@ async def login_for_access_token(current_user: schemas.UserForm, db: Session = D
     if user is None:
         raise HTTPException(status_code=404, detail="Email incorrect")
     else:
+        # Increment error counter for the user
+        if user.Email not in user_error_counters:
+            user_error_counters[user.Email] = 0
+        user_error_counters[user.Email] += 1
+
         if bcrypt.checkpw(current_user.Password.encode('utf-8'), bytes(user.Password)):
+            # Reset error counter if login successful
+            user_error_counters[user.Email] = 0
             access_token_expires = timedelta(
                 minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(
                 data={"sub": user.Email}, expires_delta=access_token_expires)
             return {"access_token": access_token, "token_type": "bearer"}
         else:
-            raise HTTPException(
-                status_code=404, detail="Mot de passe incorrect")
+            # Check if error counter reached 3
+            if user_error_counters[user.Email] >= 3:
+                # Block the user by setting Autorisation to False
+                CRUD.edit_user_status(db, user.Email, autorisation=False)
+                raise HTTPException(status_code=401, detail="Compte bloqué. Trop de tentatives de connexion échouées.")
+            else:
+                raise HTTPException(status_code=404, detail="Mot de passe incorrect")
 
 
 @app.post("/user/info/", response_model=schemas.UserBase)
@@ -140,6 +161,20 @@ def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
         salt = bcrypt.gensalt(12)
         user.Password = bcrypt.hashpw(user.Password, salt)
         return CRUD.create_user(db, user)
+
+@app.post("/edit_password/")
+def edit_password(userPasswordToChange: schemas.EditPassword, db: Session = Depends(get_db)):
+    user = CRUD.get_user_by_email(db, userPasswordToChange.Email)
+    if user is not None:
+        salt = bcrypt.gensalt(12)
+        userPasswordToChange.Password = bcrypt.hashpw(userPasswordToChange.Password.encode('utf-8'), salt)
+        CRUD.edit_user_status(db, user.Email, autorisation=False)
+        CRUD.edit_user_password(db, user.Email, password=userPasswordToChange.Password)
+        return {"message": "Mot de passe modifié avec succès. Votre compte doit etre réactiver par un administrateur."}
+    else:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+
 
 def format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get=None, order_by=None):
     formatted_results = []
@@ -256,7 +291,7 @@ def format_Historique_results(results):
         "sous article_Ref",  "sous article_Conditionnement", "Fournisseur", "quantité_Commandé", "quantité_Sous article", "quantité_Reçue", "date_Demande",
         "date_Commande", "date_Réception", "Lot", "date_Péremption", "COA", "En totalité ?"]
     second_keys_to_get = ["commentaire_Demande", "commentaire_Commande", "commentaire_Reception"]
-    order_by = ["article_Libelle", "date_Commande"]
+    order_by = ["article_Libelle", "date_Commande", "sous article_Libelle"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
 
 def format_Stock_results(results):
@@ -264,7 +299,7 @@ def format_Stock_results(results):
     first_keys_to_get = [
         "stock_id", "reception_id", "article_Libelle", "sous article_Libelle", "Lot" ,"COA", "date_Péremption", "date_Réception", "date_DebutUtilisation", "date_FinUtilisation", "quantité_LotTotal", "quantité_LotRestante", "quantité_Reçue", "quantité_ReceptionRestante"]
     second_keys_to_get = []
-    order_by = ["article_Libelle", "date_Péremption"]
+    order_by = ["article_Libelle","sous article_Libelle", "date_Péremption"]
     return format_results(results, secteur_labels, first_keys_to_get, second_keys_to_get, order_by)
 
 def format_Article_For_Edit_results(results):
