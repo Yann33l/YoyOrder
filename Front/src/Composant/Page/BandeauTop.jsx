@@ -7,7 +7,7 @@ const Headers = ({ setContent, onLogout }) => {
   const [isDemandeur, setIsDemandeur] = useState();
   const [isAcheteur, setIsAcheteur] = useState();
   const [isAdmin, setIsAdmin] = useState();
-  const [selectedElement, setSelectedElement] = useState("Acceuil");
+  const [selectedElement, setSelectedElement] = useState("Accueil");
   const [navItems, setNavItems] = useState([]);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ const Headers = ({ setContent, onLogout }) => {
 
   useEffect(() => {
     setNavItems([
-      { label: "Acceuil", content: "acceuil", condition: true },
+      { label: "Accueil", content: "acceuil", condition: true },
       { label: "Demandes", content: "Demande", condition: isDemandeur },
       { label: "Commandes", content: "Commande", condition: isAcheteur },
       { label: "Réceptions", content: "Reception", condition: isDemandeur },
@@ -47,7 +47,7 @@ const Headers = ({ setContent, onLogout }) => {
   return (
     <header className="BandeauTop">
       <nav className="menu-nav">
-        <div id="logoheader">
+        <div className="logoheader">
           <img
             id="logo"
             alt="logo"
@@ -73,7 +73,7 @@ const Headers = ({ setContent, onLogout }) => {
             }
             return null;
           })}
-          <li className="bouton" onClick={() => onLogout()}>
+          <li className="bouton logout" onClick={() => onLogout()}>
             Déconnexion
           </li>
         </ul>
