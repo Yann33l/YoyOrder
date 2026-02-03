@@ -1,0 +1,4 @@
+buildpacks:
+  - name: "scalingo/python"
+    config:
+      python_version: "3.12"
