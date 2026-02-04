@@ -252,7 +252,7 @@ body {
 nav.sous_menu-nav {
   text-align: center;
   font-weight: bold;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 nav.sous_menu-nav ul {
@@ -261,8 +261,8 @@ nav.sous_menu-nav ul {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 nav.sous_menu-nav ul li {
@@ -304,26 +304,7 @@ footer {
   margin: 0 30px 30px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.page-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f3faf9 60%, #e7f2f6 100%);
-  border-radius: 16px;
-  padding: 16px 20px;
-  border: 1px solid rgba(38, 95, 91, 0.12);
-  box-shadow: 0 12px 20px rgba(22, 56, 52, 0.08);
-}
-
-.page-header h1 {
-  margin: 0 0 4px;
-  color: var(--thirdary);
-  font-size: 22px;
-}
-
-.page-header p {
-  margin: 0;
-  color: rgba(0, 0, 0, 0.65);
+  gap: 12px;
 }
 
 .creation {

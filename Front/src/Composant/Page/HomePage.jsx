@@ -50,44 +50,6 @@ function HomePage({ onLogout }) {
     }
   };
 
-  const pageMeta = {
-    Commande: {
-      title: "Commandes fournisseurs",
-      description: "Suivi centralisé des commandes et des délais de livraison.",
-    },
-    Demande: {
-      title: "Demandes internes",
-      description:
-        "Gérez les besoins des équipes et priorisez les approvisionnements.",
-    },
-    Reception: {
-      title: "Réceptions",
-      description: "Enregistrez les livraisons et contrôlez les lots entrants.",
-    },
-    Stocks: {
-      title: "Stocks",
-      description: "Visualisez les niveaux et anticipez les réassorts.",
-    },
-    Creation: {
-      title: "Créations",
-      description: "Ajoutez de nouveaux référentiels pour les catalogues.",
-    },
-    Edition: {
-      title: "Éditions",
-      description: "Mettez à jour les articles, fournisseurs et secteurs.",
-    },
-    Historique: {
-      title: "Historique",
-      description: "Analysez les mouvements de commandes et de stocks.",
-    },
-    Admin: {
-      title: "Administration",
-      description: "Gérez les utilisateurs, rôles et permissions.",
-    },
-  };
-
-  const meta = pageMeta[content];
-
   switch (content) {
     case "acceuil":
     case "default":
@@ -211,14 +173,6 @@ function HomePage({ onLogout }) {
       <Headers {...{ setContent, onLogout }} />
 
       <main className="ZoneTravail">
-        {meta && (
-          <section className="page-header">
-            <div>
-              <h1>{meta.title}</h1>
-              <p>{meta.description}</p>
-            </div>
-          </section>
-        )}
         {mainContent}
       </main>
 
