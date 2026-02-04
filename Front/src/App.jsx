@@ -44,45 +44,47 @@ function App() {
 
   // Fonction d'inscription
   const handleInscription = async (event) => {
-    event.preventDefault();
+  event.preventDefault();
 
-    const Email = event.target.elements.Email.value;
-    const Password = event.target.elements.Password.value;
-    const ConfirmPassword = event.target.elements.ConfirmPassword.value;
+  const Email = event.target.elements.Email.value;
+  const Password = event.target.elements.Password.value;
+  const ConfirmPassword = event.target.elements.ConfirmPassword.value;
 
-    // Vérification de l'email
-    if (Email.endsWith(import.meta.env.VITE_EMAIL_FINI_PAR)) {
-      try {
-        // Vérification de l'existence de l'utilisateur
-        const response = await checkUser(Email);
-        if (response.status === 200) {
-          alert(
-            "Utilisateur déjà existant merci de vous connecter ou de demander un nouveau mot de passe par mail au sevice informatique"
-          );
-        }
-      } catch (error) {
-        // Si l'utilisateur n'existe pas =>
-        if (error.response && error.response.status === 404) {
-          console.log("404 = Utilisateur inexistant => création");
-          // Vérification de la correspondance des mots de passe
-          if (Password !== ConfirmPassword) {
-            alert("Les mots de passe ne correspondent pas");
-          } else {
-            await createUser(Email, Password);
-            alert("Utilisateur créé");
-            setIsRegistering(false);
-          }
-        } else {
-          // Gérer les autres erreurs de requête ou de réseau
-          alert("Une erreur est survenue");
-        }
-      }
-    } else {
+  if (!Email.endsWith(import.meta.env.VITE_EMAIL_FINI_PAR)) {
+    alert(
+      "Vous devez utiliser un email " + import.meta.env.VITE_EMAIL_FINI_PAR
+    );
+    return;
+  }
+
+  if (Password !== ConfirmPassword) {
+    alert("Les mots de passe ne correspondent pas");
+    return;
+  }
+
+  try {
+    const response = await checkUser(Email);
+
+    // Utilisateur existant
+    if (response.status === 200) {
       alert(
-        "Vous devez utiliser un email" + import.meta.env.VITE_EMAIL_FINI_PAR
+        "Utilisateur déjà existant merci de vous connecter ou de demander un nouveau mot de passe"
       );
+      return;
     }
-  };
+  } catch (error) {
+    // Utilisateur inexistant
+    if (error.response?.status === 404) {
+      await createUser(Email, Password);
+      alert("Utilisateur créé");
+      setIsRegistering(false);
+      return;
+    }
+
+    console.error("Erreur checkUser :", error);
+    alert("Une erreur est survenue");
+  }
+};
 
   // Fonction de changement de page vers la page d'inscription
   const handleRegisterClick = () => {
