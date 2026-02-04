@@ -194,21 +194,24 @@ body {
   display: flex;
   font-weight: 600;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 16px 32px;
+  justify-content: center;
+  gap: 32px;
+  padding: 12px 28px;
 }
 
 .BandeauTop .logoheader {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 0 0 auto;
 }
 
 .BandeauTop .menu-nav ul {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
+  flex: 1;
   gap: 8px;
   margin: 0;
   padding: 0;
@@ -249,6 +252,7 @@ body {
 nav.sous_menu-nav {
   text-align: center;
   font-weight: bold;
+  margin-top: 8px;
 }
 
 nav.sous_menu-nav ul {
@@ -268,6 +272,10 @@ nav.sous_menu-nav ul li {
   border: 1px solid rgba(38, 95, 91, 0.2);
   font-size: 14px;
   background-color: #fff;
+}
+
+nav.sous_menu-nav ul li.selected {
+  box-shadow: 0 8px 16px rgba(38, 95, 91, 0.15);
 }
 nav.sous_menu-nav ul li.bouton {
   color: var(--text);
@@ -296,21 +304,21 @@ footer {
   margin: 0 30px 30px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .page-header {
   background: linear-gradient(135deg, #ffffff 0%, #f3faf9 60%, #e7f2f6 100%);
-  border-radius: 20px;
-  padding: 24px 28px;
+  border-radius: 16px;
+  padding: 16px 20px;
   border: 1px solid rgba(38, 95, 91, 0.12);
   box-shadow: 0 12px 20px rgba(22, 56, 52, 0.08);
 }
 
 .page-header h1 {
-  margin: 0 0 8px;
+  margin: 0 0 4px;
   color: var(--thirdary);
-  font-size: 26px;
+  font-size: 22px;
 }
 
 .page-header p {
