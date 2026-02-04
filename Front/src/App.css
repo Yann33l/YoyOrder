@@ -252,7 +252,7 @@ body {
 nav.sous_menu-nav {
   text-align: center;
   font-weight: bold;
-  margin-top: 4px;
+  margin-top: 12px;
 }
 
 nav.sous_menu-nav ul {
@@ -261,34 +261,36 @@ nav.sous_menu-nav ul {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: center;
+  gap: 12px;
 }
 
 nav.sous_menu-nav ul li {
   width: auto;
-  padding: 8px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(38, 95, 91, 0.2);
-  font-size: 14px;
-  background-color: #fff;
+  padding: 0 10px 3px 5px;
+  border-radius: 0;
+  border-right: solid 2px var(--background);
+  border-bottom: solid 2px var(--secondary);
+  font-size: 18px;
+  background-color: transparent;
 }
 
 nav.sous_menu-nav ul li.bouton {
   color: var(--text);
   text-decoration: none;
-  margin: 0;
+  margin: 12px;
 }
 nav.sous_menu-nav ul li.bouton:hover {
-  background-color: rgba(215, 225, 225, 0.6);
+  border-radius: 0 0 15px 0;
+  background-color: var(--backgroundLight);
   transition: 0.2s;
-  border-color: rgba(38, 95, 91, 0.3);
+  border-bottom-color: var(--background);
 }
 nav.sous_menu-nav ul li.selected {
-  background-color: var(--background);
-  color: #fff;
-  border-color: rgba(38, 95, 91, 0.3);
-  box-shadow: 0 8px 16px rgba(38, 95, 91, 0.15);
+  background-color: var(--backgroundLight);
+  border-bottom: solid 2px var(--background);
+  border-radius: 0 0 15px 0;
+  border-bottom-color: var(--background);
 }
 
 footer {
