@@ -14,8 +14,8 @@ import Headers from "./BandeauTop";
 import Creation from "./Creation";
 import Edition from "./Edition";
 
-function HomePage({ onLogout }) {
-  const [content, setContent] = useState("default");
+function HomePage({ onLogout, initialContent = "default" }) {
+  const [content, setContent] = useState(initialContent);
   const [pieces, setPieces] = useState([]);
   const [selectedElement, setSelectedElement] = useState("Tous");
   const [selectedItem, setSelectedItem] = useState("HistoriqueCommande");
@@ -185,4 +185,5 @@ export default HomePage;
 
 HomePage.propTypes = {
   onLogout: PropTypes.func.isRequired,
+  initialContent: PropTypes.string,
 };
