@@ -58,7 +58,6 @@ function HomePage({ onLogout }) {
     case "Commande":
       mainContent = (
         <div>
-          <div style={{ height: "51px" }} />
           <TableArticlesCommande />
         </div>
       );
@@ -110,7 +109,7 @@ function HomePage({ onLogout }) {
           <div>
             {content === "Demande" ? (
               <TableArticlesDemande pieces={selectedElement} />
-            ) : content === "Reception" && selectedElement == "Ajout" ? (
+            ) : content === "Reception" && selectedElement === "Ajout" ? (
               <div>
                 <p>Ajout de reception (remplacement/supplement)</p>
                 <PageAjoutLigneReception />
@@ -161,7 +160,6 @@ function HomePage({ onLogout }) {
     case "Admin":
       mainContent = (
         <div>
-          <div style={{ height: "51px" }} />
           <TableUtilisateurs />
         </div>
       );
@@ -172,7 +170,9 @@ function HomePage({ onLogout }) {
     <div className="page">
       <Headers {...{ setContent, onLogout }} />
 
-      <main className="ZoneTravail">{mainContent}</main>
+      <main className="ZoneTravail">
+        {mainContent}
+      </main>
 
       <footer>
         <p>réalisé par Yannick Leger</p>

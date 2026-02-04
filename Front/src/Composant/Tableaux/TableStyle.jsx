@@ -6,9 +6,20 @@ const dataTableStyle = {
   margin: "auto",
   backgroundColor: "#ffffff",
   color: "#000000",
-  border: "none",
-  borderRadius: "5px",
-  boxShadow: "0px 0px 5px 0px rgba(0,0,0,0.75)",
+  border: "1px solid rgba(38, 95, 91, 0.12)",
+  borderRadius: "12px",
+  boxShadow: "0 18px 32px rgba(22, 56, 52, 0.12)",
+  "& .MuiDataGrid-columnHeaders": {
+    backgroundColor: "rgba(38, 95, 91, 0.08)",
+    borderBottom: "1px solid rgba(38, 95, 91, 0.18)",
+    fontWeight: 600,
+  },
+  "& .MuiDataGrid-row:nth-of-type(even)": {
+    backgroundColor: "rgba(215, 225, 225, 0.25)",
+  },
+  "& .MuiDataGrid-cell": {
+    borderBottom: "1px solid rgba(38, 95, 91, 0.08)",
+  },
 };
 
 export { dataTableStyle };
@@ -410,7 +421,6 @@ export const returnTable = (
     }
   >
     <DataGrid
-      style={{ borderRadius: "8px" }}
       experimentalFeatures={{ columnGrouping: true }}
       rows={data}
       {...(CALLER === "SelectionArticles"
