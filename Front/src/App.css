@@ -167,6 +167,26 @@ body {
   line-height: 1.6;
 }
 
+}
+
+.auth-panel h2 {
+  color: var(--thirdary);
+  font-size: 26px;
+  margin-bottom: 12px;
+}
+
+.auth-panel p {
+  color: rgba(0, 0, 0, 0.7);
+  line-height: 1.6;
+}
+
+.auth-panel ul {
+  margin-top: 20px;
+  padding-left: 20px;
+  color: rgba(0, 0, 0, 0.75);
+  line-height: 1.6;
+}
+
 @media (max-width: 900px) {
   .auth-shell {
     grid-template-columns: 1fr;
@@ -194,6 +214,9 @@ body {
   display: flex;
   font-weight: 600;
   align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 12px 28px;
   justify-content: space-between;
   gap: 24px;
   padding: 16px 32px;
@@ -203,12 +226,15 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 0 0 auto;
 }
 
 .BandeauTop .menu-nav ul {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
+  flex: 1;
   gap: 8px;
   margin: 0;
   padding: 0;
@@ -249,33 +275,46 @@ body {
 nav.sous_menu-nav {
   text-align: center;
   font-weight: bold;
+  margin-top: 12px;
 }
 
 nav.sous_menu-nav ul {
   margin: 0;
   padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
 }
 
 nav.sous_menu-nav ul li {
-  display: inline-block;
   width: auto;
+  padding: 0;
+  border-right: none;
+  border-bottom: none;
+  background-color: transparent;
+}
+
+nav.sous_menu-nav ul li .bouton {
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  text-decoration: none;
+  margin: 12px;
+  font: inherit;
   padding: 0 10px 3px 5px;
   border-right: solid 2px var(--background);
   border-bottom: solid 2px var(--secondary);
-  font-size: 18px;
+  cursor: pointer;
 }
-nav.sous_menu-nav ul li.bouton {
-  color: var(--text);
-  text-decoration: none;
-  margin: 12px;
-}
-nav.sous_menu-nav ul li.bouton:hover {
+nav.sous_menu-nav ul li .bouton:hover {
   border-radius: 0 0 15px 0;
   background-color: var(--backgroundLight);
   transition: 0.2s;
   border-bottom-color: var(--background);
 }
-nav.sous_menu-nav ul li.selected {
+nav.sous_menu-nav ul li .bouton.selected {
   background-color: var(--backgroundLight);
   border-bottom: solid 2px var(--background);
   border-radius: 0 0 15px 0;
@@ -290,7 +329,16 @@ footer {
 
 /* ZoneTravail */
 .ZoneTravail {
-  margin: 0 30px 10px 30px;
+  margin: 0 30px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.table-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .creation {

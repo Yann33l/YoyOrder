@@ -8,6 +8,29 @@ import {
 import HomePage from "./Composant/Page/HomePage";
 
 function App() {
+  const demoParam =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("demo")
+      : null;
+  const isDemoEnabled = import.meta.env.MODE !== "production";
+  const demoContent =
+    demoParam === "demande"
+      ? "Demande"
+      : demoParam === "commande"
+      ? "Commande"
+      : demoParam === "reception"
+      ? "Reception"
+      : demoParam === "stocks"
+      ? "Stocks"
+      : demoParam === "admin"
+      ? "Admin"
+      : demoParam === "creation"
+      ? "Creation"
+      : demoParam === "edition"
+      ? "Edition"
+      : demoParam === "historique"
+      ? "Historique"
+      : null;
   const [userState, setUserState] = useState({
     loggedIn: false,
     isAuthorized: false,
@@ -330,6 +353,8 @@ function App() {
     alert("Votre compte n'est pas encore activé par un administrateur");
     setUserState({ loggedIn: false, isAuthorized: false });
     return handleConnexion();
+  } else if (isDemoEnabled && demoContent) {
+    return <HomePage onLogout={handleLogout} initialContent={demoContent} />;
   } else {
     return handleConnexion();
   }
