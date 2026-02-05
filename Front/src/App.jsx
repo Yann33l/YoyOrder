@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   checkCredentials,
   checkUser,
@@ -38,6 +38,13 @@ function App() {
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  useEffect(() => {
+    if (userState.loggedIn && !userState.isAuthorized) {
+      alert("Votre compte n'est pas encore activé par un administrateur");
+      setUserState({ loggedIn: false, isAuthorized: false });
+    }
+  }, [userState.loggedIn, userState.isAuthorized]);
 
   // Fonction de connexion
   const handleLogin = async (event) => {
@@ -128,13 +135,14 @@ function App() {
     const confirmNewPassword = event.target.elements.confirmNewPassword.value;
     if (newPassword !== confirmNewPassword) {
       alert("Les nouveaux mots de passe ne correspondent pas");
+      return;
     }
     try {
       const response = await checkUser(email);
       if (response.status === 200) {
         await editPassword(email, newPassword);
         alert("Mot de passe modifié avec succès. Vous devez vous reconnecter.");
-        setUserState({ loggedIn: false });
+        setUserState({ loggedIn: false, isAuthorized: false });
         setIsChangingPassword(false);
       }
     } catch (error) {
@@ -350,8 +358,6 @@ function App() {
   if (userState.loggedIn && userState.isAuthorized) {
     return <HomePage onLogout={handleLogout} />;
   } else if (userState.loggedIn && !userState.isAuthorized) {
-    alert("Votre compte n'est pas encore activé par un administrateur");
-    setUserState({ loggedIn: false, isAuthorized: false });
     return handleConnexion();
   } else if (isDemoEnabled && demoContent) {
     return <HomePage onLogout={handleLogout} initialContent={demoContent} />;

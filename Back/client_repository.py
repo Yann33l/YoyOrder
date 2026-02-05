@@ -1,6 +1,10 @@
 from sqlalchemy.sql.expression import text
 
 from .database import engine
+
+
+def escape_sql_literal(value: str) -> str:
+    return value.replace("'", "''")
 def get_secteurID_by_libelle(secteur_libelle):
     with engine.connect() as connection:
         query = text(
@@ -30,10 +34,11 @@ def get_users():
         secteur_labels = connection.execute(
             text("SELECT DISTINCT ID, libelle FROM secteurs WHERE dateFinValidite >= NOW() ORDER BY libelle;")).fetchall()
 
+        safe_labels = [(label[0], escape_sql_literal(label[1])) for label in secteur_labels]
         select_part = ", ".join(
-            [f"MAX(CASE WHEN s.libelle = '{s_label[1]}' THEN secteur_{s_label[0]}.libelle ELSE NULL END) AS libelle{s_label[0]}" for s_label in secteur_labels])
+            [f"MAX(CASE WHEN s.libelle = '{label}' THEN secteur_{label_id}.libelle ELSE NULL END) AS libelle{label_id}" for label_id, label in safe_labels])
         
-        join_part = " ".join([f"LEFT JOIN secteurs secteur_{s_label[0]} ON s.ID = {s_label[0]} AND s.dateFinValidite >= NOW() " for s_label in secteur_labels])
+        join_part = " ".join([f"LEFT JOIN secteurs secteur_{label_id} ON s.ID = {label_id} AND s.dateFinValidite >= NOW() " for label_id, _ in safe_labels])
 
         query = text(f"SELECT u.ID, Email, Admin, Autorisation, Demandeur, Acheteur, Editeur, {select_part} "
                      "FROM users u "
@@ -86,7 +91,7 @@ def get_articles_by_secteur(piece_libelle):
     with engine.connect() as connection:
         secteur_labels = connection.execute(
             text("SELECT DISTINCT libelle FROM secteurs WHERE dateFinValidite >= NOW() ORDER BY libelle;")).fetchall()
-        secteur_labels = [libelle[0] for libelle in secteur_labels]
+        secteur_labels = [escape_sql_literal(libelle[0]) for libelle in secteur_labels]
 
         quantite_demande = text("(SELECT SUM(COALESCE(r_sc_sub.quantite, 0)) as quantite_demande "
              "FROM commandes c_sub "
@@ -133,7 +138,7 @@ def get_articles_to_receve(piece_libelle):
     with engine.connect() as connection:
         secteur_labels = connection.execute(
             text("SELECT DISTINCT libelle FROM secteurs WHERE dateFinValidite >= NOW() order by libelle;")).fetchall()
-        secteur_labels = [libelle[0] for libelle in secteur_labels]
+        secteur_labels = [escape_sql_literal(libelle[0]) for libelle in secteur_labels]
 
         select_part = ", ".join(
             [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
@@ -179,7 +184,7 @@ def get_sous_articles_to_receve(piece_libelle):
     with engine.connect() as connection:
         secteur_labels = connection.execute(
             text("SELECT DISTINCT libelle FROM secteurs WHERE dateFinValidite >= NOW() ORDER BY libelle; ")).fetchall()
-        secteur_labels = [libelle[0] for libelle in secteur_labels]
+        secteur_labels = [escape_sql_literal(libelle[0]) for libelle in secteur_labels]
 
         quantite_recu = text("(SELECT SUM(COALESCE(r_sub.quantite, 0)) "
                             "FROM sous_commandes s_c_sub "
@@ -229,7 +234,7 @@ def get_historique_commandes():
     with engine.connect() as connection:
         secteur_labels = connection.execute(
             text("SELECT DISTINCT libelle FROM secteurs WHERE dateFinValidite >= NOW() order by libelle;")).fetchall()
-        secteur_labels = [libelle[0] for libelle in secteur_labels]
+        secteur_labels = [escape_sql_literal(libelle[0]) for libelle in secteur_labels]
 
         select_part = ", ".join(
             [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
@@ -264,7 +269,7 @@ def get_articles_to_buy():
     with engine.connect() as connection:
         secteur_labels = connection.execute(
             text("SELECT DISTINCT libelle FROM secteurs WHERE dateFinValidite >= NOW() order by libelle;")).fetchall()
-        secteur_labels = [libelle[0] for libelle in secteur_labels]
+        secteur_labels = [escape_sql_literal(libelle[0]) for libelle in secteur_labels]
 
         select_part = ", ".join(
             [f"SUM(DISTINCT CASE WHEN s.libelle = '{libelle}' THEN r_sc.quantite ELSE 0 END) AS 'quantite_{libelle}'" for libelle in secteur_labels])
@@ -292,7 +297,7 @@ def get_articles_to_edit():
     with engine.connect() as connection:
         piece_labels = connection.execute(
             text("SELECT DISTINCT libelle FROM piece WHERE dateFinValidite >= NOW(); ")).fetchall()
-        piece_labels = [libelle[0] for libelle in piece_labels]
+        piece_labels = [escape_sql_literal(libelle[0]) for libelle in piece_labels]
 
         select_part = ", ".join(
             [f"SUM(DISTINCT CASE WHEN p.libelle = '{libelle}' THEN 1 ELSE 0 END) AS 'piece_{libelle}'" for libelle in piece_labels])
