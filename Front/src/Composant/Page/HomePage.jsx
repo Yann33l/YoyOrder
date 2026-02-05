@@ -14,8 +14,8 @@ import Headers from "./BandeauTop";
 import Creation from "./Creation";
 import Edition from "./Edition";
 
-function HomePage({ onLogout }) {
-  const [content, setContent] = useState("default");
+function HomePage({ onLogout, initialContent = "default" }) {
+  const [content, setContent] = useState(initialContent);
   const [pieces, setPieces] = useState([]);
   const [selectedElement, setSelectedElement] = useState("Tous");
   const [selectedItem, setSelectedItem] = useState("HistoriqueCommande");
@@ -57,60 +57,68 @@ function HomePage({ onLogout }) {
       break;
     case "Commande":
       mainContent = (
-        <div>
-          <div style={{ height: "51px" }} />
+        <section className="table-shell">
           <TableArticlesCommande />
-        </div>
+        </section>
       );
       break;
     case "Demande":
     case "Reception":
     case "Stocks":
       mainContent = (
-        <div>
-          <div>
-            <nav className="sous_menu-nav">
-              <ul>
-                <li
+        <>
+          <nav className="sous_menu-nav" aria-label="Filtre des pièces">
+            <ul>
+              <li>
+                <button
                   className={`bouton ${
                     selectedElement === "Tous" ? "selected" : ""
                   }`}
+                  type="button"
+                  aria-pressed={selectedElement === "Tous"}
                   onClick={() => {
                     setSelectedElement("Tous");
                   }}
                 >
                   Tous
-                </li>
-                {pieces.map((piece) => (
-                  <li
-                    key={piece.ID}
+                </button>
+              </li>
+              {pieces.map((piece) => (
+                <li key={piece.ID}>
+                  <button
                     className={`bouton ${
                       selectedElement === piece.libelle ? "selected" : ""
                     }`}
+                    type="button"
+                    aria-pressed={selectedElement === piece.libelle}
                     onClick={() => {
                       setSelectedElement(piece.libelle);
                     }}
                   >
                     {piece.libelle}
-                  </li>
-                ))}
-                {content === "Reception" && (
-                  <li
+                  </button>
+                </li>
+              ))}
+              {content === "Reception" && (
+                <li>
+                  <button
                     className={`bouton ${
                       selectedElement === "Ajout" ? "selected" : ""
                     }`}
+                    type="button"
+                    aria-pressed={selectedElement === "Ajout"}
                     onClick={() => setSelectedElement("Ajout")}
                   >
                     Récep. (rempl./suppl.)
-                  </li>
-                )}
-              </ul>
-            </nav>
-          </div>
-          <div>
+                  </button>
+                </li>
+              )}
+            </ul>
+          </nav>
+          <section className="table-shell">
             {content === "Demande" ? (
               <TableArticlesDemande pieces={selectedElement} />
-            ) : content === "Reception" && selectedElement == "Ajout" ? (
+            ) : content === "Reception" && selectedElement === "Ajout" ? (
               <div>
                 <p>Ajout de reception (remplacement/supplement)</p>
                 <PageAjoutLigneReception />
@@ -120,8 +128,8 @@ function HomePage({ onLogout }) {
             ) : (
               <TableArticlesEnStock pieces={selectedElement} />
             )}
-          </div>
-        </div>
+          </section>
+        </>
       );
       break;
     case "Creation":
@@ -129,30 +137,30 @@ function HomePage({ onLogout }) {
       break;
     case "Historique":
       mainContent = (
-        <div>
-          {" "}
-          <div>
-            <nav className="sous_menu-nav">
-              <ul>
-                {menuItems.map((item, index) => (
-                  <li
-                    key={index}
+        <>
+          <nav className="sous_menu-nav" aria-label="Historique">
+            <ul>
+              {menuItems.map((item) => (
+                <li key={item.content}>
+                  <button
                     className={`bouton ${
                       selectedItem === item.content ? "selected" : ""
                     }`}
+                    type="button"
+                    aria-pressed={selectedItem === item.content}
                     onClick={() => {
                       setSubContent(item.content);
                       setSelectedItem(item.content);
                     }}
                   >
                     {item.label}
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-          <div>{mainSubContent(subContent)}</div>
-        </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <section className="table-shell">{mainSubContent(subContent)}</section>
+        </>
       );
       break;
     case "Edition":
@@ -160,10 +168,9 @@ function HomePage({ onLogout }) {
       break;
     case "Admin":
       mainContent = (
-        <div>
-          <div style={{ height: "51px" }} />
+        <section className="table-shell">
           <TableUtilisateurs />
-        </div>
+        </section>
       );
       break;
   }
@@ -172,7 +179,9 @@ function HomePage({ onLogout }) {
     <div className="page">
       <Headers {...{ setContent, onLogout }} />
 
-      <main className="ZoneTravail">{mainContent}</main>
+      <main className="ZoneTravail">
+        {mainContent}
+      </main>
 
       <footer>
         <p>réalisé par Yannick Leger</p>
@@ -185,4 +194,5 @@ export default HomePage;
 
 HomePage.propTypes = {
   onLogout: PropTypes.func.isRequired,
+  initialContent: PropTypes.string,
 };

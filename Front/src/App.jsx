@@ -8,6 +8,29 @@ import {
 import HomePage from "./Composant/Page/HomePage";
 
 function App() {
+  const demoParam =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("demo")
+      : null;
+  const isDemoEnabled = import.meta.env.MODE !== "production";
+  const demoContent =
+    demoParam === "demande"
+      ? "Demande"
+      : demoParam === "commande"
+      ? "Commande"
+      : demoParam === "reception"
+      ? "Reception"
+      : demoParam === "stocks"
+      ? "Stocks"
+      : demoParam === "admin"
+      ? "Admin"
+      : demoParam === "creation"
+      ? "Creation"
+      : demoParam === "edition"
+      ? "Edition"
+      : demoParam === "historique"
+      ? "Historique"
+      : null;
   const [userState, setUserState] = useState({
     loggedIn: false,
     isAuthorized: false,
@@ -119,50 +142,63 @@ function App() {
 
   const handleConnexion = () => {
     return (
-      <main className="Connexion centered-element">
-        <div
-          style={{
-            border: "1px solid black",
-            margin: "20px",
-            borderRadius: "15px",
-          }}
-        >
-          <h1>Log in</h1>
-          <form onSubmit={handleLogin}>
-            <label htmlFor="Email">
-              Email
-              <br />
-            </label>
+      <main className="auth-shell">
+        <section className="auth-card">
+          <header className="auth-header">
+            <p className="auth-kicker">Yoyorder</p>
+            <h1>Connexion</h1>
+            <p className="auth-subtitle">
+              Connectez-vous pour piloter vos commandes, vos stocks et la
+              traçabilité de vos lots.
+            </p>
+          </header>
+          <form className="auth-form" onSubmit={handleLogin}>
+            <label htmlFor="Email">Email</label>
             <input
               id="Email"
               name="Email"
               type="email"
-              placeholder="Email"
+              placeholder="nom@laboratoire.fr"
               autoComplete="email"
+              required
             />
-            <br />
-            <br />
-            <label htmlFor="Password">
-              Password
-              <br />
-            </label>
+            <label htmlFor="Password">Mot de passe</label>
             <input
               id="Password"
               name="Password"
               type="password"
-              placeholder="Mot de passe"
-              autoComplete="off"
+              placeholder="Votre mot de passe"
+              autoComplete="current-password"
+              required
             />
-            <br />
-            <br />
-            <button type="submit"> Connexion </button>
+            <button className="button-primary" type="submit">
+              Se connecter
+            </button>
           </form>
-          <br />
-        </div>
-        <button onClick={handleRegisterClick}>Creer un compte</button> <br />
-        <button onClick={handleChangePasswordClick}>
-          Mot de passe oublié ?
-        </button>
+          <div className="auth-actions">
+            <button className="button-secondary" onClick={handleRegisterClick}>
+              Créer un compte
+            </button>
+            <button
+              className="button-link"
+              onClick={handleChangePasswordClick}
+            >
+              Mot de passe oublié ?
+            </button>
+          </div>
+        </section>
+        <aside className="auth-panel">
+          <h2>Un poste de pilotage clair</h2>
+          <p>
+            Centralisez les demandes, les achats et les stocks grâce à une vue
+            partagée par toutes les équipes.
+          </p>
+          <ul>
+            <li>Suivi en temps réel des commandes et réceptions.</li>
+            <li>Historique des lots et certificats d&apos;analyse.</li>
+            <li>Rôles et permissions adaptés à chaque équipe.</li>
+          </ul>
+        </aside>
       </main>
     );
   };
@@ -170,45 +206,70 @@ function App() {
   // Rendu conditionnel en fonction de l'état isRegistering = Page d'inscription
   if (isRegistering) {
     return (
-      <main className="Connexion centered-element">
-        <h1>Inscription</h1>
-        <p>
-          Apres inscription votre compte doit etre activé par un administrateur
-        </p>
-        <form onSubmit={handleInscription}>
-          <label htmlFor="Email">
-            Email
-            <br />
-          </label>
-          <input name="Email" type="email" placeholder="Email" />
-          <br />
-          <br />
-          <label htmlFor="Password">
-            Password
-            <br />
-          </label>
-          <input name="Password" type="password" placeholder="Mot de passe" />
-          <br />
-          <label htmlFor="ConfirmPassword">
-            Confirmation password
-            <br />
-          </label>
-          <input
-            name="ConfirmPassword"
-            type="password"
-            placeholder="Confirmation mot de passe"
-          />
-          <br />
-          <button type="submit"> Valider </button>
-          <br />
-          <button
-            id="reset"
-            type="reset"
-            onClick={() => setIsRegistering(false)}
-          >
-            Retour
-          </button>
-        </form>
+      <main className="auth-shell">
+        <section className="auth-card">
+          <header className="auth-header">
+            <p className="auth-kicker">Yoyorder</p>
+            <h1>Inscription</h1>
+            <p className="auth-subtitle">
+              Après inscription, votre compte doit être activé par un
+              administrateur.
+            </p>
+          </header>
+          <form className="auth-form" onSubmit={handleInscription}>
+            <label htmlFor="register-email">Email</label>
+            <input
+              id="register-email"
+              name="Email"
+              type="email"
+              placeholder="nom@laboratoire.fr"
+              required
+            />
+            <label htmlFor="register-password">Mot de passe</label>
+            <input
+              id="register-password"
+              name="Password"
+              type="password"
+              placeholder="Choisissez un mot de passe"
+              required
+            />
+            <label htmlFor="register-confirm">
+              Confirmation du mot de passe
+            </label>
+            <input
+              id="register-confirm"
+              name="ConfirmPassword"
+              type="password"
+              placeholder="Confirmez votre mot de passe"
+              required
+            />
+            <button className="button-primary" type="submit">
+              Valider l&apos;inscription
+            </button>
+          </form>
+          <div className="auth-actions">
+            <button
+              id="reset"
+              className="button-secondary"
+              type="reset"
+              onClick={() => setIsRegistering(false)}
+            >
+              Retour à la connexion
+            </button>
+          </div>
+        </section>
+        <aside className="auth-panel">
+          <h2>Une base saine dès le départ</h2>
+          <p>
+            Les administrateurs valident les accès pour garantir la conformité
+            des processus et des données.
+          </p>
+          <ul>
+            <li>Création rapide des profils de demandeurs.</li>
+            <li>Traçabilité complète des actions réalisées.</li>
+            <li>Accès sécurisé par rôle métier.</li>
+          </ul>
+        </aside>
       </main>
     );
   }
@@ -216,50 +277,70 @@ function App() {
   // Pop-up de changement de mot de passe
   if (isChangingPassword) {
     return (
-      <main className="Connexion centered-element">
-        <h1>Changement du Password</h1>
-        <p>
-          Apres modification votre compte doit etre réactivé par un
-          administrateur
-        </p>
-        <form onSubmit={handleEditPassword}>
-          <label htmlFor="Email">
-            Email
-            <br />
-          </label>
-          <input name="Email" type="email" placeholder="Email" />
-          <br />
-          <br />
-          <label htmlFor="newPassword">
-            Password
-            <br />
-          </label>
-          <input
-            name="newPassword"
-            type="password"
-            placeholder="Mot de passe"
-          />
-          <br />
-          <label htmlFor="confirmNewPassword">
-            Confirmation password
-            <br />
-          </label>
-          <input
-            name="confirmNewPassword"
-            type="password"
-            placeholder="Confirmation mot de passe"
-          />
-          <br />
-          <button type="submit"> Valider </button>
-          <br />
-          <button
-            id="reset"
-            type="reset"
-            onClick={() => setIsChangingPassword(false)}
-          >
-            Retour
-          </button>
-        </form>
+      <main className="auth-shell">
+        <section className="auth-card">
+          <header className="auth-header">
+            <p className="auth-kicker">Yoyorder</p>
+            <h1>Réinitialiser le mot de passe</h1>
+            <p className="auth-subtitle">
+              Après modification, votre compte doit être réactivé par un
+              administrateur.
+            </p>
+          </header>
+          <form className="auth-form" onSubmit={handleEditPassword}>
+            <label htmlFor="reset-email">Email</label>
+            <input
+              id="reset-email"
+              name="Email"
+              type="email"
+              placeholder="nom@laboratoire.fr"
+              required
+            />
+            <label htmlFor="newPassword">Nouveau mot de passe</label>
+            <input
+              id="newPassword"
+              name="newPassword"
+              type="password"
+              placeholder="Nouveau mot de passe"
+              required
+            />
+            <label htmlFor="confirmNewPassword">
+              Confirmation du mot de passe
+            </label>
+            <input
+              id="confirmNewPassword"
+              name="confirmNewPassword"
+              type="password"
+              placeholder="Confirmez le mot de passe"
+              required
+            />
+            <button className="button-primary" type="submit">
+              Mettre à jour
+            </button>
+          </form>
+          <div className="auth-actions">
+            <button
+              id="reset"
+              className="button-secondary"
+              type="reset"
+              onClick={() => setIsChangingPassword(false)}
+            >
+              Retour à la connexion
+            </button>
+          </div>
+        </section>
+        <aside className="auth-panel">
+          <h2>Restez maître de vos accès</h2>
+          <p>
+            Sécurisez votre compte avec un nouveau mot de passe et maintenez la
+            conformité avec votre équipe d&apos;administration.
+          </p>
+          <ul>
+            <li>Processus simple, guidé pas à pas.</li>
+            <li>Validation administrative pour plus de sécurité.</li>
+            <li>Accès rapide une fois confirmé.</li>
+          </ul>
+        </aside>
       </main>
     );
   }
@@ -270,6 +351,8 @@ function App() {
     alert("Votre compte n'est pas encore activé par un administrateur");
     setUserState({ loggedIn: false, isAuthorized: false });
     return handleConnexion();
+  } else if (isDemoEnabled && demoContent) {
+    return <HomePage onLogout={handleLogout} initialContent={demoContent} />;
   } else {
     return handleConnexion();
   }
