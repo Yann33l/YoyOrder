@@ -167,6 +167,26 @@ body {
   line-height: 1.6;
 }
 
+}
+
+.auth-panel h2 {
+  color: var(--thirdary);
+  font-size: 26px;
+  margin-bottom: 12px;
+}
+
+.auth-panel p {
+  color: rgba(0, 0, 0, 0.7);
+  line-height: 1.6;
+}
+
+.auth-panel ul {
+  margin-top: 20px;
+  padding-left: 20px;
+  color: rgba(0, 0, 0, 0.75);
+  line-height: 1.6;
+}
+
 @media (max-width: 900px) {
   .auth-shell {
     grid-template-columns: 1fr;
@@ -197,6 +217,9 @@ body {
   justify-content: center;
   gap: 32px;
   padding: 12px 28px;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 32px;
 }
 
 .BandeauTop .logoheader {
