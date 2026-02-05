@@ -30,17 +30,23 @@ app = FastAPI()
 router = APIRouter()
 
 
+def parse_allowed_origins(value: Optional[str]) -> list[str]:
+    if not value:
+        return []
+    return [origin.strip() for origin in value.split(",") if origin.strip()]
+
+
 if Env == "local":
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=os.getenv("local_allow_origins"),
+        allow_origins=parse_allowed_origins(os.getenv("local_allow_origins")),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],)
 else:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=os.getenv("allow_origins"),
+        allow_origins=parse_allowed_origins(os.getenv("allow_origins")),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],)
@@ -87,17 +93,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 async def login_for_access_token_docs(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = CRUD.get_user_by_email(db, form_data.username)
     if user is None:
-        raise HTTPException(status_code=404, detail="Email incorrect")
-    else:
-        if bcrypt.checkpw(form_data.password.encode('utf-8'), bytes(user.Password)):
-            access_token_expires = timedelta(
-                minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-            access_token = create_access_token(
-                data={"sub": user.Email}, expires_delta=access_token_expires)
-            return {"access_token": access_token, "token_type": "bearer"}
-        else:
-            raise HTTPException(
-                status_code=404, detail="Mot de passe incorrect")
+        raise HTTPException(status_code=401, detail="Identifiants invalides")
+    if bcrypt.checkpw(form_data.password.encode('utf-8'), bytes(user.Password)):
+        access_token_expires = timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.Email}, expires_delta=access_token_expires)
+        return {"access_token": access_token, "token_type": "bearer"}
+    raise HTTPException(
+        status_code=401, detail="Identifiants invalides")
 
 user_error_counters = {}
    # Récupération d'un utilisateur par son email
@@ -113,29 +117,26 @@ def read_user_email(email: str, db: Session = Depends(get_db)):
 async def login_for_access_token(current_user: schemas.UserForm, db: Session = Depends(get_db)):
     user = CRUD.get_user_by_email(db, current_user.Email)
     if user is None:
-        raise HTTPException(status_code=404, detail="Email incorrect")
-    else:
-        # Increment error counter for the user
-        if user.Email not in user_error_counters:
-            user_error_counters[user.Email] = 0
-        user_error_counters[user.Email] += 1
+        raise HTTPException(status_code=401, detail="Identifiants invalides")
+    # Increment error counter for the user
+    if user.Email not in user_error_counters:
+        user_error_counters[user.Email] = 0
+    user_error_counters[user.Email] += 1
 
-        if bcrypt.checkpw(current_user.Password.encode('utf-8'), bytes(user.Password)):
-            # Reset error counter if login successful
-            user_error_counters[user.Email] = 0
-            access_token_expires = timedelta(
-                minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-            access_token = create_access_token(
-                data={"sub": user.Email}, expires_delta=access_token_expires)
-            return {"access_token": access_token, "token_type": "bearer"}
-        else:
-            # Check if error counter reached 3
-            if user_error_counters[user.Email] >= 3:
-                # Block the user by setting Autorisation to False
-                CRUD.edit_user_status(db, user.Email, autorisation=False)
-                raise HTTPException(status_code=401, detail="Compte bloqué. Trop de tentatives de connexion échouées.")
-            else:
-                raise HTTPException(status_code=404, detail="Mot de passe incorrect")
+    if bcrypt.checkpw(current_user.Password.encode('utf-8'), bytes(user.Password)):
+        # Reset error counter if login successful
+        user_error_counters[user.Email] = 0
+        access_token_expires = timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.Email}, expires_delta=access_token_expires)
+        return {"access_token": access_token, "token_type": "bearer"}
+    # Check if error counter reached 3
+    if user_error_counters[user.Email] >= 3:
+        # Block the user by setting Autorisation to False
+        CRUD.edit_user_status(db, user.Email, autorisation=False)
+        raise HTTPException(status_code=401, detail="Compte bloqué. Trop de tentatives de connexion échouées.")
+    raise HTTPException(status_code=401, detail="Identifiants invalides")
 
 
 @app.post("/user/info/", response_model=schemas.UserBase)
@@ -223,8 +224,11 @@ def read_users(current_user: schemas.UserBase = Depends(get_current_user)):
 @router.put("/editUserStatus/{status}/", response_model=schemas.UserBase)
 def update_user_status(status: str, edit_user: schemas.UserEditStatus, db: Session = Depends(get_db), current_user: schemas.UserBase = Depends(get_current_user)):
     if current_user.Admin is True:
-        update_function = None
-        update_function = CRUD.edit_user_status(db, edit_user.Email, **{status.lower(): edit_user.Status})
+        allowed_statuses = {"admin", "autorisation", "acheteur", "demandeur", "editeur"}
+        normalized_status = status.lower()
+        if normalized_status not in allowed_statuses:
+            raise HTTPException(status_code=400, detail="Status invalide")
+        update_function = CRUD.edit_user_status(db, edit_user.Email, **{normalized_status: edit_user.Status})
         if update_function:
             return update_function
         else:
