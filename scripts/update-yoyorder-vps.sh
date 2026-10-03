@@ -10,6 +10,7 @@ readonly BRANCH="${BRANCH:-feat/open-saas-clean}"
 readonly COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
 readonly HEALTH_TIMEOUT_SECONDS="${HEALTH_TIMEOUT_SECONDS:-300}"
 readonly PROXY_CONTAINER="${PROXY_CONTAINER:-}"
+readonly BACKUP_IDENTITY_FILE="${BACKUP_IDENTITY_FILE:-$HOME/.config/yoyorder/backup.agekey}"
 MODE="${1:-update}"
 OLD_REVISION=inconnue
 NEW_REVISION=inconnue
@@ -47,20 +48,42 @@ docker info >/dev/null
 "${COMPOSE[@]}" config --quiet
 
 backup() {
-  local db_id
+  local db_id identity_path project_path backup_path recipient
+  for tool in age age-keygen stat id; do
+    command -v "$tool" >/dev/null || fail "Commande manquante pour le chiffrement : $tool"
+  done
+  [[ -f "$BACKUP_IDENTITY_FILE" && -r "$BACKUP_IDENTITY_FILE" ]] || fail "Clé de sauvegarde absente ou illisible : $BACKUP_IDENTITY_FILE (voir le guide de production)."
+  identity_path="$(readlink -f "$BACKUP_IDENTITY_FILE")"
+  project_path="$(readlink -f "$PROJECT_DIR")"
+  backup_path="$(readlink -f "$BACKUP_PARENT_DIR")"
+  case "$identity_path" in
+    "$project_path"/*|"$backup_path"/*) fail 'Conserver la clé hors du dépôt et du dossier de sauvegardes.' ;;
+  esac
+  [[ "$(stat -c %u "$identity_path")" == "$(id -u)" ]] || fail 'La clé doit appartenir au compte de déploiement.'
+  case "$(stat -c %a "$identity_path")" in
+    400|600) ;;
+    *) fail 'La clé doit avoir les permissions 600 ou 400.' ;;
+  esac
+  # Clé dédiée non protégée par passphrase : aucun prompt pendant le déploiement.
+  recipient="$(age-keygen -y "$identity_path")"
+  [[ "$recipient" =~ ^age1[a-z0-9]+$ ]] || fail 'Utiliser une seule clé native age dans le fichier identité.'
   db_id="$("${COMPOSE[@]}" ps --all --quiet postgres)"
   [[ -n "$db_id" ]] || fail 'Conteneur PostgreSQL introuvable.'
   [[ "$(docker inspect -f '{{.State.Health.Status}}' "$db_id")" == healthy ]] || fail 'PostgreSQL doit être sain avant la sauvegarde.'
-  BACKUP="$BACKUP_PARENT_DIR/yoyorder-$(date -u +%Y%m%dT%H%M%SZ)-$$.dump"
-  printf 'Sauvegarde PostgreSQL : %s\n' "$BACKUP"
+  BACKUP="$BACKUP_PARENT_DIR/yoyorder-$(date -u +%Y%m%dT%H%M%SZ)-$$.dump.age"
+  printf 'Sauvegarde PostgreSQL chiffrée : %s\n' "$BACKUP"
   (
     umask 077
-    "${COMPOSE[@]}" exec -T postgres sh -c 'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$BACKUP.partial"
+    "${COMPOSE[@]}" exec -T postgres sh -c 'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' \
+      | age --encrypt --recipient "$recipient" > "$BACKUP.partial"
     [[ -s "$BACKUP.partial" ]] || fail 'Sauvegarde vide ; déploiement interrompu.'
-    "${COMPOSE[@]}" exec -T postgres pg_restore --list < "$BACKUP.partial" >/dev/null
+    # Déchiffrer uniquement en flux. Drainer le flux après pg_restore pour vérifier
+    # aussi l'authenticité de la fin du fichier, sans SIGPIPE sur les grosses bases.
+    age --decrypt --identity "$identity_path" "$BACKUP.partial" \
+      | "${COMPOSE[@]}" exec -T postgres sh -c 'set -e; pg_restore --list >/dev/null; cat >/dev/null'
     mv "$BACKUP.partial" "$BACKUP"
   )
-  printf 'Archive créée et structure vérifiée.\n'
+  printf 'Archive chiffrée créée, déchiffrement intégral et structure vérifiés.\n'
 }
 if [[ "$MODE" == --backup-only ]]; then
   backup

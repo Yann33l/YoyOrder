@@ -34,3 +34,4 @@ process.env
 .env.production.server
 backups/
 .maj-yoyorder.lock
+*.agekey
