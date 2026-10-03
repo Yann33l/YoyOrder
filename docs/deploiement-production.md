@@ -17,18 +17,18 @@ Avant le premier déploiement :
 
 Installer Git, Node.js compatible avec Wasp/Vite (Node 22.12+), npm, Wasp **0.25.x**, Docker Engine avec Compose v2 (`--wait`), et `flock` (util-linux). Le compte de déploiement doit accéder à Docker et pouvoir écrire dans le dépôt.
 
-Exemple avec le dépôt cloné dans `/opt/yoyorder` :
+Exemple avec la branche `feat/open-saas-clean` clonée dans `/home/ubuntu/yoyOrder` :
 
 ```bash
-cd /opt/yoyorder
+cd /home/ubuntu/yoyOrder
 cp .env.production.example .env.production
 cp .env.production.server.example .env.production.server
 chmod 600 .env.production .env.production.server
 openssl rand -hex 32 # mot de passe PostgreSQL
 openssl rand -hex 32 # secret JWT indépendant
 # Modifier les deux fichiers avec les secrets et les deux domaines publics.
-chmod +x maj-yoyorder
-sudo ln -s /opt/yoyorder/maj-yoyorder /usr/local/bin/maj-yoyorder
+alias maj-yoyorder='bash /home/ubuntu/yoyOrder/scripts/update-yoyorder-vps.sh'
+# Ajouter la même ligne une seule fois dans ~/.bash_aliases pour la conserver.
 maj-yoyorder --no-pull
 ```
 
@@ -44,16 +44,22 @@ Ne pas remplacer la configuration globale du proxy ou ouvrir un second proxy sur
 maj-yoyorder
 ```
 
-Le script résout son chemin réel, verrouille l'exécution, refuse un dépôt modifié, puis fait `git pull --ff-only` sur la branche suivie. Il valide Compose sans afficher ses secrets, compile Wasp et Vite, construit les deux images, attend PostgreSQL, sauvegarde la base et contrôle l'archive avec `pg_restore --list`. Il démarre enfin le serveur et le client et attend leurs contrôles de santé. Une erreur interrompt la commande.
+Comme pour YoyImmo, l'alias appelle `scripts/update-yoyorder-vps.sh`. Le fichier `maj-yoyorder` à la racine reste un raccourci utilisable directement. Le script résout son dossier, verrouille l'exécution et journalise les anciennes/nouvelles révisions. Il refuse un dépôt modifié, récupère explicitement `origin/feat/open-saas-clean`, puis s'arrête si la révision est déjà à jour ou si le code local a divergé.
 
-`maj-yoyorder --no-pull` déploie le contenu déjà présent, notamment lors de l'installation initiale ou après un changement local volontaire. `maj-yoyorder --backup-only` sauvegarde uniquement la base, sans Git ni compilation. Les archives sont privées et conservées dans `backups/` sans purge automatique ; prévoir une copie hors du serveur et des sauvegardes régulières.
+Pour une installation existante, le serveur et PostgreSQL doivent être sains. Le script sauvegarde la base **avant la fusion du code**, puis contrôle la structure de l'archive avec `pg_restore --list` (ce contrôle ne remplace pas un essai de restauration). Il avance ensuite Git avec `merge --ff-only`, valide Compose sans afficher ses secrets, compile Wasp et Vite, construit les images et démarre tous les services Compose avec attente des contrôles de santé. Une erreur interrompt la commande. Au premier lancement, `--no-pull` construit l'application, démarre PostgreSQL et sauvegarde la base initiale avant les migrations.
+
+`maj-yoyorder --no-pull` déploie le contenu déjà présent, notamment lors de l'installation initiale ou après un changement local volontaire. Il permet aussi de redéployer la même révision après changement des variables. `maj-yoyorder --backup-only` sauvegarde uniquement la base, sans Git ni compilation. Les archives sont privées mais **non chiffrées**, contrairement au système applicatif de YoyImmo. Elles sont conservées hors du dépôt, dans `/home/ubuntu/yoyOrder_backups`, sans purge automatique ; prévoir une copie hors du serveur et des sauvegardes régulières.
+
+Le journal est `/home/ubuntu/yoyOrder_backups/yoyorder_deploy.log`. Les variables `PROJECT_DIR`, `BACKUP_PARENT_DIR`, `LOG_FILE`, `BRANCH`, `COMPOSE_FILE` et `HEALTH_TIMEOUT_SECONDS` permettent de surcharger ces valeurs. Le dossier du dépôt est déduit du script ; si `PROJECT_DIR` est surchargé, utiliser un chemin absolu. La branche par défaut est `feat/open-saas-clean`, pas `main` qui contient l'ancienne application.
+
+Le proxy partagé de YoyImmo n'est pas démarré ni reconfiguré par ce script. Pour vérifier qu'il tourne en fin de déploiement, définir `PROXY_CONTAINER=yoyimmo-caddy`. Le script ne purge pas les images ou caches globaux de Docker sur ce VPS partagé.
 
 L'URL de l'API est incorporée au client à la compilation : modifier `WASP_SERVER_URL` nécessite une nouvelle mise à jour. Les variables serveur sont lues depuis `.env.production.server`, les variables Compose depuis `.env.production`.
 
 ## Diagnostic et retour arrière
 
 ```bash
-cd /opt/yoyorder
+cd /home/ubuntu/yoyOrder
 docker compose --env-file .env.production ps
 docker compose --env-file .env.production logs --tail=100 server web postgres
 curl --fail http://127.0.0.1:3100/healthz
@@ -66,4 +72,6 @@ Pour revenir en arrière, identifier le commit précédent, analyser la compatib
 
 ## Limites de validation locale
 
-La configuration doit encore être validée avec une compilation Wasp complète et un lancement Docker sur Linux. L'alignement exact avec `maj-yoyimmo` dépend de l'accès à son script et à la configuration du serveur.
+La configuration doit encore être validée avec une compilation Wasp complète et un lancement Docker sur Linux. Le script reprend le fonctionnement du script YoyImmo fourni ; les domaines et l'accès au Caddy du VPS restent à configurer.
+
+Les scénarios Git à jour, dépôt modifié, divergence, service non sain, échec de sauvegarde, succès et échec de démarrage sont vérifiables sans Docker réel avec `bash tests/deployment.test.sh`. Les outils sont simulés ; les contrôles de permissions POSIX du test s'exécutent uniquement sous Linux.
