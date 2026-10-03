@@ -1,93 +1,28 @@
-# Présentation de l'application Yoyorder
+# YoyOrder
 
-**Yoyorder** est une application conçue pour optimiser la gestion des commandes et des stocks dans un laboratoire comportant plusieurs unités. Cette plateforme centralisée permet de suivre et de réaliser l'ensemble des processus liés à l'acquisition, au stockage, et à la consommation des articles. Grâce à des rôles distincts, Yoyorder assure une gestion efficace et fluide des ressources du laboratoire.
+Application de gestion des demandes, commandes et stocks d'un laboratoire. Le nouveau socle est [Open SaaS](https://github.com/wasp-lang/open-saas), basé sur Wasp, React, Node.js, Prisma et PostgreSQL.
 
-## Les rôles et fonctionnalités
+## Structure
 
-### 1. Demandeurs
+- `app/` : nouvelle application Open SaaS et modèle Prisma YoyOrder.
+- `blog/` : site de documentation Open SaaS.
+- `e2e-tests/` : exemples de tests fournis par Open SaaS.
+- `docs/migration-open-saas.md` : correspondance des données et étapes de migration.
 
-Les **Demandeurs** sont chargés de formuler les besoins en articles au sein du laboratoire. Ils ont accès aux fonctionnalités suivantes :
+## Démarrage
 
-- **Saisie de nouvelles demandes d'articles** : Les Demandeurs peuvent ajouter des articles à la liste des besoins en précisant la quantité et la date de livraison souhaitée.
-- **Réception des articles** : Ils enregistrent la date de réception, les quantités reçues, et les lots associés une fois les articles livrés.
+Wasp doit être installé dans WSL sous Windows. Depuis un terminal WSL, ouvrir le dossier `app/`, installer les dépendances JavaScript, démarrer PostgreSQL, puis lancer les migrations Prisma et l'application selon le [guide Open SaaS](https://docs.opensaas.sh/start/getting-started/).
 
-### 2. Acheteurs
+Le fichier `.env.server` doit être créé à partir de `app/.env.server.example`. Pour le développement local, Wasp peut gérer PostgreSQL avec `wasp start db`. L'envoi d'e-mails est à configurer avant toute mise en production.
 
-Les **Acheteurs** gèrent les commandes des articles auprès des fournisseurs. Leurs responsabilités incluent :
+## Déploiement Docker
 
-- **Saisie de la date de commande** : Ils enregistrent la date à laquelle chaque commande est passée pour assurer la traçabilité.
-- **Saisie du numéro de commande** : Un numéro de commande unique est attribué à chaque transaction.
-- **Exportation des listes d'articles à commander** : Ils peuvent exporter des listes d'articles à commander, avec des filtres basés sur les fournisseurs, facilitant ainsi la gestion des commandes.
+Le fichier `docker-compose.yml` et la commande `maj-yoyorder` préparent le déploiement Linux de la nouvelle application Wasp. Installation, variables de production, sauvegardes et prérequis applicatifs : [guide de production](docs/deploiement-production.md).
 
-### 3. Éditeurs
+## État de la migration
 
-Les **Éditeurs** ont un rôle crucial dans la structuration et la mise à jour des informations de base de l'application. Ils peuvent :
+Le template Open SaaS et le modèle PostgreSQL sont installés. L'authentification remplace la connexion JWT. Les nouveaux parcours Wasp couvrent les demandes par secteur, l'enregistrement des commandes, les réceptions partielles avec lots et certificats, le suivi des quantités, la création des principaux référentiels et l'attribution des rôles/secteurs par l'administrateur.
 
-- **Créer** :
-  - Des pièces (les différents locaux ou zones de stockage)
-  - Des secteurs (les différentes unités ou divisions du laboratoire)
-  - Des fournisseurs (les partenaires commerciaux)
-  - Des articles (les produits ou matériaux nécessaires)
-  - Des sous-articles (les composantes spécifiques des articles principaux)
-- **Éditer** :
-  - Les pièces
-  - Les secteurs
-  - Les fournisseurs
-  - Les articles
-  - Les sous-articles
+Cette branche contient uniquement le nouveau socle Open SaaS. L'ancienne application est conservée dans l'historique Git de la branche `dev`.
 
-Ces capacités permettent une adaptation continue de l'application aux besoins évolutifs du laboratoire.
-
-### 4. Administrateurs
-
-Les **Administrateurs** ont un accès complet à l'ensemble du système via le panneau d'administration, leur permettant de superviser la configuration de l'application, la gestion des utilisateurs, et les permissions.
-
-## Fonctions additionnelles
-
-En plus des fonctionnalités principales, Yoyorder propose des outils avancés pour un contrôle accru des processus :
-
-- **Suivi des quantités consommées** : Yoyorder permet de suivre précisément les quantités d'articles consommés, garantissant ainsi une gestion efficace des stocks.
-- **Suivi des lots consommés** : Grâce à cette fonctionnalité, les utilisateurs peuvent suivre l'ouverture et la fin d'utilisation des lots reçus. Cela inclut l'enregistrement des dates d'ouverture et de fin d'utilisation, assurant une traçabilité complète et une gestion optimisée des ressources.
-- **Gestion des certificats d'analyses** : L'application permet également de gérer les certificats d'analyses pour garantir que les produits reçus respectent les normes de qualité requises.
-
-**Yoyorder** se positionne ainsi comme une solution complète et intégrée pour la gestion des commandes et des stocks au sein des laboratoires, offrant des outils dédiés à chaque rôle et des fonctionnalités avancées pour un suivi rigoureux et une traçabilité optimale.
-
----
-
-# Variables d'environement à creer :
-
-## exemple
-
-### Back
-
-**Login** = "root"
-
-**Password** = "projet3"
-
-**Server_Host** = "localhost"
-
-**Port** = 3388
-
-**Database** = "yoyo"
-
-**Env** = "local" => SQLALCHEMY_DATABASE_URL = f"mysql+mysqlconnector://{Login}:{Password}@{Server_Host}:{Port}/{Database}"
-
-autre => SCALINGO_MYSQL_URL = f"mysql://{Login}:{Password}@{Server_Host}:{Port}/{Database}"
-
-**local_allow_origins** = ["*"]
-
-**allow_origins** = ["https://yoyo.vercel.app"]
-
-**SECRET_KEY** = "F6K6L6M2C1D9E2B4A6F8C6D5B6A0E6C6"
-
-**ALGORITHM** = "HS256"
-
-**ACCESS_TOKEN_EXPIRE_MINUTES** = 180
-
-### Front
-
-**VITE_API_LOCAL_URL** = "http://127.0.0.1:8000"
-
-**VITE_API_ONLINE_URL** = "https://yoyo.scalo.io"
-
-**VITE_EMAIL_FINI_PAR** = "@ab"
+La parité n'est pas encore complète : l'édition des référentiels, les sous-articles, les historiques et l'import réel des données restent à terminer avant le basculement en production. La base MySQL de production reste inchangée. Voir le [guide de migration](docs/migration-open-saas.md).

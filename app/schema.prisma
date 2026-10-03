@@ -1,0 +1,271 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                        String          @id @default(uuid())
+  createdAt                 DateTime        @default(now())
+  email                     String?         @unique
+  username                  String?         @unique
+  isAdmin                   Boolean         @default(false)
+  isBuyer                   Boolean         @default(false)
+  isRequester               Boolean         @default(false)
+  isEditor                  Boolean         @default(false)
+  isAuthorized              Boolean         @default(false)
+  paymentProcessorUserId    String?         @unique
+  lemonSqueezyCustomerPortalUrl String?
+  subscriptionStatus        String?
+  subscriptionPlan          String?
+  datePaid                  DateTime?
+  credits                   Int             @default(3)
+  gptResponses              GptResponse[]
+  contactFormMessages       ContactFormMessage[]
+  tasks                     Task[]
+  files                     File[]
+  sectors                   UserSector[]
+  requestedOrders           Order[]          @relation("RequestedOrders")
+}
+
+model GptResponse {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  description String
+  time        String   @default("1")
+  isDone      Boolean  @default(false)
+}
+
+model File {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  type      String
+  s3Key     String
+}
+
+model DailyStats {
+  id                        Int              @id @default(autoincrement())
+  date                      DateTime         @default(now()) @unique
+  totalViews                Int              @default(0)
+  prevDayViewsChangePercent String           @default("0")
+  userCount                 Int              @default(0)
+  paidUserCount             Int              @default(0)
+  userDelta                 Int              @default(0)
+  paidUserDelta             Int              @default(0)
+  totalRevenue              Float            @default(0)
+  totalProfit               Float            @default(0)
+  sources                   PageViewSource[]
+}
+
+model PageViewSource {
+  date         DateTime   @default(now())
+  name         String
+  dailyStatsId Int?
+  dailyStats   DailyStats? @relation(fields: [dailyStatsId], references: [id])
+  visitors     Int
+
+  @@id([date, name])
+}
+
+model Logs {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  message   String
+  level     String
+}
+
+model ContactFormMessage {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  isRead    Boolean  @default(false)
+  repliedAt DateTime?
+}
+
+model Sector {
+  id          Int          @id @default(autoincrement())
+  label       String
+  validFrom   DateTime?
+  validUntil  DateTime?
+  users       UserSector[]
+  articles    ArticleSector[]
+  orders      OrderSector[]
+}
+
+model UserSector {
+  userId   String
+  sectorId Int
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sector   Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sectorId])
+}
+
+model Piece {
+  id         Int             @id @default(autoincrement())
+  label      String
+  validFrom  DateTime?
+  validUntil DateTime?
+  articles   ArticlePiece[]
+}
+
+model Supplier {
+  id                    Int       @id @default(autoincrement())
+  label                 String
+  telephone             String?
+  email                 String?
+  website               String?
+  certificateRequest    String?
+  validFrom             DateTime?
+  validUntil            DateTime?
+  articles              Article[]
+}
+
+model Article {
+  id             Int              @id @default(autoincrement())
+  label          String
+  reference      String?
+  supplierId     Int?
+  supplier       Supplier?        @relation(fields: [supplierId], references: [id])
+  packaging      String?
+  validFrom      DateTime?
+  validUntil     DateTime?
+  comment        String?
+  sectors        ArticleSector[]
+  pieces         ArticlePiece[]
+  compositions   ArticleSubArticle[]
+  orders         Order[]
+
+  @@index([label])
+}
+
+model ArticleSector {
+  articleId Int
+  sectorId  Int
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  sector    Sector  @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, sectorId])
+}
+
+model ArticlePiece {
+  articleId Int
+  pieceId   Int
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  piece     Piece   @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, pieceId])
+}
+
+model SubArticle {
+  id           Int                 @id @default(autoincrement())
+  label        String
+  reference    String?
+  packaging    String?
+  validFrom    DateTime?
+  validUntil   DateTime?
+  comment      String?
+  compositions ArticleSubArticle[]
+  orderItems   SubOrder[]
+}
+
+model ArticleSubArticle {
+  articleId    Int
+  subArticleId Int
+  quantity     Int
+  article      Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  subArticle   SubArticle @relation(fields: [subArticleId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, subArticleId])
+}
+
+model Order {
+  id                Int           @id @default(autoincrement())
+  orderNumber       String?
+  articleId         Int
+  article           Article       @relation(fields: [articleId], references: [id])
+  orderDate         DateTime?
+  requestDate       DateTime?
+  receivedInFull    Boolean       @default(false)
+  comment           String?
+  requesterComment String?
+  requestedByUserId String?
+  requestedBy       User?         @relation("RequestedOrders", fields: [requestedByUserId], references: [id])
+  sectors           OrderSector[]
+  items             SubOrder[]
+  receptions        Reception[]
+}
+
+model OrderSector {
+  orderId  Int
+  sectorId Int
+  quantity Int
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sector   Sector @relation(fields: [sectorId], references: [id])
+
+  @@id([orderId, sectorId])
+}
+
+model SubOrder {
+  id            Int        @id @default(autoincrement())
+  orderId       Int
+  subArticleId  Int
+  quantity      Int
+  receivedInFull Boolean    @default(false)
+  order         Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  subArticle    SubArticle @relation(fields: [subArticleId], references: [id])
+  receptions    Reception[]
+}
+
+model Reception {
+  id             Int              @id @default(autoincrement())
+  orderId        Int
+  subOrderId     Int?
+  quantity       Int
+  receivedAt     DateTime?
+  comment        String?
+  useStartedAt   DateTime?
+  useEndedAt     DateTime?
+  remainingQty   Int?
+  order          Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  subOrder       SubOrder?        @relation(fields: [subOrderId], references: [id])
+  stocks         ReceptionStock[]
+}
+
+model Stock {
+  id             Int              @id @default(autoincrement())
+  initialQty     Int?
+  remainingQty   Int?
+  lot            String?
+  expiresAt      DateTime?
+  coa            Bytes?
+  receptions     ReceptionStock[]
+}
+
+model ReceptionStock {
+  receptionId Int
+  stockId     Int
+  reception   Reception @relation(fields: [receptionId], references: [id], onDelete: Cascade)
+  stock       Stock     @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@id([receptionId, stockId])
+}

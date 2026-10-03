@@ -1,0 +1,9 @@
+# À intégrer au Caddy existant sur le serveur (ne pas remplacer ses autres sites).
+# Remplacer les domaines ; les ports correspondent à .env.production.
+order.example.fr {
+    reverse_proxy 127.0.0.1:3100
+}
+
+api-order.example.fr {
+    reverse_proxy 127.0.0.1:3101
+}

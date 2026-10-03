@@ -1,0 +1,10 @@
+**
+!deploy/
+!deploy/Dockerfile.web
+!deploy/nginx.conf
+!app/
+!app/.wasp/
+!app/.wasp/out/
+!app/.wasp/out/web-app/
+!app/.wasp/out/web-app/build/
+!app/.wasp/out/web-app/build/**
