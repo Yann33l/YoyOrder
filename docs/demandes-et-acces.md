@@ -4,7 +4,11 @@ Les rôles définissent les actions autorisées : Demandeur pour demander et ré
 
 Les affectations aux secteurs (ACP, PAM, etc.) définissent le périmètre des utilisateurs. Dans **Vue d’ensemble → Accès utilisateurs**, l’administrateur coche les rôles et les affectations, puis enregistre. L’utilisateur voit uniquement les articles compatibles avec ses secteurs et les pièces contenant ces articles. Un administrateur voit l’ensemble du catalogue.
 
-Dans **Référentiels → Créer un article**, les cases **Secteurs compatibles** et **Pièces** permettent plusieurs choix. Au moins un secteur doit être associé à l’article.
+Les **Référentiels** sont organisés en cinq onglets : **Fournisseurs**, **Secteurs**, **Pièces**, **Articles** et **Compositions (sous-articles)**. Chaque onglet permet de créer et modifier ses éléments avec le rôle Éditeur.
+
+Dans **Référentiels → Articles**, les cases **Secteurs compatibles** et **Pièces** permettent plusieurs choix à la création et à la modification. Au moins un secteur doit être associé à l’article.
+
+Dans **Compositions (sous-articles)**, choisissez l’article parent, puis ajoutez les sous-articles et leur quantité par article. Vous pouvez modifier la quantité ou retirer un sous-article de la composition sans supprimer sa fiche du référentiel.
 
 La page **Demandes** présente les articles accessibles, y compris ceux qui n’ont pas encore de demande. Le sous-menu permet de choisir une pièce ou toutes les pièces. Un article associé à plusieurs pièces apparaît dans chacune d’elles.
 

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("wasp/server", () => ({
   HttpError: class HttpError extends Error { constructor(public statusCode: number, message: string) { super(message); } },
-  prisma: { $transaction: vi.fn(), order: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() }, stock: { findUnique: vi.fn(), update: vi.fn() }, articleSector: { findUnique: vi.fn() }, userSector: { findUnique: vi.fn(), findMany: vi.fn() }, article: { findMany: vi.fn() }, sector: { findMany: vi.fn() }, piece: { findMany: vi.fn() }, supplier: { findMany: vi.fn() } },
+  prisma: { $transaction: vi.fn(), order: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() }, stock: { findUnique: vi.fn(), update: vi.fn() }, articleSector: { findUnique: vi.fn() }, userSector: { findUnique: vi.fn(), findMany: vi.fn() }, article: { findMany: vi.fn() }, sector: { findMany: vi.fn() }, piece: { findMany: vi.fn() }, supplier: { findMany: vi.fn() }, subArticle: { findMany: vi.fn() }, articleSubArticle: { findMany: vi.fn() } },
 }));
 import { prisma } from "wasp/server";
-import { createRequest, setOrderPurchase, setBatchOrderPurchase, registerReception, updateStock, createArticle, getCatalog } from "./workflows";
+import { createRequest, setOrderPurchase, setBatchOrderPurchase, registerReception, updateStock, createArticle, getCatalog, saveCatalogItem, setArticleComposition } from "./workflows";
 import { hasBusinessRole } from "./permissions";
 const editor = { id: "editor", isAdmin: true, isAuthorized: true, isRequester: false, isBuyer: false, isEditor: true };
 describe("Demandes par secteur et visibilité du catalogue", () => {
@@ -37,7 +37,7 @@ describe("Demandes par secteur et visibilité du catalogue", () => {
   });
   it("filtre les articles, leurs secteurs et les pièces côté serveur selon les affectations", async () => {
     vi.mocked(prisma.userSector.findMany).mockResolvedValue([{ sectorId: 10 }] as never);
-    for (const model of [prisma.article, prisma.sector, prisma.piece, prisma.supplier]) vi.mocked(model.findMany).mockResolvedValue([] as never);
+    for (const model of [prisma.article, prisma.sector, prisma.piece, prisma.supplier, prisma.subArticle, prisma.articleSubArticle]) vi.mocked(model.findMany).mockResolvedValue([] as never);
     await getCatalog({}, { user: requester } as never);
     expect(prisma.article.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { sectors: { some: { sectorId: { in: [10] } } } }, select: expect.objectContaining({ sectors: { where: { sectorId: { in: [10] } }, select: { sectorId: true } } }) }));
     expect(prisma.piece.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { articles: { some: { article: { sectors: { some: { sectorId: { in: [10] } } } } } } } }));
@@ -55,6 +55,8 @@ describe("Droits métier indépendants de l’administration", () => {
   });
   it("refuse la création de référentiels sans rôle éditeur", async () => {
     await expect(createArticle({} as never, { user: { ...editor, isEditor: false } } as never)).rejects.toMatchObject({ statusCode: 403 });
+    await expect(saveCatalogItem({} as never, { user: { ...editor, isEditor: false } } as never)).rejects.toMatchObject({ statusCode: 403 });
+    await expect(setArticleComposition({} as never, { user: { ...editor, isEditor: false } } as never)).rejects.toMatchObject({ statusCode: 403 });
   });
   it("respecte chaque rôle coché et refuse un compte désactivé", () => {
     expect(hasBusinessRole(editor, "isEditor")).toBe(true);

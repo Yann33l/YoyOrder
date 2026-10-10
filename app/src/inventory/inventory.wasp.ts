@@ -20,12 +20,14 @@ import {
   setBatchOrderPurchase,
   updateStock,
   updateUserAccess,
+  saveCatalogItem,
+  setArticleComposition,
 } from "./workflows" with { type: "ref" };
 
 export const inventorySpec: Spec = [
   route("InventoryRoute", "/inventory", page(InventoryPage, { authRequired: true })),
   query(getInventoryOverview, { entities: ["Article", "Stock", "User", "UserSector"] }),
-  query(getCatalog, { entities: ["Article", "ArticleSector", "ArticlePiece", "Supplier", "Sector", "Piece", "UserSector"] }),
+  query(getCatalog, { entities: ["Article", "ArticleSector", "ArticlePiece", "SubArticle", "ArticleSubArticle", "Supplier", "Sector", "Piece", "UserSector"] }),
   query(getWorkspaceUsers, { entities: ["User", "Sector", "UserSector"] }),
   query(getOrders, { entities: ["Order", "Article", "Sector", "OrderSector", "UserSector"] }),
   query(getStock, { entities: ["Stock", "ReceptionStock", "Reception", "Order", "OrderSector", "UserSector"] }),
@@ -40,4 +42,6 @@ export const inventorySpec: Spec = [
   action(createPiece, { entities: ["Piece"] }),
   action(createArticle, { entities: ["Article", "Supplier", "Sector", "Piece", "ArticleSector", "ArticlePiece", "UserSector"] }),
   action(updateUserAccess, { entities: ["User", "Sector", "UserSector"] }),
+  action(saveCatalogItem, { entities: ["Article", "ArticleSector", "ArticlePiece", "SubArticle", "Supplier", "Sector", "Piece", "UserSector"] }),
+  action(setArticleComposition, { entities: ["Article", "SubArticle", "ArticleSubArticle", "UserSector"] }),
 ];

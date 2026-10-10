@@ -1,9 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
-  createArticle,
-  createPiece,
-  createSector,
-  createSupplier,
   downloadCertificate,
   getCatalog,
   getInventoryOverview,
@@ -28,6 +24,7 @@ import { InventoryGrid, type GridColumn } from "./InventoryGrid";
 import { hasBusinessRole } from "./permissions";
 import { DemandTable } from "./DemandTable";
 import { PurchaseTable } from "./PurchaseTable";
+import { CatalogPage } from "./CatalogPage";
 
 type View = "overview" | "requests" | "orders" | "stock" | "catalog";
 
@@ -61,10 +58,6 @@ export function InventoryPage({ user }: { user: User }) {
   const setOrderPurchaseAction = useAction(setOrderPurchase);
   const registerReceptionAction = useAction(registerReception);
   const updateStockAction = useAction(updateStock);
-  const createSupplierAction = useAction(createSupplier);
-  const createArticleAction = useAction(createArticle);
-  const createSectorAction = useAction(createSector);
-  const createPieceAction = useAction(createPiece);
   const downloadCertificateAction = useAction(downloadCertificate);
 
   async function run(operation: () => Promise<unknown>, refresh: () => Promise<unknown>): Promise<boolean> {
@@ -108,48 +101,6 @@ export function InventoryPage({ user }: { user: User }) {
         coaBase64,
       }),
       async () => Promise.all([refetchOrders(), refetchStock()]),
-    );
-    if (saved) form.reset();
-  }
-
-  async function onCreateSupplier(event: FormEvent<HTMLFormElement>) {
-    const form = event.currentTarget;
-    const values = formData(event);
-    const saved = await run(
-      () => createSupplierAction({ label: String(values.get("label")) }),
-      refetchCatalog,
-    );
-    if (saved) form.reset();
-  }
-
-  async function onCreateSector(event: FormEvent<HTMLFormElement>) {
-    const form = event.currentTarget;
-    const values = formData(event);
-    const saved = await run(() => createSectorAction({ label: String(values.get("label")) }), refetchCatalog);
-    if (saved) form.reset();
-  }
-
-  async function onCreatePiece(event: FormEvent<HTMLFormElement>) {
-    const form = event.currentTarget;
-    const values = formData(event);
-    const saved = await run(() => createPieceAction({ label: String(values.get("label")) }), refetchCatalog);
-    if (saved) form.reset();
-  }
-
-  async function onCreateArticle(event: FormEvent<HTMLFormElement>) {
-    const form = event.currentTarget;
-    const values = formData(event);
-    const selected = (name: string) => values.getAll(name).map(Number);
-    const saved = await run(
-      () => createArticleAction({
-        label: String(values.get("label")),
-        reference: String(values.get("reference") || ""),
-        packaging: String(values.get("packaging") || ""),
-        supplierId: Number(values.get("supplierId")) || undefined,
-        sectorIds: selected("sectorIds"),
-        pieceIds: selected("pieceIds"),
-      }),
-      refetchCatalog,
     );
     if (saved) form.reset();
   }
@@ -275,41 +226,7 @@ export function InventoryPage({ user }: { user: User }) {
           </WorkflowForm>
         </section>
       ) : (
-        <section className="space-y-6">
-          <div>
-            <h2 className="mb-3 text-lg font-semibold">Articles</h2>
-            <InventoryGrid label="Articles" rows={catalog?.articles ?? []} rowId={(article) => article.id} columns={[
-              { id: "label", label: "Article", group: "Articles", width: 300, value: (article) => article.label },
-              { id: "reference", label: "Référence", group: "Articles", value: (article) => article.reference },
-              { id: "packaging", label: "Conditionnement", group: "Articles", width: 180, value: (article) => article.packaging },
-              { id: "supplier", label: "Fournisseur", group: "Fournisseur", width: 220, value: (article) => catalog?.suppliers.find((supplier) => supplier.id === article.supplierId)?.label ?? "—" },
-            ]} />
-          </div>
-          <div className="space-y-6">
-            <Card><CardHeader><CardTitle>Créer un article</CardTitle></CardHeader><CardContent>
-              <form className="grid gap-4 sm:grid-cols-2" onSubmit={onCreateArticle}>
-                <Field label="Libellé"><Input name="label" required maxLength={255} /></Field>
-                <Field label="Référence"><Input name="reference" maxLength={255} /></Field>
-                <Field label="Conditionnement"><Input name="packaging" maxLength={255} /></Field>
-                <Field label="Fournisseur"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="supplierId"><option value="">Aucun</option>{catalog?.suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.label}</option>)}</select></Field>
-                <ChoiceChecks label="Secteurs compatibles" name="sectorIds" options={catalog?.sectors ?? []} />
-                <ChoiceChecks label="Pièces (plusieurs possibles)" name="pieceIds" options={catalog?.pieces ?? []} />
-                <Button className="sm:col-span-2" disabled={working}>Créer l’article</Button>
-              </form>
-            </CardContent></Card>
-            <Card><CardHeader><CardTitle>Créer un fournisseur</CardTitle></CardHeader><CardContent>
-              <form className="flex gap-3" onSubmit={onCreateSupplier}><Input name="label" aria-label="Nom du fournisseur" placeholder="Nom du fournisseur" required maxLength={255} /><Button disabled={working}>Ajouter</Button></form>
-            </CardContent></Card>
-            <div className="grid gap-6 sm:grid-cols-2">
-              <Card><CardHeader><CardTitle>Créer un secteur</CardTitle></CardHeader><CardContent>
-                <form className="flex gap-3" onSubmit={onCreateSector}><Input name="label" aria-label="Nom du secteur" placeholder="Nom du secteur" required maxLength={255} /><Button disabled={working}>Ajouter</Button></form>
-              </CardContent></Card>
-              <Card><CardHeader><CardTitle>Créer une pièce</CardTitle></CardHeader><CardContent>
-                <form className="flex gap-3" onSubmit={onCreatePiece}><Input name="label" aria-label="Nom de la pièce" placeholder="Nom de la pièce" required maxLength={255} /><Button disabled={working}>Ajouter</Button></form>
-              </CardContent></Card>
-            </div>
-          </div>
-        </section>
+        catalog && <CatalogPage catalog={catalog} onSaved={refetchCatalog} />
       )}
     </main>
   );
