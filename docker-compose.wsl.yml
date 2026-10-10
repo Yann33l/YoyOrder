@@ -1,0 +1,86 @@
+# Environnement local indépendant de la production et de YoyImmo.
+name: yoyorder-wsl-test
+services:
+  postgres:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: yoyorder_wsl_test
+      POSTGRES_USER: yoyorder
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Mot de passe local manquant}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  compiler:
+    profiles: [tools]
+    build:
+      context: ./deploy
+      dockerfile: Dockerfile.wasp
+    volumes:
+      - .:/workspace
+    environment:
+      DATABASE_URL: postgresql://yoyorder:${POSTGRES_PASSWORD}@postgres:5432/yoyorder_wsl_test
+      REACT_APP_API_URL: http://localhost:3083
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      SMTP_USERNAME: yoyorder-local
+      SMTP_PASSWORD: mailpit-local-only
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: [bash, scripts/build-wsl-dev.sh]
+  server:
+    build:
+      context: ./app/.wasp/out
+    restart: unless-stopped
+    env_file: ./app/.env.server
+    environment:
+      NODE_ENV: production
+      PORT: '3001'
+      DATABASE_URL: postgresql://yoyorder:${POSTGRES_PASSWORD}@postgres:5432/yoyorder_wsl_test
+      JWT_SECRET: ${JWT_SECRET:?Secret local manquant}
+      WASP_WEB_CLIENT_URL: http://localhost:8083
+      WASP_SERVER_URL: http://localhost:3083
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      SMTP_USERNAME: yoyorder-local
+      SMTP_PASSWORD: mailpit-local-only
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    ports: ['127.0.0.1:3083:3001']
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3001/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 12
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    ports: ['127.0.0.1:8083:8080']
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/healthz]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 'true'
+      MP_SMTP_AUTH_ALLOW_INSECURE: 'true'
+    ports: ['127.0.0.1:8027:8025']
+volumes:
+  postgres-data:

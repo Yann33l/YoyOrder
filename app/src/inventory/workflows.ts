@@ -41,7 +41,7 @@ type WorkspaceUser = Pick<User, "id" | "email" | "isAuthorized" | "isRequester" 
   sectors: { sectorId: number }[];
 };
 
-async function requireUser(context: { user: User | null }) {
+async function requireUser(context: { user?: User | null }) {
   if (!context.user) throw new HttpError(401, "Authentification requise");
   if (!context.user.isAuthorized) throw new HttpError(403, "Compte en attente d'activation");
   return context.user;
@@ -366,7 +366,15 @@ export const getStock: GetStock<Record<string, never>, StockSummary[]> = async (
   const rows = await prisma.stock.findMany({
     where: sectorIds === null
       ? undefined
-      : { receptions: { some: { reception: { order: { sectors: { some: { sectorId: { in: sectorIds } } } } } } },
+      : {
+          receptions: {
+            some: {
+              reception: {
+                order: { sectors: { some: { sectorId: { in: sectorIds } } } },
+              },
+            },
+          },
+        },
     select: { id: true, initialQty: true, remainingQty: true, lot: true, expiresAt: true, coa: true },
     orderBy: [{ expiresAt: "asc" }, { lot: "asc" }],
   });
@@ -388,7 +396,13 @@ export const updateStock: UpdateStock<StockUpdateInput, StockSummary> = async (r
     select: {
       initialQty: true,
       coa: true,
-      receptions: { select: { reception: { select: { order: { select: { sectors: { select: { sectorId: true } } } } } } },
+      receptions: {
+        select: {
+          reception: {
+            select: { order: { select: { sectors: { select: { sectorId: true } } } } },
+          },
+        },
+      },
     },
   });
   if (!stock) throw new HttpError(404, "Lot introuvable");

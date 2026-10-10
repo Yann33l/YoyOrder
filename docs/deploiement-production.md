@@ -93,7 +93,7 @@ cd /home/ubuntu/yoyOrder
 docker compose --env-file .env.production ps
 docker compose --env-file .env.production logs --tail=100 server web postgres
 curl --fail http://127.0.0.1:3100/healthz
-curl --fail http://127.0.0.1:3101/health
+curl --fail http://127.0.0.1:3101/
 ```
 
 Un échec de compilation laisse les conteneurs actuels en place. Après lancement du nouveau serveur, une migration peut déjà avoir modifié la base : le script ne fait pas de restauration automatique. Le dump pris pendant que l'ancienne application fonctionne peut précéder de nouvelles écritures ; prévoir une fenêtre de maintenance pour les migrations incompatibles et pour une restauration.

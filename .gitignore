@@ -35,3 +35,5 @@ process.env
 backups/
 .maj-yoyorder.lock
 *.agekey
+.env.wsl
+.wsl-update.lock

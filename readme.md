@@ -17,6 +17,8 @@ Le fichier `.env.server` doit être créé à partir de `app/.env.server.example
 
 ## Déploiement Docker
 
+Pour lancer ou mettre à jour l'environnement local depuis le bureau Windows : [raccourcis WSL](docs/developpement-wsl.md).
+
 Le fichier `docker-compose.yml` et la commande `maj-yoyorder` préparent le déploiement Linux de la nouvelle application Wasp. Installation, variables de production, sauvegardes et prérequis applicatifs : [guide de production](docs/deploiement-production.md).
 
 ## État de la migration
