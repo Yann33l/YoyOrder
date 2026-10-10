@@ -11,6 +11,7 @@ import {
   type GetCatalog,
   type GetOrders,
   type GetStock,
+  type GetHistory,
   type RegisterReception,
   type SetOrderPurchase,
   type SetBatchOrderPurchase,
@@ -46,6 +47,47 @@ type OrderSummary = Pick<
 };
 
 type StockSummary = Pick<Stock, "id" | "initialQty" | "remainingQty" | "lot" | "expiresAt"> & { hasCertificate: boolean };
+type HistoryRow = {
+  id: string; orderId: number; orderNumber: string | null; article: string; reference: string | null;
+  packaging: string | null; supplier: string | null; sectors: string; requestedQty: number; requester: string | null;
+  requestDate: Date | null; orderDate: Date | null; receivedInFull: boolean;
+  requesterComment: string | null; orderComment: string | null; receptionId: number | null;
+  receivedAt: Date | null; receivedQty: number | null; receptionComment: string | null;
+  useStartedAt: Date | null; useEndedAt: Date | null; receptionRemainingQty: number | null;
+  subArticle: string | null; stockId: number | null; lot: string | null; expiresAt: Date | null;
+  initialQty: number | null; remainingQty: number | null; hasCertificate: boolean;
+};
+
+export const getHistory: GetHistory<Record<string, never>, HistoryRow[]> = async (_args, context) => {
+  const user = await requireUser(context);
+  if (!user.isAdmin && !user.isRequester && !user.isBuyer) throw new HttpError(403, "Aucun rôle ne permet de consulter l’historique");
+  const sectorIds = await getSectorIds(user);
+  const orders = await prisma.order.findMany({
+    where: sectorIds === null ? undefined : { sectors: { some: { sectorId: { in: sectorIds } } } },
+    select: {
+      id: true, orderNumber: true, requestDate: true, orderDate: true, receivedInFull: true, requesterComment: true, comment: true,
+      requestedBy: { select: { email: true } },
+      article: { select: { label: true, reference: true, packaging: true, supplier: { select: { label: true } } } },
+      sectors: { where: sectorIds === null ? undefined : { sectorId: { in: sectorIds } }, select: { quantity: true, sector: { select: { label: true } } } },
+      receptions: { orderBy: { id: "asc" }, select: {
+        id: true, quantity: true, receivedAt: true, comment: true, useStartedAt: true, useEndedAt: true, remainingQty: true,
+        subOrder: { select: { subArticle: { select: { label: true } } } },
+        stocks: { select: { stock: { select: { id: true, lot: true, expiresAt: true, initialQty: true, remainingQty: true, coa: true } } } },
+      } },
+    },
+    orderBy: [{ requestDate: "desc" }, { id: "desc" }],
+  });
+  return orders.flatMap((order) => (order.receptions.length ? order.receptions : [null]).flatMap((reception) =>
+    (reception?.stocks.length ? reception.stocks.map((link) => link.stock) : [null]).map((stock) => ({
+      id: `${order.id}-${reception?.id ?? "none"}-${stock?.id ?? "none"}`, orderId: order.id, orderNumber: order.orderNumber,
+      article: order.article.label, reference: order.article.reference, packaging: order.article.packaging, supplier: order.article.supplier?.label ?? null,
+      sectors: order.sectors.map((entry) => `${entry.sector.label} : ${entry.quantity}`).join(" · "), requestedQty: order.sectors.reduce((sum, entry) => sum + entry.quantity, 0), requester: order.requestedBy?.email ?? null,
+      requestDate: order.requestDate, orderDate: order.orderDate, receivedInFull: order.receivedInFull, requesterComment: order.requesterComment, orderComment: order.comment,
+      receptionId: reception?.id ?? null, receivedAt: reception?.receivedAt ?? null, receivedQty: reception?.quantity ?? null, receptionComment: reception?.comment ?? null,
+      useStartedAt: reception?.useStartedAt ?? null, useEndedAt: reception?.useEndedAt ?? null, receptionRemainingQty: reception?.remainingQty ?? null, subArticle: reception?.subOrder?.subArticle.label ?? null,
+      stockId: stock?.id ?? null, lot: stock?.lot ?? null, expiresAt: stock?.expiresAt ?? null, initialQty: stock?.initialQty ?? null, remainingQty: stock?.remainingQty ?? null, hasCertificate: Boolean(stock?.coa),
+    }))));
+};
 type WorkspaceUser = Pick<User, "id" | "email" | "isAuthorized" | "isRequester" | "isBuyer" | "isEditor"> & {
   sectors: { sectorId: number }[];
 };
@@ -366,7 +408,7 @@ export const downloadCertificate: DownloadCertificate<
   { filename: string; base64: string } | null
 > = async (rawArgs, context) => {
   const user = await requireUser(context);
-  requireRole(user, "isRequester");
+  if (!user.isAdmin && !user.isRequester && !user.isBuyer) throw new HttpError(403, "Aucun rôle ne permet de consulter les certificats");
   const { stockId } = ensureArgsSchemaOrThrowHttpError(certificateSchema, rawArgs);
   const stock = await prisma.stock.findUnique({
     where: { id: stockId },

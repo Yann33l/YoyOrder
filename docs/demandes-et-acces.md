@@ -23,3 +23,11 @@ La page **Commandes** affiche les demandes qui n’ont pas encore de date de com
 Cochez les lignes en première colonne. La case d’en-tête sélectionne toutes les demandes correspondant aux filtres, sur toutes les pages. Le formulaire **Commande commune** liste les demandes choisies, puis permet de leur appliquer une date, un numéro et un commentaire identiques. Un changement de fournisseur vide la sélection.
 
 Les articles sélectionnés doivent appartenir au même fournisseur. La date choisie doit être égale ou postérieure à la date de chacune des demandes. L’enregistrement est transactionnel : si une demande n’est plus en attente ou n’est pas autorisée, la sélection entière est refusée. Les demandes enregistrées quittent la liste en attente et apparaissent dans **Commandes déjà enregistrées**.
+
+## Historique
+
+L’onglet **Historique** est accessible aux demandeurs, acheteurs et administrateurs. Il conserve toutes les demandes et commandes, avec une ligne par réception et lot, y compris les lots épuisés ou périmés. Les commandes sans réception sont également affichées.
+
+La grille regroupe l’article, le fournisseur, les quantités par secteur, le demandeur, les dates de demande et de commande, la réception, les commentaires, le lot, les quantités initiales et restantes, les dates d’utilisation et de péremption. Les certificats d’analyse PDF se téléchargent depuis leur ligne. Les champs non renseignés restent vides.
+
+La recherche globale, les filtres par colonne, la pagination et l’export CSV permettent de retrouver les anciens enregistrements. Les utilisateurs restent limités à leurs secteurs ; les administrateurs peuvent consulter l’ensemble. Cette vue présente les données enregistrées, sans journal des modifications successives.

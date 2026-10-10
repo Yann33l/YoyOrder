@@ -25,8 +25,9 @@ import { hasBusinessRole } from "./permissions";
 import { DemandTable } from "./DemandTable";
 import { PurchaseTable } from "./PurchaseTable";
 import { CatalogPage } from "./CatalogPage";
+import { HistoryTable } from "./HistoryTable";
 
-type View = "overview" | "requests" | "orders" | "stock" | "catalog";
+type View = "overview" | "requests" | "orders" | "stock" | "catalog" | "history";
 
 function formData(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
@@ -43,9 +44,10 @@ export function InventoryPage({ user }: { user: User }) {
   const canRequest = hasBusinessRole(user, "isRequester");
   const canBuy = hasBusinessRole(user, "isBuyer");
   const canEdit = hasBusinessRole(user, "isEditor");
+  const canViewHistory = user.isAuthorized && (user.isAdmin || canRequest || canBuy);
   useEffect(() => {
-    if ((view === "requests" || view === "stock") && !canRequest || view === "orders" && !canBuy || view === "catalog" && !canEdit) setView("overview");
-  }, [view, canRequest, canBuy, canEdit]);
+    if ((view === "requests" || view === "stock") && !canRequest || view === "orders" && !canBuy || view === "catalog" && !canEdit || view === "history" && !canViewHistory) setView("overview");
+  }, [view, canRequest, canBuy, canEdit, canViewHistory]);
   const { data: overview, isLoading, error } = useQuery(getInventoryOverview, {});
   const { data: catalog, refetch: refetchCatalog } = useQuery(getCatalog, {});
   const { data: orders, refetch: refetchOrders } = useQuery(getOrders, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
@@ -138,6 +140,7 @@ export function InventoryPage({ user }: { user: User }) {
     { id: "requests", label: "Demandes", visible: canRequest },
     { id: "orders", label: "Commandes", visible: canBuy },
     { id: "stock", label: "Réceptions et stock", visible: canRequest },
+    { id: "history", label: "Historique", visible: canViewHistory },
     { id: "catalog", label: "Référentiels", visible: canEdit },
   ];
 
@@ -206,6 +209,8 @@ export function InventoryPage({ user }: { user: User }) {
           <PurchaseTable orders={orders ?? []} onSaved={refetchOrders} />
           <details className="mt-6"><summary className="mb-3 cursor-pointer font-medium">Commandes déjà enregistrées</summary><OrderTable orders={orders?.filter((order) => order.orderDate) ?? []} canPurchase={canBuy} disabled={working} onPurchase={(order, field, value) => run(() => setOrderPurchaseAction({ orderId: order.id, orderDate: field === "orderDate" ? value : new Date(order.orderDate!).toISOString().slice(0, 10), orderNumber: field === "orderNumber" ? value : order.orderNumber ?? "", comment: field === "comment" ? value : order.comment ?? "" }), refetchOrders)} /></details>
         </section>
+      ) : view === "history" ? (
+        <HistoryTable onDownload={(stockId) => void onDownloadCertificate(stockId)} />
       ) : view === "stock" ? (
         <section className="space-y-4">
           <div>
