@@ -13,11 +13,9 @@ import {
 import { throttleWithTrailingInvocation } from "../../../shared/utils";
 import { UserDropdown } from "../../../user/UserDropdown";
 import { UserMenuItems } from "../../../user/UserMenuItems";
-import { useIsLandingPage } from "../../hooks/useIsLandingPage";
 import logo from "../../static/brand/logo-yoyorder.png";
 import { cn } from "../../utils";
 import { DarkModeSwitcher } from "../DarkModeSwitcher";
-import { Announcement } from "./Announcement";
 
 export interface NavigationItem {
   name: string;
@@ -30,7 +28,6 @@ export function NavBar({
   navigationItems: NavigationItem[];
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
-  const isLandingPage = useIsLandingPage();
 
   useEffect(() => {
     const throttledHandler = throttleWithTrailingInvocation(() => {
@@ -47,7 +44,6 @@ export function NavBar({
 
   return (
     <>
-      {isLandingPage && <Announcement />}
       <header
         className={cn(
           "sticky top-0 z-50 transition-all duration-300",
@@ -78,17 +74,6 @@ export function NavBar({
                 className="text-foreground hover:text-primary flex items-center transition-colors duration-300 ease-in-out"
               >
                 <NavLogo isScrolled={isScrolled} />
-                <span
-                  className={cn(
-                    "text-foreground font-semibold leading-6 transition-all duration-300",
-                    {
-                      "ml-2 text-sm": !isScrolled,
-                      "ml-2 text-xs": isScrolled,
-                    },
-                  )}
-                >
-                  YoyOrder
-                </span>
               </WaspRouterLink>
 
               <ul className="ml-4 hidden items-center gap-6 lg:flex">
@@ -247,9 +232,9 @@ function renderNavigationItems(
 function NavLogo({ isScrolled }: { isScrolled: boolean }) {
   return (
     <img
-      className={cn("rounded-md transition-all duration-500", {
-        "size-8": !isScrolled,
-        "size-7": isScrolled,
+      className={cn("h-auto object-contain transition-all duration-500", {
+        "w-36": !isScrolled,
+        "w-28": isScrolled,
       })}
       src={logo}
       alt="YoyOrder"
