@@ -17,6 +17,7 @@ import {
   getWorkspaceUsers,
   registerReception,
   setOrderPurchase,
+  setBatchOrderPurchase,
   updateStock,
   updateUserAccess,
 } from "./workflows" with { type: "ref" };
@@ -30,6 +31,7 @@ export const inventorySpec: Spec = [
   query(getStock, { entities: ["Stock", "ReceptionStock", "Reception", "Order", "OrderSector", "UserSector"] }),
   action(createRequest, { entities: ["Order", "Article", "Sector", "OrderSector", "User", "UserSector"] }),
   action(setOrderPurchase, { entities: ["Order", "OrderSector", "UserSector"] }),
+  action(setBatchOrderPurchase, { entities: ["Order", "OrderSector", "Article", "UserSector"] }),
   action(registerReception, { entities: ["Reception", "Stock", "ReceptionStock", "Order", "OrderSector", "UserSector"] }),
   action(downloadCertificate, { entities: ["Stock", "ReceptionStock", "Reception", "Order", "OrderSector", "UserSector"] }),
   action(updateStock, { entities: ["Stock", "ReceptionStock", "Reception", "Order", "OrderSector", "UserSector"] }),

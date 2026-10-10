@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { InventoryGrid, type GridColumn } from "./InventoryGrid";
 import { hasBusinessRole } from "./permissions";
 import { DemandTable } from "./DemandTable";
+import { PurchaseTable } from "./PurchaseTable";
 
 type View = "overview" | "requests" | "orders" | "stock" | "catalog";
 
@@ -42,7 +43,6 @@ function dateValue(value: Date | null) {
 export function InventoryPage({ user }: { user: User }) {
   const [view, setView] = useState<View>("overview");
   const [working, setWorking] = useState(false);
-  const [purchaseOrderId, setPurchaseOrderId] = useState("");
   const canRequest = hasBusinessRole(user, "isRequester");
   const canBuy = hasBusinessRole(user, "isBuyer");
   const canEdit = hasBusinessRole(user, "isEditor");
@@ -53,7 +53,6 @@ export function InventoryPage({ user }: { user: User }) {
   const { data: catalog, refetch: refetchCatalog } = useQuery(getCatalog, {});
   const { data: orders, refetch: refetchOrders } = useQuery(getOrders, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
   const { data: stock, refetch: refetchStock } = useQuery(getStock, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
-  const purchaseOrder = orders?.find((order) => !order.orderDate && String(order.id) === purchaseOrderId) ?? orders?.find((order) => !order.orderDate);
   const { data: workspaceUsers, refetch: refetchWorkspaceUsers } = useQuery(
     getWorkspaceUsers,
     {},
@@ -85,21 +84,6 @@ export function InventoryPage({ user }: { user: User }) {
     } finally {
       setWorking(false);
     }
-  }
-
-  async function onSetPurchase(event: FormEvent<HTMLFormElement>) {
-    const form = event.currentTarget;
-    const values = formData(event);
-    const saved = await run(
-      () => setOrderPurchaseAction({
-        orderId: Number(values.get("orderId")),
-        orderNumber: String(values.get("orderNumber") || ""),
-        orderDate: String(values.get("orderDate")),
-        comment: String(values.get("comment") || ""),
-      }),
-      refetchOrders,
-    );
-    if (saved) form.reset();
   }
 
   async function onRegisterReception(event: FormEvent<HTMLFormElement>) {
@@ -268,16 +252,8 @@ export function InventoryPage({ user }: { user: User }) {
       ) : view === "orders" ? (
         <section>
           <h2 className="mb-3 text-lg font-semibold">À commander</h2>
-          <OrderTable orders={orders ?? []} canPurchase={canBuy} disabled={working} onPurchase={(order, field, value) => run(() => setOrderPurchaseAction({ orderId: order.id, orderDate: field === "orderDate" ? value : new Date(order.orderDate!).toISOString().slice(0, 10), orderNumber: field === "orderNumber" ? value : order.orderNumber ?? "", comment: field === "comment" ? value : order.comment ?? "" }), refetchOrders)} />
-          <WorkflowForm title="Enregistrer une commande fournisseur">
-              <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSetPurchase}>
-                <Field label="Demande"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="orderId" value={purchaseOrder ? String(purchaseOrder.id) : ""} onChange={(event) => setPurchaseOrderId(event.target.value)} required>{orders?.filter((order) => !order.orderDate).map((order) => <option key={order.id} value={order.id}>#{order.id} · {order.article.label}</option>)}</select></Field>
-                <Field label="N° de commande"><Input name="orderNumber" maxLength={255} /></Field>
-                <Field label="Date de commande"><Input name="orderDate" type="date" min={purchaseOrder?.requestDate ? new Date(purchaseOrder.requestDate).toISOString().slice(0, 10) : undefined} required /></Field>
-                <Field label="Commentaire"><Input name="comment" maxLength={255} /></Field>
-                <Button className="sm:col-span-2" disabled={working || !orders?.some((order) => !order.orderDate)}>Enregistrer</Button>
-              </form>
-          </WorkflowForm>
+          <PurchaseTable orders={orders ?? []} onSaved={refetchOrders} />
+          <details className="mt-6"><summary className="mb-3 cursor-pointer font-medium">Commandes déjà enregistrées</summary><OrderTable orders={orders?.filter((order) => order.orderDate) ?? []} canPurchase={canBuy} disabled={working} onPurchase={(order, field, value) => run(() => setOrderPurchaseAction({ orderId: order.id, orderDate: field === "orderDate" ? value : new Date(order.orderDate!).toISOString().slice(0, 10), orderNumber: field === "orderNumber" ? value : order.orderNumber ?? "", comment: field === "comment" ? value : order.comment ?? "" }), refetchOrders)} /></details>
         </section>
       ) : view === "stock" ? (
         <section className="space-y-4">

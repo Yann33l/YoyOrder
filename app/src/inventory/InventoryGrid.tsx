@@ -13,6 +13,7 @@ export type GridColumn<Row> = {
   editable?: boolean;
   value: (row: Row) => string | number | null;
   render?: (row: Row) => ReactNode;
+  header?: (filteredRows: Row[]) => ReactNode;
 };
 
 export function InventoryGrid<Row>({ rows, columns, rowId, label, emptyMessage = "Aucune ligne à afficher." }: {
@@ -76,7 +77,7 @@ export function InventoryGrid<Row>({ rows, columns, rowId, label, emptyMessage =
           <thead>
             <tr className="inventory-grid-groups">{groups.map((group, index) => <th key={index} colSpan={group.count} scope="colgroup">{group.name}</th>)}</tr>
             <tr>{visible.map((column) => <th key={column.id} scope="col" aria-sort={sort?.id === column.id ? sort.descending ? "descending" : "ascending" : "none"} className={column.editable ? "inventory-grid-editable" : ""}>
-              <button type="button" className="flex w-full items-center gap-2 text-left" onClick={() => { setSort(sort?.id === column.id ? sort.descending ? null : { id: column.id, descending: true } : { id: column.id, descending: false }); setPage(0); }}>{column.label}{sort?.id === column.id && (sort.descending ? <ArrowDown className="size-3 shrink-0" /> : <ArrowUp className="size-3 shrink-0" />)}</button>
+              {column.header ? column.header(filtered) : <button type="button" className="flex w-full items-center gap-2 text-left" onClick={() => { setSort(sort?.id === column.id ? sort.descending ? null : { id: column.id, descending: true } : { id: column.id, descending: false }); setPage(0); }}>{column.label}{sort?.id === column.id && (sort.descending ? <ArrowDown className="size-3 shrink-0" /> : <ArrowUp className="size-3 shrink-0" />)}</button>}
               <span role="separator" aria-label={`Largeur de ${column.label}`} aria-orientation="vertical" tabIndex={0} className="inventory-grid-resize" onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setWidths({ ...widths, [column.id]: Math.max(80, (widths[column.id] ?? column.width ?? 150) + (event.key === "ArrowRight" ? 20 : -20)) }); } }} onPointerDown={(event) => {
                 event.preventDefault();
                 const start = event.clientX;

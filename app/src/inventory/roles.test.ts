@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("wasp/server", () => ({
   HttpError: class HttpError extends Error { constructor(public statusCode: number, message: string) { super(message); } },
-  prisma: { order: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn() }, stock: { findUnique: vi.fn(), update: vi.fn() }, articleSector: { findUnique: vi.fn() }, userSector: { findUnique: vi.fn(), findMany: vi.fn() }, article: { findMany: vi.fn() }, sector: { findMany: vi.fn() }, piece: { findMany: vi.fn() }, supplier: { findMany: vi.fn() } },
+  prisma: { $transaction: vi.fn(), order: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() }, stock: { findUnique: vi.fn(), update: vi.fn() }, articleSector: { findUnique: vi.fn() }, userSector: { findUnique: vi.fn(), findMany: vi.fn() }, article: { findMany: vi.fn() }, sector: { findMany: vi.fn() }, piece: { findMany: vi.fn() }, supplier: { findMany: vi.fn() } },
 }));
 import { prisma } from "wasp/server";
-import { createRequest, setOrderPurchase, registerReception, updateStock, createArticle, getCatalog } from "./workflows";
+import { createRequest, setOrderPurchase, setBatchOrderPurchase, registerReception, updateStock, createArticle, getCatalog } from "./workflows";
 import { hasBusinessRole } from "./permissions";
 const editor = { id: "editor", isAdmin: true, isAuthorized: true, isRequester: false, isBuyer: false, isEditor: true };
 describe("Demandes par secteur et visibilité du catalogue", () => {
@@ -46,7 +46,7 @@ describe("Demandes par secteur et visibilité du catalogue", () => {
 describe("Droits métier indépendants de l’administration", () => {
   beforeEach(() => vi.clearAllMocks());
   it.each([
-    ["demande", createRequest], ["commande", setOrderPurchase], ["réception", registerReception], ["stock", updateStock],
+    ["demande", createRequest], ["commande", setOrderPurchase], ["commande groupée", setBatchOrderPurchase], ["réception", registerReception], ["stock", updateStock],
   ])("refuse une mutation %s à un éditeur, même administrateur", async (_name, action) => {
     await expect(action({} as never, { user: editor } as never)).rejects.toMatchObject({ statusCode: 403 });
     expect(prisma.order.create).not.toHaveBeenCalled();

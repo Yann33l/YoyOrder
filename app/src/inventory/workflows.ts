@@ -13,6 +13,7 @@ import {
   type GetStock,
   type RegisterReception,
   type SetOrderPurchase,
+  type SetBatchOrderPurchase,
   type UpdateStock,
   type GetWorkspaceUsers,
   type UpdateUserAccess,
@@ -36,7 +37,7 @@ type OrderSummary = Pick<
   Order,
   "id" | "orderNumber" | "requestDate" | "orderDate" | "receivedInFull" | "comment" | "requesterComment"
 > & {
-  article: Pick<Article, "id" | "label" | "reference">;
+  article: Pick<Article, "id" | "label" | "reference"> & { supplier: Pick<Supplier, "id" | "label"> | null };
   sectors: { quantity: number; sector: Pick<Sector, "id" | "label"> }[];
 };
 
@@ -183,7 +184,7 @@ export const getOrders: GetOrders<Record<string, never>, OrderSummary[]> = async
       receivedInFull: true,
       comment: true,
       requesterComment: true,
-      article: { select: { id: true, label: true, reference: true } },
+      article: { select: { id: true, label: true, reference: true, supplier: { select: { id: true, label: true } } } },
       sectors: { where: sectorIds === null ? undefined : { sectorId: { in: sectorIds } }, select: { quantity: true, sector: { select: { id: true, label: true } } } },
     },
     orderBy: [{ orderDate: "desc" }, { requestDate: "desc" }],
@@ -256,6 +257,27 @@ export const setOrderPurchase: SetOrderPurchase<PurchaseInput, Order> = async (r
       orderDate: new Date(`${input.orderDate}T00:00:00.000Z`),
       comment: input.comment,
     },
+  });
+};
+
+const batchPurchaseSchema = purchaseSchema.omit({ orderId: true }).extend({ orderIds: z.array(z.number().int().positive()).min(1).max(500) });
+type BatchPurchaseInput = z.infer<typeof batchPurchaseSchema>;
+export const setBatchOrderPurchase: SetBatchOrderPurchase<BatchPurchaseInput, { count: number }> = async (rawArgs, context) => {
+  const user = await requireUser(context);
+  requireRole(user, "isBuyer");
+  const input = ensureArgsSchemaOrThrowHttpError(batchPurchaseSchema, rawArgs);
+  const ids = [...new Set(input.orderIds)];
+  const sectorIds = await getSectorIds(user);
+  return prisma.$transaction(async (tx) => {
+    const orders = await tx.order.findMany({ where: { id: { in: ids } }, select: { id: true, orderDate: true, requestDate: true, article: { select: { supplierId: true } }, sectors: { select: { sectorId: true } } } });
+    if (orders.length !== ids.length) throw new HttpError(404, "Une demande sélectionnée est introuvable");
+    if (orders.some((order) => order.orderDate)) throw new HttpError(409, "Une demande a déjà été commandée. Actualisez la liste.");
+    if (sectorIds !== null && orders.some((order) => order.sectors.some(({ sectorId }) => !sectorIds.includes(sectorId)))) throw new HttpError(403, "Une demande appartient à un secteur non autorisé");
+    if (new Set(orders.map((order) => order.article.supplierId)).size > 1) throw new HttpError(400, "Sélectionnez des articles du même fournisseur pour une commande commune");
+    if (orders.some((order) => order.requestDate && input.orderDate < order.requestDate.toISOString().slice(0, 10))) throw new HttpError(400, "La date de commande ne peut pas être antérieure à une date de demande sélectionnée");
+    const result = await tx.order.updateMany({ where: { id: { in: ids }, orderDate: null }, data: { orderNumber: input.orderNumber || null, orderDate: new Date(`${input.orderDate}T00:00:00.000Z`), comment: input.comment ?? null } });
+    if (result.count !== ids.length) throw new HttpError(409, "La sélection a été modifiée pendant l’enregistrement. Actualisez la liste.");
+    return result;
   });
 };
 
