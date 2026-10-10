@@ -17,6 +17,8 @@ model User {
   isRequester               Boolean         @default(false)
   isEditor                  Boolean         @default(false)
   isAuthorized              Boolean         @default(false)
+  validUntil                DateTime?
+  roleIds                   Int[]           @default([])
   paymentProcessorUserId    String?         @unique
   lemonSqueezyCustomerPortalUrl String?
   subscriptionStatus        String?
@@ -29,6 +31,16 @@ model User {
   files                     File[]
   sectors                   UserSector[]
   requestedOrders           Order[]          @relation("RequestedOrders")
+}
+
+model AccessRole {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  isRequester Boolean @default(false)
+  isBuyer     Boolean @default(false)
+  isEditor    Boolean @default(false)
+  sectorIds   Int[]    @default([])
+  pieceIds    Int[]    @default([])
 }
 
 model GptResponse {

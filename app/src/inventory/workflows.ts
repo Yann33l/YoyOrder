@@ -24,6 +24,7 @@ import {
 import * as z from "zod";
 import { ensureArgsSchemaOrThrowHttpError } from "../server/validation";
 import { hasBusinessRole } from "./permissions";
+import { requireActiveUser, accessSectorIds, pieceScope, orderScope, assertArticleVisible, assertPieceSelection, type EffectiveUser } from "./access";
 
 type CatalogArticle = Pick<Article, "id" | "label" | "reference" | "packaging" | "supplierId"> & {
   sectors: { sectorId: number }[];
@@ -65,7 +66,7 @@ export const getHistory: GetHistory<Record<string, never>, HistoryRow[]> = async
   if (!user.isAdmin && !user.isRequester && !user.isBuyer) throw new HttpError(403, "Aucun rôle ne permet de consulter l’historique");
   const sectorIds = await getSectorIds(user);
   const orders = await prisma.order.findMany({
-    where: sectorIds === null ? undefined : { sectors: { some: { sectorId: { in: sectorIds } } } },
+    where: orderScope(user, sectorIds),
     select: {
       id: true, orderNumber: true, requestDate: true, orderDate: true, receivedInFull: true, requesterComment: true, comment: true,
       requestedBy: { select: { email: true } },
@@ -94,27 +95,20 @@ type WorkspaceUser = Pick<User, "id" | "email" | "isAuthorized" | "isRequester" 
   sectors: { sectorId: number }[];
 };
 
-async function requireUser(context: { user?: User | null }) {
-  if (!context.user) throw new HttpError(401, "Authentification requise");
-  if (!context.user.isAuthorized) throw new HttpError(403, "Compte en attente d'activation");
-  return context.user;
-}
+const requireUser = requireActiveUser;
 
 function requireRole(user: User, role: "isRequester" | "isBuyer" | "isEditor") {
   if (!hasBusinessRole(user, role)) throw new HttpError(403, "Action non autorisée pour ce rôle");
 }
 
-async function getSectorIds(user: User) {
-  if (user.isAdmin) return null;
-  const memberships = await prisma.userSector.findMany({
-    where: { userId: user.id },
-    select: { sectorId: true },
-  });
-  return memberships.map(({ sectorId }) => sectorId);
-}
+const getSectorIds = accessSectorIds;
 
-async function assertSectorAccess(user: User, sectorId: number) {
+async function assertSectorAccess(user: EffectiveUser, sectorId: number) {
   if (user.isAdmin) return;
+  if (user.roleSectorIds !== undefined) {
+    if (!user.roleSectorIds.includes(sectorId)) throw new HttpError(403, "Ce secteur n’est pas autorisé par vos rôles");
+    return;
+  }
   const membership = await prisma.userSector.findUnique({
     where: { userId_sectorId: { userId: user.id, sectorId } },
     select: { sectorId: true },
@@ -130,19 +124,19 @@ export const getCatalog: GetCatalog<Record<string, never>, Catalog> = async (_ar
   const sectorIds = await getSectorIds(user);
   const [articles, suppliers, sectors, pieces, subArticles, compositions] = await Promise.all([
     prisma.article.findMany({
-      where: sectorIds === null ? undefined : { sectors: { some: { sectorId: { in: sectorIds } } } },
-      select: { id: true, label: true, reference: true, packaging: true, supplierId: true, sectors: { where: sectorIds === null ? undefined : { sectorId: { in: sectorIds } }, select: { sectorId: true } }, pieces: { select: { pieceId: true } } },
+      where: sectorIds === null ? undefined : { sectors: { some: { sectorId: { in: sectorIds } } }, ...pieceScope(user) },
+      select: { id: true, label: true, reference: true, packaging: true, supplierId: true, sectors: { where: sectorIds === null ? undefined : { sectorId: { in: sectorIds } }, select: { sectorId: true } }, pieces: { where: user.isAdmin || user.rolePieceIds === undefined ? undefined : { pieceId: { in: user.rolePieceIds } }, select: { pieceId: true } } },
       orderBy: { label: "asc" },
     }),
     prisma.supplier.findMany({ where: { OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] }, select: { id: true, label: true, telephone: true, email: true, website: true }, orderBy: { label: "asc" } }),
     prisma.sector.findMany({
-      where: user.isAdmin ? undefined : { users: { some: { userId: user.id } } },
+      where: sectorIds === null ? undefined : { id: { in: sectorIds } },
       select: { id: true, label: true },
       orderBy: { label: "asc" },
     }),
-    prisma.piece.findMany({ where: sectorIds === null ? undefined : { articles: { some: { article: { sectors: { some: { sectorId: { in: sectorIds } } } } } } }, select: { id: true, label: true }, orderBy: { label: "asc" } }),
-    prisma.subArticle.findMany({ where: user.isEditor || sectorIds === null ? undefined : { compositions: { some: { article: { sectors: { some: { sectorId: { in: sectorIds } } } } } } }, select: { id: true, label: true, reference: true, packaging: true }, orderBy: { label: "asc" } }),
-    prisma.articleSubArticle.findMany({ where: sectorIds === null ? undefined : { article: { sectors: { some: { sectorId: { in: sectorIds } } } } }, select: { articleId: true, subArticleId: true, quantity: true } }),
+    prisma.piece.findMany({ where: sectorIds === null ? undefined : { ...(user.rolePieceIds === undefined ? {} : { id: { in: user.rolePieceIds } }), articles: { some: { article: { sectors: { some: { sectorId: { in: sectorIds } } } } } } }, select: { id: true, label: true }, orderBy: { label: "asc" } }),
+    prisma.subArticle.findMany({ where: user.isEditor || sectorIds === null ? undefined : { compositions: { some: { article: { sectors: { some: { sectorId: { in: sectorIds } } }, ...pieceScope(user) } } } }, select: { id: true, label: true, reference: true, packaging: true }, orderBy: { label: "asc" } }),
+    prisma.articleSubArticle.findMany({ where: sectorIds === null ? undefined : { article: { sectors: { some: { sectorId: { in: sectorIds } } }, ...pieceScope(user) } }, select: { articleId: true, subArticleId: true, quantity: true } }),
   ]);
   return { articles, suppliers, sectors, pieces, subArticles, compositions };
 };
@@ -225,7 +219,7 @@ export const getOrders: GetOrders<Record<string, never>, OrderSummary[]> = async
   }
   const sectorIds = await getSectorIds(user);
   const orders = await prisma.order.findMany({
-    where: sectorIds === null ? undefined : { sectors: { some: { sectorId: { in: sectorIds } } } },
+    where: orderScope(user, sectorIds),
     select: {
       id: true,
       orderNumber: true,
@@ -260,6 +254,7 @@ export const createRequest: CreateRequest<RequestInput, Order> = async (rawArgs,
   const user = await requireUser(context);
   requireRole(user, "isRequester");
   const input = ensureArgsSchemaOrThrowHttpError(requestSchema, rawArgs);
+  await assertArticleVisible(user, input.articleId);
   if (new Set(input.sectors.map(({ sectorId }) => sectorId)).size !== input.sectors.length) throw new HttpError(400, "Un secteur ne peut apparaître qu'une seule fois");
   for (const { sectorId } of input.sectors) {
     await assertSectorAccess(user, sectorId);
@@ -295,9 +290,10 @@ export const setOrderPurchase: SetOrderPurchase<PurchaseInput, Order> = async (r
   const input = ensureArgsSchemaOrThrowHttpError(purchaseSchema, rawArgs);
   const existing = await prisma.order.findUnique({
     where: { id: input.orderId },
-    select: { id: true, requestDate: true, sectors: { select: { sectorId: true } } },
+    select: { id: true, articleId: true, requestDate: true, sectors: { select: { sectorId: true } } },
   });
   if (!existing) throw new HttpError(404, "Demande introuvable");
+  await assertArticleVisible(user, existing.articleId);
   if (existing.requestDate && input.orderDate < existing.requestDate.toISOString().slice(0, 10)) {
     throw new HttpError(400, "La date de commande ne peut pas être antérieure à la date de demande");
   }
@@ -326,7 +322,7 @@ export const setBatchOrderPurchase: SetBatchOrderPurchase<BatchPurchaseInput, { 
   const ids = [...new Set(input.orderIds)];
   const sectorIds = await getSectorIds(user);
   return prisma.$transaction(async (tx) => {
-    const orders = await tx.order.findMany({ where: { id: { in: ids } }, select: { id: true, orderDate: true, requestDate: true, article: { select: { supplierId: true } }, sectors: { select: { sectorId: true } } } });
+    const orders = await tx.order.findMany({ where: { id: { in: ids }, ...orderScope(user, sectorIds) }, select: { id: true, orderDate: true, requestDate: true, article: { select: { supplierId: true } }, sectors: { select: { sectorId: true } } } });
     if (orders.length !== ids.length) throw new HttpError(404, "Une demande sélectionnée est introuvable");
     if (orders.some((order) => order.orderDate)) throw new HttpError(409, "Une demande a déjà été commandée. Actualisez la liste.");
     if (sectorIds !== null && orders.some((order) => order.sectors.some(({ sectorId }) => !sectorIds.includes(sectorId)))) throw new HttpError(403, "Une demande appartient à un secteur non autorisé");
@@ -358,11 +354,13 @@ export const registerReception: RegisterReception<ReceptionInput, StockSummary> 
     select: {
       id: true,
       orderDate: true,
+      articleId: true,
       receivedInFull: true,
       sectors: { select: { sectorId: true, quantity: true } },
     },
   });
   if (!order) throw new HttpError(404, "Commande introuvable");
+  await assertArticleVisible(user, order.articleId);
   if (!order.orderDate) throw new HttpError(400, "La commande fournisseur doit être enregistrée avant sa réception");
   if (new Date(`${input.receivedAt}T00:00:00.000Z`) < order.orderDate) throw new HttpError(400, "La date de réception ne peut pas être antérieure à la date de commande");
   if (input.expiresAt && input.expiresAt < input.receivedAt) throw new HttpError(400, "La date de péremption ne peut pas être antérieure à la réception");
@@ -429,7 +427,7 @@ export const downloadCertificate: DownloadCertificate<
       receptions: {
         select: {
           reception: {
-            select: { order: { select: { sectors: { select: { sectorId: true } } } } },
+            select: { order: { select: { sectors: { select: { sectorId: true } }, article: { select: { pieces: { select: { pieceId: true } } } } } } },
           },
         },
       },
@@ -439,7 +437,7 @@ export const downloadCertificate: DownloadCertificate<
   if (!user.isAdmin) {
     const sectorIds = await getSectorIds(user);
     const canAccess = stock.receptions.some(({ reception }) =>
-      reception.order.sectors.some(({ sectorId }) => sectorIds?.includes(sectorId)),
+      reception.order.sectors.some(({ sectorId }) => sectorIds?.includes(sectorId)) && (user.rolePieceIds === undefined || reception.order.article.pieces.some(({ pieceId }) => user.rolePieceIds!.includes(pieceId))),
     );
     if (!canAccess) throw new HttpError(403, "Ce lot appartient à un autre secteur");
   }
@@ -461,7 +459,7 @@ export const getStock: GetStock<Record<string, never>, StockSummary[]> = async (
           receptions: {
             some: {
               reception: {
-                order: { sectors: { some: { sectorId: { in: sectorIds } } } },
+                order: orderScope(user, sectorIds),
               },
             },
           },
@@ -490,7 +488,7 @@ export const updateStock: UpdateStock<StockUpdateInput, StockSummary> = async (r
       receptions: {
         select: {
           reception: {
-            select: { order: { select: { sectors: { select: { sectorId: true } } } } },
+            select: { order: { select: { sectors: { select: { sectorId: true } }, article: { select: { pieces: { select: { pieceId: true } } } } } } },
           },
         },
       },
@@ -503,7 +501,7 @@ export const updateStock: UpdateStock<StockUpdateInput, StockSummary> = async (r
   if (!user.isAdmin) {
     const sectorIds = await getSectorIds(user);
     const canAccess = stock.receptions.some(({ reception }) =>
-      reception.order.sectors.some(({ sectorId }) => sectorIds?.includes(sectorId)),
+      reception.order.sectors.some(({ sectorId }) => sectorIds?.includes(sectorId)) && (user.rolePieceIds === undefined || reception.order.article.pieces.some(({ pieceId }) => user.rolePieceIds!.includes(pieceId))),
     );
     if (!canAccess) throw new HttpError(403, "Ce lot appartient à un autre secteur");
   }
@@ -548,12 +546,14 @@ const articleSchema = z.object({
 });
 type ArticleInput = z.infer<typeof articleSchema>;
 
-async function assertArticleEditAccess(user: User, articleId: number) {
-  const article = await prisma.article.findUnique({ where: { id: articleId }, select: { sectors: { select: { sectorId: true } } } });
+async function assertArticleEditAccess(user: EffectiveUser, articleId: number) {
+  await assertArticleVisible(user, articleId);
+  const article = await prisma.article.findUnique({ where: { id: articleId }, select: { sectors: { select: { sectorId: true } }, pieces: { select: { pieceId: true } } } });
   if (!article) throw new HttpError(404, "Article introuvable");
   if (!user.isAdmin) {
     const allowed = await getSectorIds(user);
     if (!article.sectors.length || article.sectors.some(({ sectorId }) => !allowed?.includes(sectorId))) throw new HttpError(403, "Cet article appartient à un secteur non autorisé");
+    if (user.rolePieceIds !== undefined && article.pieces.some(({ pieceId }) => !user.rolePieceIds!.includes(pieceId))) throw new HttpError(403, "Cet article est partagé avec une pièce non autorisée ; un administrateur doit le modifier");
   }
 }
 
@@ -571,6 +571,7 @@ export const saveCatalogItem: SaveCatalogItem<z.infer<typeof catalogItemSchema>,
   const input = ensureArgsSchemaOrThrowHttpError(catalogItemSchema, rawArgs);
   const { kind, id, label } = input;
   if (kind === "article") {
+    assertPieceSelection(user, input.pieceIds ?? []);
     if (id) await assertArticleEditAccess(user, id);
     if (!input.sectorIds?.length) throw new HttpError(400, "Sélectionnez au moins un secteur compatible");
     for (const sectorId of input.sectorIds) await assertSectorAccess(user, sectorId);
@@ -589,6 +590,7 @@ export const saveCatalogItem: SaveCatalogItem<z.infer<typeof catalogItemSchema>,
     return id ? prisma.sector.update({ where: { id }, data: { label } }) : prisma.sector.create({ data: { label } });
   }
   if (kind === "piece") {
+    if (id && !user.isAdmin && user.rolePieceIds !== undefined && !user.rolePieceIds.includes(id)) throw new HttpError(403, "Pièce non autorisée par vos rôles");
     if (id && !user.isAdmin) {
       const sectorIds = await getSectorIds(user);
       const allowed = await prisma.piece.findFirst({ where: { id, articles: { some: { article: { sectors: { some: { sectorId: { in: sectorIds ?? [] } } } } } } }, select: { id: true } });
@@ -620,6 +622,7 @@ export const createArticle: CreateArticle<ArticleInput, Article> = async (rawArg
   const user = await requireUser(context);
   requireRole(user, "isEditor");
   const input = ensureArgsSchemaOrThrowHttpError(articleSchema, rawArgs);
+  assertPieceSelection(user, input.pieceIds);
   for (const sectorId of input.sectorIds) await assertSectorAccess(user, sectorId);
   return prisma.article.create({
     data: {

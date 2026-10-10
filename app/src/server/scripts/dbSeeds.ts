@@ -47,6 +47,8 @@ function generateMockUserData(): MockUserData {
     isRequester: false,
     isEditor: false,
     isAuthorized: false,
+    validUntil: null,
+    roleIds: [],
     credits,
     subscriptionStatus,
     lemonSqueezyCustomerPortalUrl: null,

@@ -2,7 +2,13 @@
 
 Les rôles définissent les actions autorisées : Demandeur pour demander et réceptionner, Acheteur pour commander, Éditeur pour créer les référentiels. Le statut administrateur permet de gérer les accès sans attribuer automatiquement ces rôles.
 
-Les affectations aux secteurs (ACP, PAM, etc.) définissent le périmètre des utilisateurs. Dans **Vue d’ensemble → Accès utilisateurs**, l’administrateur coche les rôles et les affectations, puis enregistre. L’utilisateur voit uniquement les articles compatibles avec ses secteurs et les pièces contenant ces articles. Un administrateur voit l’ensemble du catalogue.
+Dans **Administration → Rôles**, l’administrateur crée des rôles nommés (Technicien ACP, Technicien PAM, etc.), choisit leurs permissions métier, puis leurs secteurs et pièces visibles. Dans **Administration → Utilisateurs**, il attribue un ou plusieurs rôles aux comptes. Les permissions et les listes de visibilité des rôles attribués se cumulent. Un article doit correspondre à un secteur et une pièce autorisés. Les listes vides ne donnent aucune visibilité. Un administrateur voit l’ensemble du catalogue mais ses actions métier restent soumises aux permissions attribuées.
+
+Les comptes existants sans rôle personnalisé conservent leurs permissions et affectations précédentes. Dès qu’un rôle est attribué, les permissions et visibilités proviennent des rôles, et les anciennes cases ne donnent plus d’accès supplémentaires. Un éditeur ne peut pas modifier un article partagé avec des secteurs ou pièces hors de son périmètre.
+
+Le panneau **Utilisateurs** permet de créer, activer ou désactiver les comptes, attribuer leurs rôles et fixer leur **fin de validité**. La date est incluse selon le calendrier de Paris : le lendemain, l’accès métier est bloqué côté serveur et le compte apparaît dans le filtre **Archivés**. Les données et les demandes associées sont conservées. Pour rétablir l’accès, activez le compte et modifiez ou retirez la date de fin. Un administrateur ne peut pas désactiver ou archiver son propre compte.
+
+La création d’un compte demande un email et un mot de passe initial d’au moins 12 caractères, haché par Wasp. Le compte doit encore vérifier son email : le panneau affiche un lien valable 30 minutes à transmettre à l’utilisateur. Aucun email n’est envoyé automatiquement. L’utilisateur peut ensuite changer son mot de passe via le parcours de réinitialisation habituel.
 
 Les **Référentiels** sont organisés en cinq onglets : **Fournisseurs**, **Secteurs**, **Pièces**, **Articles** et **Compositions (sous-articles)**. Chaque onglet permet de créer et modifier ses éléments avec le rôle Éditeur.
 

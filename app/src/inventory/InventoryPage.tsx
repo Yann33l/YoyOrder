@@ -5,11 +5,10 @@ import {
   getInventoryOverview,
   getOrders,
   getStock,
-  getWorkspaceUsers,
+  getMyAccess,
   registerReception,
   setOrderPurchase,
   updateStock,
-  updateUserAccess,
   useAction,
   useQuery,
 } from "wasp/client/operations";
@@ -25,8 +24,9 @@ import { PurchaseTable } from "./PurchaseTable";
 import { CatalogPage } from "./CatalogPage";
 import { HistoryTable } from "./HistoryTable";
 import { ReceptionTable } from "./ReceptionTable";
+import { AdminPanel } from "./AdminPanel";
 
-type View = "overview" | "requests" | "orders" | "stock" | "catalog" | "history";
+type View = "overview" | "requests" | "orders" | "stock" | "catalog" | "history" | "admin";
 
 function formData(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
@@ -37,7 +37,9 @@ function dateValue(value: Date | null) {
   return value ? new Date(value).toLocaleDateString("fr-FR") : "—";
 }
 
-export function InventoryPage({ user }: { user: User }) {
+export function InventoryPage({ user: sessionUser }: { user: User }) {
+  const { data: access, isLoading: accessLoading, error: accessError, refetch: refetchAccess } = useQuery(getMyAccess, {});
+  const user = { ...sessionUser, ...(access ?? { isAuthorized: false, isRequester: false, isBuyer: false, isEditor: false }) };
   const [view, setView] = useState<View>("overview");
   const [working, setWorking] = useState(false);
   const canRequest = hasBusinessRole(user, "isRequester");
@@ -47,15 +49,10 @@ export function InventoryPage({ user }: { user: User }) {
   useEffect(() => {
     if ((view === "requests" || view === "stock") && !canRequest || view === "orders" && !canBuy || view === "catalog" && !canEdit || view === "history" && !canViewHistory) setView("overview");
   }, [view, canRequest, canBuy, canEdit, canViewHistory]);
-  const { data: overview, isLoading, error } = useQuery(getInventoryOverview, {});
-  const { data: catalog, refetch: refetchCatalog } = useQuery(getCatalog, {});
+  const { data: overview, isLoading, error } = useQuery(getInventoryOverview, {}, { enabled: user.isAuthorized });
+  const { data: catalog, refetch: refetchCatalog } = useQuery(getCatalog, {}, { enabled: user.isAuthorized });
   const { data: orders, refetch: refetchOrders } = useQuery(getOrders, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
   const { data: stock, refetch: refetchStock } = useQuery(getStock, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
-  const { data: workspaceUsers, refetch: refetchWorkspaceUsers } = useQuery(
-    getWorkspaceUsers,
-    {},
-    { enabled: user.isAdmin },
-  );
   const setOrderPurchaseAction = useAction(setOrderPurchase);
   const registerReceptionAction = useAction(registerReception);
   const updateStockAction = useAction(updateStock);
@@ -125,11 +122,13 @@ export function InventoryPage({ user }: { user: User }) {
     }
   }
 
+  if (accessLoading) return <main className="p-8">Chargement des accès…</main>;
+  if (accessError) return <main className="p-8 text-destructive">Impossible de vérifier les accès.</main>;
   if (!user.isAuthorized) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-2xl font-semibold">Compte en attente d’activation</h1>
-        <p className="text-muted-foreground mt-2">Un administrateur doit activer votre accès à YoyOrder.</p>
+        <h1 className="text-2xl font-semibold">{user.validUntil && new Date(user.validUntil).toISOString().slice(0, 10) < new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Paris" }) ? "Compte arrivé en fin de validité" : "Compte en attente d’activation"}</h1>
+        <p className="text-muted-foreground mt-2">Un administrateur doit vérifier votre activation et votre fin de validité.</p>
       </main>
     );
   }
@@ -141,6 +140,7 @@ export function InventoryPage({ user }: { user: User }) {
     { id: "stock", label: "Réceptions et stock", visible: canRequest },
     { id: "history", label: "Historique", visible: canViewHistory },
     { id: "catalog", label: "Référentiels", visible: canEdit },
+    { id: "admin", label: "Administration", visible: user.isAdmin },
   ];
 
   return (
@@ -177,22 +177,6 @@ export function InventoryPage({ user }: { user: User }) {
               </Card>
             ))}
           </section>
-          {user.isAdmin && workspaceUsers && workspaceUsers.length > 0 && (
-            <section className="mt-8 border-t pt-6">
-              <h2 className="text-lg font-semibold">Accès utilisateurs</h2>
-              <p className="text-muted-foreground mt-1 text-sm">L’administration des comptes ne donne pas les rôles métier : cochez séparément Demandeur, Acheteur et Éditeur.</p>
-              <div className="mt-3 divide-y">
-                {workspaceUsers.map((account) => (
-                  <UserAccessRow
-                    account={account}
-                    key={account.id}
-                    sectors={catalog?.sectors ?? []}
-                    onSaved={async () => { await refetchWorkspaceUsers(); if (account.id === user.id) window.location.reload(); }}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
         </>
       ) : view === "requests" ? (
         <section className="space-y-4">
@@ -208,6 +192,8 @@ export function InventoryPage({ user }: { user: User }) {
           <PurchaseTable orders={orders ?? []} onSaved={refetchOrders} />
           <details className="mt-6"><summary className="mb-3 cursor-pointer font-medium">Commandes déjà enregistrées</summary><OrderTable orders={orders?.filter((order) => order.orderDate) ?? []} canPurchase={canBuy} disabled={working} onPurchase={(order, field, value) => run(() => setOrderPurchaseAction({ orderId: order.id, orderDate: field === "orderDate" ? value : new Date(order.orderDate!).toISOString().slice(0, 10), orderNumber: field === "orderNumber" ? value : order.orderNumber ?? "", comment: field === "comment" ? value : order.comment ?? "" }), refetchOrders)} /></details>
         </section>
+      ) : view === "admin" && user.isAdmin ? (
+        <AdminPanel actorId={user.id} onChanged={async () => { await refetchAccess(); await Promise.all([refetchCatalog(), refetchOrders(), refetchStock()]); }} />
       ) : view === "history" ? (
         <HistoryTable onDownload={(stockId) => void onDownloadCertificate(stockId)} />
       ) : view === "stock" ? (
@@ -225,62 +211,6 @@ export function InventoryPage({ user }: { user: User }) {
   );
 }
 
-
-function ChoiceChecks({ label, name, options, selected = [] }: { label: string; name: string; options: { id: number; label: string }[]; selected?: number[] }) {
-  return <fieldset className="space-y-2"><legend className="text-sm font-medium">{label}</legend><div className="max-h-40 space-y-2 overflow-auto rounded-md border p-3">{options.map((option) => <label key={option.id} className="flex items-center gap-2 text-sm"><input type="checkbox" name={name} value={option.id} defaultChecked={selected.includes(option.id)} />{option.label}</label>)}{!options.length && <p className="text-muted-foreground text-sm">Aucun élément disponible.</p>}</div></fieldset>;
-}
-
-function UserAccessRow({
-  account,
-  sectors,
-  onSaved,
-}: {
-  account: Awaited<ReturnType<typeof getWorkspaceUsers>>[number];
-  sectors: Awaited<ReturnType<typeof getCatalog>>["sectors"];
-  onSaved: () => Promise<void>;
-}) {
-  const [saving, setSaving] = useState(false);
-  const saveAccess = useAction(updateUserAccess);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    const values = formData(event);
-    setSaving(true);
-    try {
-      await saveAccess({
-        userId: account.id,
-        isAuthorized: values.get("isAuthorized") === "on",
-        isRequester: values.get("isRequester") === "on",
-        isBuyer: values.get("isBuyer") === "on",
-        isEditor: values.get("isEditor") === "on",
-        sectorIds: values.getAll("sectorIds").map(Number),
-      });
-      await onSaved();
-      toast({ title: "Droits mis à jour" });
-    } catch {
-      toast({ title: "Droits non enregistrés", variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <form className="grid gap-4 py-4 xl:grid-cols-[minmax(170px,1fr)_repeat(4,auto)_minmax(170px,220px)_auto] xl:items-center" onSubmit={submit}>
-      <span className="font-medium">{account.email}</span>
-      {([
-        ["isAuthorized", "Actif", account.isAuthorized],
-        ["isRequester", "Demandeur", account.isRequester],
-        ["isBuyer", "Acheteur", account.isBuyer],
-        ["isEditor", "Éditeur", account.isEditor],
-      ] as const).map(([name, label, checked]) => (
-        <label className="flex items-center gap-2 text-sm" key={name}>
-          <input defaultChecked={checked} name={name} type="checkbox" />{label}
-        </label>
-      ))}
-      <ChoiceChecks label="Affectations (ACP, PAM…)" name="sectorIds" options={sectors} selected={account.sectors.map(({ sectorId }) => sectorId)} />
-      <Button size="sm" disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer"}</Button>
-    </form>
-  );
-}
 
 type OrderRow = Awaited<ReturnType<typeof getOrders>>[number];
 type StockRow = Awaited<ReturnType<typeof getStock>>[number];
