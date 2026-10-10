@@ -231,9 +231,12 @@ export const setOrderPurchase: SetOrderPurchase<PurchaseInput, Order> = async (r
   const input = ensureArgsSchemaOrThrowHttpError(purchaseSchema, rawArgs);
   const existing = await prisma.order.findUnique({
     where: { id: input.orderId },
-    select: { id: true, sectors: { select: { sectorId: true } } },
+    select: { id: true, requestDate: true, sectors: { select: { sectorId: true } } },
   });
   if (!existing) throw new HttpError(404, "Demande introuvable");
+  if (existing.requestDate && input.orderDate < existing.requestDate.toISOString().slice(0, 10)) {
+    throw new HttpError(400, "La date de commande ne peut pas être antérieure à la date de demande");
+  }
   if (!user.isAdmin) {
     const sectorIds = await getSectorIds(user);
     if (existing.sectors.some(({ sectorId }) => !sectorIds?.includes(sectorId))) {

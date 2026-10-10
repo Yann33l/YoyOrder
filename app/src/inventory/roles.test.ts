@@ -27,3 +27,18 @@ describe("Droits métier indépendants de l’administration", () => {
     expect(hasBusinessRole({ ...editor, isAuthorized: false }, "isEditor")).toBe(false);
   });
 });
+
+describe("Chronologie des commandes", () => {
+  beforeEach(() => vi.clearAllMocks());
+  const buyer = { ...editor, isBuyer: true };
+  it("refuse le 09/10 pour une demande du 10/10 sans modifier la commande", async () => {
+    vi.mocked(prisma.order.findUnique).mockResolvedValue({ id: 1, requestDate: new Date("2026-10-10T00:00:00Z"), sectors: [] } as never);
+    await expect(setOrderPurchase({ orderId: 1, orderDate: "2026-10-09" }, { user: buyer } as never)).rejects.toMatchObject({ statusCode: 400, message: "La date de commande ne peut pas être antérieure à la date de demande" });
+    expect(prisma.order.update).not.toHaveBeenCalled();
+  });
+  it.each(["2026-10-10", "2026-10-11"])("accepte la date %s pour une demande du 10/10", async (orderDate) => {
+    vi.mocked(prisma.order.findUnique).mockResolvedValue({ id: 1, requestDate: new Date("2026-10-10T00:00:00Z"), sectors: [] } as never);
+    await setOrderPurchase({ orderId: 1, orderDate }, { user: buyer } as never);
+    expect(prisma.order.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ orderDate: new Date(`${orderDate}T00:00:00Z`) }) }));
+  });
+});
