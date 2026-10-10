@@ -21,7 +21,10 @@ import * as z from "zod";
 import { ensureArgsSchemaOrThrowHttpError } from "../server/validation";
 import { hasBusinessRole } from "./permissions";
 
-type CatalogArticle = Pick<Article, "id" | "label" | "reference" | "packaging" | "supplierId">;
+type CatalogArticle = Pick<Article, "id" | "label" | "reference" | "packaging" | "supplierId"> & {
+  sectors: { sectorId: number }[];
+  pieces: { pieceId: number }[];
+};
 type Catalog = {
   articles: CatalogArticle[];
   suppliers: Pick<Supplier, "id" | "label">[];
@@ -75,10 +78,11 @@ export const getCatalog: GetCatalog<Record<string, never>, Catalog> = async (_ar
   if (!user.isAdmin && !user.isRequester && !user.isBuyer && !user.isEditor) {
     throw new HttpError(403, "Aucun rôle ne permet de consulter les référentiels");
   }
+  const sectorIds = await getSectorIds(user);
   const [articles, suppliers, sectors, pieces] = await Promise.all([
     prisma.article.findMany({
-      where: user.isAdmin ? undefined : { sectors: { some: { sectorId: { in: (await getSectorIds(user)) ?? [] } } } },
-      select: { id: true, label: true, reference: true, packaging: true, supplierId: true },
+      where: sectorIds === null ? undefined : { sectors: { some: { sectorId: { in: sectorIds } } } },
+      select: { id: true, label: true, reference: true, packaging: true, supplierId: true, sectors: { where: sectorIds === null ? undefined : { sectorId: { in: sectorIds } }, select: { sectorId: true } }, pieces: { select: { pieceId: true } } },
       orderBy: { label: "asc" },
     }),
     prisma.supplier.findMany({ where: { OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] }, select: { id: true, label: true }, orderBy: { label: "asc" } }),
@@ -87,7 +91,7 @@ export const getCatalog: GetCatalog<Record<string, never>, Catalog> = async (_ar
       select: { id: true, label: true },
       orderBy: { label: "asc" },
     }),
-    prisma.piece.findMany({ select: { id: true, label: true }, orderBy: { label: "asc" } }),
+    prisma.piece.findMany({ where: sectorIds === null ? undefined : { articles: { some: { article: { sectors: { some: { sectorId: { in: sectorIds } } } } } } }, select: { id: true, label: true }, orderBy: { label: "asc" } }),
   ]);
   return { articles, suppliers, sectors, pieces };
 };
@@ -180,7 +184,7 @@ export const getOrders: GetOrders<Record<string, never>, OrderSummary[]> = async
       comment: true,
       requesterComment: true,
       article: { select: { id: true, label: true, reference: true } },
-      sectors: { select: { quantity: true, sector: { select: { id: true, label: true } } } },
+      sectors: { where: sectorIds === null ? undefined : { sectorId: { in: sectorIds } }, select: { quantity: true, sector: { select: { id: true, label: true } } } },
     },
     orderBy: [{ orderDate: "desc" }, { requestDate: "desc" }],
   });
@@ -188,8 +192,7 @@ export const getOrders: GetOrders<Record<string, never>, OrderSummary[]> = async
 
 const requestSchema = z.object({
   articleId: z.number().int().positive(),
-  sectorId: z.number().int().positive(),
-  quantity: z.number().int().positive(),
+  sectors: z.array(z.object({ sectorId: z.number().int().positive(), quantity: z.number().int().positive() })).min(1),
   requestDate: z.string().date(),
   comment: z.string().trim().max(255).optional(),
 });
@@ -199,12 +202,15 @@ export const createRequest: CreateRequest<RequestInput, Order> = async (rawArgs,
   const user = await requireUser(context);
   requireRole(user, "isRequester");
   const input = ensureArgsSchemaOrThrowHttpError(requestSchema, rawArgs);
-  await assertSectorAccess(user, input.sectorId);
-  const articleSector = await prisma.articleSector.findUnique({
-    where: { articleId_sectorId: { articleId: input.articleId, sectorId: input.sectorId } },
-    select: { articleId: true },
-  });
-  if (!articleSector) throw new HttpError(400, "Cet article n'est pas disponible pour ce secteur");
+  if (new Set(input.sectors.map(({ sectorId }) => sectorId)).size !== input.sectors.length) throw new HttpError(400, "Un secteur ne peut apparaître qu'une seule fois");
+  for (const { sectorId } of input.sectors) {
+    await assertSectorAccess(user, sectorId);
+    const articleSector = await prisma.articleSector.findUnique({
+      where: { articleId_sectorId: { articleId: input.articleId, sectorId } },
+      select: { articleId: true },
+    });
+    if (!articleSector) throw new HttpError(400, "Cet article n'est pas disponible pour ce secteur");
+  }
 
   return prisma.order.create({
     data: {
@@ -212,7 +218,7 @@ export const createRequest: CreateRequest<RequestInput, Order> = async (rawArgs,
       requestDate: new Date(`${input.requestDate}T00:00:00.000Z`),
       requesterComment: input.comment,
       requestedByUserId: user.id,
-      sectors: { create: { sectorId: input.sectorId, quantity: input.quantity } },
+      sectors: { create: input.sectors },
     },
   });
 };
@@ -456,7 +462,7 @@ const articleSchema = z.object({
   reference: z.string().trim().max(255).optional(),
   packaging: z.string().trim().max(255).optional(),
   supplierId: z.number().int().positive().optional(),
-  sectorIds: z.array(z.number().int().positive()),
+  sectorIds: z.array(z.number().int().positive()).min(1, "Sélectionnez au moins un secteur compatible"),
   pieceIds: z.array(z.number().int().positive()),
 });
 type ArticleInput = z.infer<typeof articleSchema>;
@@ -472,8 +478,8 @@ export const createArticle: CreateArticle<ArticleInput, Article> = async (rawArg
       reference: input.reference,
       packaging: input.packaging,
       supplierId: input.supplierId,
-      sectors: { create: input.sectorIds.map((sectorId) => ({ sectorId })) },
-      pieces: { create: input.pieceIds.map((pieceId) => ({ pieceId })) },
+      sectors: { create: [...new Set(input.sectorIds)].map((sectorId) => ({ sectorId })) },
+      pieces: { create: [...new Set(input.pieceIds)].map((pieceId) => ({ pieceId })) },
     },
   });
 };

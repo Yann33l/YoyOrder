@@ -24,7 +24,7 @@ import {
 export const inventorySpec: Spec = [
   route("InventoryRoute", "/inventory", page(InventoryPage, { authRequired: true })),
   query(getInventoryOverview, { entities: ["Article", "Stock", "User", "UserSector"] }),
-  query(getCatalog, { entities: ["Article", "Supplier", "Sector", "Piece", "UserSector"] }),
+  query(getCatalog, { entities: ["Article", "ArticleSector", "ArticlePiece", "Supplier", "Sector", "Piece", "UserSector"] }),
   query(getWorkspaceUsers, { entities: ["User", "Sector", "UserSector"] }),
   query(getOrders, { entities: ["Order", "Article", "Sector", "OrderSector", "UserSector"] }),
   query(getStock, { entities: ["Stock", "ReceptionStock", "Reception", "Order", "OrderSector", "UserSector"] }),

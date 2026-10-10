@@ -1,12 +1,48 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("wasp/server", () => ({
   HttpError: class HttpError extends Error { constructor(public statusCode: number, message: string) { super(message); } },
-  prisma: { order: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn() }, stock: { findUnique: vi.fn(), update: vi.fn() }, articleSector: { findUnique: vi.fn() }, userSector: { findUnique: vi.fn() } },
+  prisma: { order: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn() }, stock: { findUnique: vi.fn(), update: vi.fn() }, articleSector: { findUnique: vi.fn() }, userSector: { findUnique: vi.fn(), findMany: vi.fn() }, article: { findMany: vi.fn() }, sector: { findMany: vi.fn() }, piece: { findMany: vi.fn() }, supplier: { findMany: vi.fn() } },
 }));
 import { prisma } from "wasp/server";
-import { createRequest, setOrderPurchase, registerReception, updateStock, createArticle } from "./workflows";
+import { createRequest, setOrderPurchase, registerReception, updateStock, createArticle, getCatalog } from "./workflows";
 import { hasBusinessRole } from "./permissions";
 const editor = { id: "editor", isAdmin: true, isAuthorized: true, isRequester: false, isBuyer: false, isEditor: true };
+describe("Demandes par secteur et visibilité du catalogue", () => {
+  beforeEach(() => vi.resetAllMocks());
+  const requester = { ...editor, isAdmin: false, isRequester: true };
+  const input = { articleId: 1, sectors: [{ sectorId: 10, quantity: 2 }, { sectorId: 20, quantity: 3 }], requestDate: "2026-10-10" };
+  it("enregistre une demande unique avec les quantités de plusieurs secteurs", async () => {
+    vi.mocked(prisma.userSector.findUnique).mockResolvedValue({ sectorId: 10 } as never);
+    vi.mocked(prisma.articleSector.findUnique).mockResolvedValue({ articleId: 1 } as never);
+    await createRequest(input, { user: requester } as never);
+    expect(prisma.order.create).toHaveBeenCalledOnce();
+    expect(prisma.order.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ sectors: { create: input.sectors } }) }));
+  });
+  it("refuse toute la demande si un secteur n’est pas affecté à l’utilisateur", async () => {
+    vi.mocked(prisma.userSector.findUnique).mockResolvedValueOnce({ sectorId: 10 } as never).mockResolvedValueOnce(null);
+    vi.mocked(prisma.articleSector.findUnique).mockResolvedValue({ articleId: 1 } as never);
+    await expect(createRequest(input, { user: requester } as never)).rejects.toMatchObject({ statusCode: 403 });
+    expect(prisma.order.create).not.toHaveBeenCalled();
+  });
+  it("refuse un article incompatible avec le secteur demandé", async () => {
+    vi.mocked(prisma.userSector.findUnique).mockResolvedValue({ sectorId: 10 } as never);
+    vi.mocked(prisma.articleSector.findUnique).mockResolvedValue(null);
+    await expect(createRequest(input, { user: requester } as never)).rejects.toMatchObject({ statusCode: 400 });
+    expect(prisma.order.create).not.toHaveBeenCalled();
+  });
+  it("refuse les secteurs dupliqués et les quantités nulles", async () => {
+    await expect(createRequest({ ...input, sectors: [input.sectors[0], input.sectors[0]] }, { user: requester } as never)).rejects.toMatchObject({ statusCode: 400 });
+    await expect(createRequest({ ...input, sectors: [{ sectorId: 10, quantity: 0 }] }, { user: requester } as never)).rejects.toMatchObject({ statusCode: 400 });
+    expect(prisma.order.create).not.toHaveBeenCalled();
+  });
+  it("filtre les articles, leurs secteurs et les pièces côté serveur selon les affectations", async () => {
+    vi.mocked(prisma.userSector.findMany).mockResolvedValue([{ sectorId: 10 }] as never);
+    for (const model of [prisma.article, prisma.sector, prisma.piece, prisma.supplier]) vi.mocked(model.findMany).mockResolvedValue([] as never);
+    await getCatalog({}, { user: requester } as never);
+    expect(prisma.article.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { sectors: { some: { sectorId: { in: [10] } } } }, select: expect.objectContaining({ sectors: { where: { sectorId: { in: [10] } }, select: { sectorId: true } } }) }));
+    expect(prisma.piece.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { articles: { some: { article: { sectors: { some: { sectorId: { in: [10] } } } } } } } }));
+  });
+});
 describe("Droits métier indépendants de l’administration", () => {
   beforeEach(() => vi.clearAllMocks());
   it.each([

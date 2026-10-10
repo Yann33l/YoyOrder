@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   createArticle,
   createPiece,
-  createRequest,
   createSector,
   createSupplier,
   downloadCertificate,
@@ -27,6 +26,7 @@ import { toast } from "../client/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../client/components/ui/dialog";
 import { InventoryGrid, type GridColumn } from "./InventoryGrid";
 import { hasBusinessRole } from "./permissions";
+import { DemandTable } from "./DemandTable";
 
 type View = "overview" | "requests" | "orders" | "stock" | "catalog";
 
@@ -59,7 +59,6 @@ export function InventoryPage({ user }: { user: User }) {
     {},
     { enabled: user.isAdmin },
   );
-  const createRequestAction = useAction(createRequest);
   const setOrderPurchaseAction = useAction(setOrderPurchase);
   const registerReceptionAction = useAction(registerReception);
   const updateStockAction = useAction(updateStock);
@@ -86,22 +85,6 @@ export function InventoryPage({ user }: { user: User }) {
     } finally {
       setWorking(false);
     }
-  }
-
-  async function onCreateRequest(event: FormEvent<HTMLFormElement>) {
-    const form = event.currentTarget;
-    const values = formData(event);
-    const saved = await run(
-      () => createRequestAction({
-        articleId: Number(values.get("articleId")),
-        sectorId: Number(values.get("sectorId")),
-        quantity: Number(values.get("quantity")),
-        requestDate: String(values.get("requestDate")),
-        comment: String(values.get("comment") || ""),
-      }),
-      refetchOrders,
-    );
-    if (saved) form.reset();
   }
 
   async function onSetPurchase(event: FormEvent<HTMLFormElement>) {
@@ -172,9 +155,7 @@ export function InventoryPage({ user }: { user: User }) {
   async function onCreateArticle(event: FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
     const values = formData(event);
-    const selected = (name: string) =>
-      Array.from(form.querySelector<HTMLSelectElement>(`[name="${name}"]`)?.selectedOptions ?? [])
-        .map((option) => Number(option.value));
+    const selected = (name: string) => values.getAll(name).map(Number);
     const saved = await run(
       () => createArticleAction({
         label: String(values.get("label")),
@@ -279,19 +260,10 @@ export function InventoryPage({ user }: { user: User }) {
       ) : view === "requests" ? (
         <section className="space-y-4">
           <div>
-            <h2 className="mb-3 text-lg font-semibold">Demandes en cours</h2>
-            <OrderTable orders={orders ?? []} />
+            <h2 className="mb-3 text-lg font-semibold">Articles à demander</h2>
+            {catalog && <DemandTable catalog={catalog} onSaved={refetchOrders} />}
           </div>
-          <WorkflowForm title="Nouvelle demande">
-              <form className="space-y-4" onSubmit={onCreateRequest}>
-                <Field label="Article"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="articleId" required>{catalog?.articles.map((article) => <option key={article.id} value={article.id}>{article.label}</option>)}</select></Field>
-                <Field label="Secteur"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="sectorId" required>{catalog?.sectors.map((sector) => <option key={sector.id} value={sector.id}>{sector.label}</option>)}</select></Field>
-                <Field label="Quantité"><Input name="quantity" type="number" min="1" step="1" required /></Field>
-                <Field label="Date souhaitée"><Input name="requestDate" type="date" required /></Field>
-                <Field label="Commentaire"><Input name="comment" maxLength={255} /></Field>
-                <Button disabled={working || !catalog?.articles.length || !catalog?.sectors.length}>Envoyer la demande</Button>
-              </form>
-          </WorkflowForm>
+          <details className="pt-4"><summary className="mb-3 cursor-pointer font-medium">Demandes déjà envoyées</summary><OrderTable orders={orders ?? []} /></details>
         </section>
       ) : view === "orders" ? (
         <section>
@@ -344,8 +316,8 @@ export function InventoryPage({ user }: { user: User }) {
                 <Field label="Référence"><Input name="reference" maxLength={255} /></Field>
                 <Field label="Conditionnement"><Input name="packaging" maxLength={255} /></Field>
                 <Field label="Fournisseur"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="supplierId"><option value="">Aucun</option>{catalog?.suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.label}</option>)}</select></Field>
-                <Field label="Secteurs"><select className="h-24 w-full rounded-md border bg-background px-3 text-sm" name="sectorIds" multiple>{catalog?.sectors.map((sector) => <option key={sector.id} value={sector.id}>{sector.label}</option>)}</select></Field>
-                <Field label="Pièces"><select className="h-24 w-full rounded-md border bg-background px-3 text-sm" name="pieceIds" multiple>{catalog?.pieces.map((piece) => <option key={piece.id} value={piece.id}>{piece.label}</option>)}</select></Field>
+                <ChoiceChecks label="Secteurs compatibles" name="sectorIds" options={catalog?.sectors ?? []} />
+                <ChoiceChecks label="Pièces (plusieurs possibles)" name="pieceIds" options={catalog?.pieces ?? []} />
                 <Button className="sm:col-span-2" disabled={working}>Créer l’article</Button>
               </form>
             </CardContent></Card>
@@ -369,6 +341,10 @@ export function InventoryPage({ user }: { user: User }) {
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return <div className="space-y-1.5"><Label>{label}</Label>{children}</div>;
+}
+
+function ChoiceChecks({ label, name, options, selected = [] }: { label: string; name: string; options: { id: number; label: string }[]; selected?: number[] }) {
+  return <fieldset className="space-y-2"><legend className="text-sm font-medium">{label}</legend><div className="max-h-40 space-y-2 overflow-auto rounded-md border p-3">{options.map((option) => <label key={option.id} className="flex items-center gap-2 text-sm"><input type="checkbox" name={name} value={option.id} defaultChecked={selected.includes(option.id)} />{option.label}</label>)}{!options.length && <p className="text-muted-foreground text-sm">Aucun élément disponible.</p>}</div></fieldset>;
 }
 
 function UserAccessRow({
@@ -417,15 +393,7 @@ function UserAccessRow({
           <input defaultChecked={checked} name={name} type="checkbox" />{label}
         </label>
       ))}
-      <select
-        aria-label={`Secteurs de ${account.email ?? "l’utilisateur"}`}
-        className="h-20 rounded-md border bg-background px-3 text-sm"
-        defaultValue={account.sectors.map(({ sectorId }) => String(sectorId))}
-        multiple
-        name="sectorIds"
-      >
-        {sectors.map((sector) => <option key={sector.id} value={sector.id}>{sector.label}</option>)}
-      </select>
+      <ChoiceChecks label="Affectations (ACP, PAM…)" name="sectorIds" options={sectors} selected={account.sectors.map(({ sectorId }) => sectorId)} />
       <Button size="sm" disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer"}</Button>
     </form>
   );
