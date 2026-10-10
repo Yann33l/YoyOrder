@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   downloadCertificate,
   getCatalog,
@@ -17,15 +17,14 @@ import type { User } from "wasp/entities";
 import { Button } from "../client/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../client/components/ui/card";
 import { Input } from "../client/components/ui/input";
-import { Label } from "../client/components/ui/label";
 import { toast } from "../client/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../client/components/ui/dialog";
 import { InventoryGrid, type GridColumn } from "./InventoryGrid";
 import { hasBusinessRole } from "./permissions";
 import { DemandTable } from "./DemandTable";
 import { PurchaseTable } from "./PurchaseTable";
 import { CatalogPage } from "./CatalogPage";
 import { HistoryTable } from "./HistoryTable";
+import { ReceptionTable } from "./ReceptionTable";
 
 type View = "overview" | "requests" | "orders" | "stock" | "catalog" | "history";
 
@@ -213,22 +212,11 @@ export function InventoryPage({ user }: { user: User }) {
         <HistoryTable onDownload={(stockId) => void onDownloadCertificate(stockId)} />
       ) : view === "stock" ? (
         <section className="space-y-4">
+          <ReceptionTable orders={orders ?? []} disabled={working} onSubmit={onRegisterReception} />
           <div>
             <h2 className="mb-3 text-lg font-semibold">Lots</h2>
             <StockTable stock={stock ?? []} disabled={working} onSave={(lot, remainingQty) => run(() => updateStockAction({ stockId: lot.id, remainingQty }), refetchStock)} onDownload={(lot) => void onDownloadCertificate(lot.id)} />
           </div>
-          <WorkflowForm title="Enregistrer une réception">
-              <form className="space-y-4" onSubmit={onRegisterReception}>
-                <Field label="Commande"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="orderId" required>{orders?.filter((order) => order.orderDate && !order.receivedInFull).map((order) => <option key={order.id} value={order.id}>#{order.orderNumber || order.id} · {order.article.label}</option>)}</select></Field>
-                <Field label="Quantité reçue"><Input name="quantity" type="number" min="1" step="1" required /></Field>
-                <Field label="Date de réception"><Input name="receivedAt" type="date" required /></Field>
-                <Field label="N° de lot"><Input name="lot" maxLength={255} required /></Field>
-                <Field label="Date de péremption"><Input name="expiresAt" type="date" /></Field>
-                <Field label="Certificat d’analyse"><Input name="coa" type="file" accept="application/pdf,.pdf" /></Field>
-                <Field label="Commentaire"><Input name="comment" maxLength={255} /></Field>
-                <Button disabled={working || !orders?.some((order) => order.orderDate && !order.receivedInFull)}>Enregistrer la réception</Button>
-              </form>
-          </WorkflowForm>
         </section>
       ) : (
         catalog && <CatalogPage catalog={catalog} onSaved={refetchCatalog} />
@@ -237,9 +225,6 @@ export function InventoryPage({ user }: { user: User }) {
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1.5"><Label>{label}</Label>{children}</div>;
-}
 
 function ChoiceChecks({ label, name, options, selected = [] }: { label: string; name: string; options: { id: number; label: string }[]; selected?: number[] }) {
   return <fieldset className="space-y-2"><legend className="text-sm font-medium">{label}</legend><div className="max-h-40 space-y-2 overflow-auto rounded-md border p-3">{options.map((option) => <label key={option.id} className="flex items-center gap-2 text-sm"><input type="checkbox" name={name} value={option.id} defaultChecked={selected.includes(option.id)} />{option.label}</label>)}{!options.length && <p className="text-muted-foreground text-sm">Aucun élément disponible.</p>}</div></fieldset>;
@@ -300,9 +285,6 @@ function UserAccessRow({
 type OrderRow = Awaited<ReturnType<typeof getOrders>>[number];
 type StockRow = Awaited<ReturnType<typeof getStock>>[number];
 
-function WorkflowForm({ title, children }: { title: string; children: ReactNode }) {
-  return <Dialog><DialogTrigger asChild><Button type="button" className="my-3">{title}</Button></DialogTrigger><DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>{children}</DialogContent></Dialog>;
-}
 
 function EditableCell({ value, label, type = "text", min, max, disabled, display, onSave }: {
   value: string; label: string; type?: "text" | "number" | "date"; min?: number | string; max?: number; disabled?: boolean; display?: string;

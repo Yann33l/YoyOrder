@@ -30,7 +30,7 @@ export const inventorySpec: Spec = [
   query(getInventoryOverview, { entities: ["Article", "Stock", "User", "UserSector"] }),
   query(getCatalog, { entities: ["Article", "ArticleSector", "ArticlePiece", "SubArticle", "ArticleSubArticle", "Supplier", "Sector", "Piece", "UserSector"] }),
   query(getWorkspaceUsers, { entities: ["User", "Sector", "UserSector"] }),
-  query(getOrders, { entities: ["Order", "Article", "Sector", "OrderSector", "UserSector"] }),
+  query(getOrders, { entities: ["Order", "Article", "Sector", "OrderSector", "Reception", "UserSector"] }),
   query(getStock, { entities: ["Stock", "ReceptionStock", "Reception", "Order", "OrderSector", "UserSector"] }),
   query(getHistory, { entities: ["Order", "Article", "Supplier", "Sector", "OrderSector", "Reception", "Stock", "ReceptionStock", "SubOrder", "SubArticle", "User", "UserSector"] }),
   action(createRequest, { entities: ["Order", "Article", "Sector", "OrderSector", "User", "UserSector"] }),

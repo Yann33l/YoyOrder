@@ -24,7 +24,13 @@ Cochez les lignes en première colonne. La case d’en-tête sélectionne toutes
 
 Les articles sélectionnés doivent appartenir au même fournisseur. La date choisie doit être égale ou postérieure à la date de chacune des demandes. L’enregistrement est transactionnel : si une demande n’est plus en attente ou n’est pas autorisée, la sélection entière est refusée. Les demandes enregistrées quittent la liste en attente et apparaissent dans **Commandes déjà enregistrées**.
 
-## Historique
+## Réceptions depuis le tableau
+
+Dans **Réceptions et stock**, la grille **Articles en attente de réception** liste les commandes fournisseur non entièrement reçues. Elle affiche les quantités commandées, déjà reçues et restant à recevoir, avec recherche, pagination et filtre fournisseur.
+
+Sur chaque ligne, saisissez la quantité reçue, la date, le numéro de lot, la péremption éventuelle, le certificat PDF et le commentaire, puis cliquez sur **Réceptionner**. Une réception partielle conserve la commande dans la grille ; une réception complète la retire. La quantité ne peut pas dépasser le reste, la réception ne peut pas précéder la commande et la péremption ne peut pas précéder la réception.
+
+## Historique des commandes et lots
 
 L’onglet **Historique** est accessible aux demandeurs, acheteurs et administrateurs. Il conserve toutes les demandes et commandes, avec une ligne par réception et lot, y compris les lots épuisés ou périmés. Les commandes sans réception sont également affichées.
 

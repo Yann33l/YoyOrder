@@ -44,6 +44,8 @@ type OrderSummary = Pick<
 > & {
   article: Pick<Article, "id" | "label" | "reference"> & { supplier: Pick<Supplier, "id" | "label"> | null };
   sectors: { quantity: number; sector: Pick<Sector, "id" | "label"> }[];
+  quantityOrdered: number;
+  receivedQty: number;
 };
 
 type StockSummary = Pick<Stock, "id" | "initialQty" | "remainingQty" | "lot" | "expiresAt"> & { hasCertificate: boolean };
@@ -222,7 +224,7 @@ export const getOrders: GetOrders<Record<string, never>, OrderSummary[]> = async
     throw new HttpError(403, "Aucun rôle ne permet de consulter les commandes");
   }
   const sectorIds = await getSectorIds(user);
-  return prisma.order.findMany({
+  const orders = await prisma.order.findMany({
     where: sectorIds === null ? undefined : { sectors: { some: { sectorId: { in: sectorIds } } } },
     select: {
       id: true,
@@ -233,10 +235,17 @@ export const getOrders: GetOrders<Record<string, never>, OrderSummary[]> = async
       comment: true,
       requesterComment: true,
       article: { select: { id: true, label: true, reference: true, supplier: { select: { id: true, label: true } } } },
-      sectors: { where: sectorIds === null ? undefined : { sectorId: { in: sectorIds } }, select: { quantity: true, sector: { select: { id: true, label: true } } } },
+      sectors: { select: { quantity: true, sector: { select: { id: true, label: true } } } },
+      receptions: { select: { quantity: true } },
     },
     orderBy: [{ orderDate: "desc" }, { requestDate: "desc" }],
   });
+  return orders.map(({ receptions, sectors, ...order }) => ({
+    ...order,
+    quantityOrdered: sectors.reduce((sum, entry) => sum + entry.quantity, 0),
+    receivedQty: receptions.reduce((sum, entry) => sum + entry.quantity, 0),
+    sectors: sectorIds === null ? sectors : sectors.filter((entry) => sectorIds.includes(entry.sector.id)),
+  }));
 };
 
 const requestSchema = z.object({
@@ -355,6 +364,8 @@ export const registerReception: RegisterReception<ReceptionInput, StockSummary> 
   });
   if (!order) throw new HttpError(404, "Commande introuvable");
   if (!order.orderDate) throw new HttpError(400, "La commande fournisseur doit être enregistrée avant sa réception");
+  if (new Date(`${input.receivedAt}T00:00:00.000Z`) < order.orderDate) throw new HttpError(400, "La date de réception ne peut pas être antérieure à la date de commande");
+  if (input.expiresAt && input.expiresAt < input.receivedAt) throw new HttpError(400, "La date de péremption ne peut pas être antérieure à la réception");
   if (order.receivedInFull) throw new HttpError(400, "Cette commande a déjà été reçue en totalité");
   if (!user.isAdmin) {
     const sectorIds = await getSectorIds(user);
