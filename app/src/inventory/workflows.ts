@@ -19,6 +19,7 @@ import {
 } from "wasp/server/operations";
 import * as z from "zod";
 import { ensureArgsSchemaOrThrowHttpError } from "../server/validation";
+import { hasBusinessRole } from "./permissions";
 
 type CatalogArticle = Pick<Article, "id" | "label" | "reference" | "packaging" | "supplierId">;
 type Catalog = {
@@ -48,7 +49,7 @@ async function requireUser(context: { user?: User | null }) {
 }
 
 function requireRole(user: User, role: "isRequester" | "isBuyer" | "isEditor") {
-  if (!user.isAdmin && !user[role]) throw new HttpError(403, "Action non autorisée pour ce rôle");
+  if (!hasBusinessRole(user, role)) throw new HttpError(403, "Action non autorisée pour ce rôle");
 }
 
 async function getSectorIds(user: User) {

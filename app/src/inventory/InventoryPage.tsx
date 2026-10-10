@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   createArticle,
   createPiece,
@@ -24,6 +24,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "../client/components/u
 import { Input } from "../client/components/ui/input";
 import { Label } from "../client/components/ui/label";
 import { toast } from "../client/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../client/components/ui/dialog";
+import { InventoryGrid, type GridColumn } from "./InventoryGrid";
+import { hasBusinessRole } from "./permissions";
 
 type View = "overview" | "requests" | "orders" | "stock" | "catalog";
 
@@ -39,10 +42,16 @@ function dateValue(value: Date | null) {
 export function InventoryPage({ user }: { user: User }) {
   const [view, setView] = useState<View>("overview");
   const [working, setWorking] = useState(false);
+  const canRequest = hasBusinessRole(user, "isRequester");
+  const canBuy = hasBusinessRole(user, "isBuyer");
+  const canEdit = hasBusinessRole(user, "isEditor");
+  useEffect(() => {
+    if ((view === "requests" || view === "stock") && !canRequest || view === "orders" && !canBuy || view === "catalog" && !canEdit) setView("overview");
+  }, [view, canRequest, canBuy, canEdit]);
   const { data: overview, isLoading, error } = useQuery(getInventoryOverview, {});
   const { data: catalog, refetch: refetchCatalog } = useQuery(getCatalog, {});
-  const { data: orders, refetch: refetchOrders } = useQuery(getOrders, {});
-  const { data: stock, refetch: refetchStock } = useQuery(getStock, {});
+  const { data: orders, refetch: refetchOrders } = useQuery(getOrders, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
+  const { data: stock, refetch: refetchStock } = useQuery(getStock, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
   const { data: workspaceUsers, refetch: refetchWorkspaceUsers } = useQuery(
     getWorkspaceUsers,
     {},
@@ -208,10 +217,10 @@ export function InventoryPage({ user }: { user: User }) {
 
   const tabs: { id: View; label: string; visible: boolean }[] = [
     { id: "overview", label: "Vue d’ensemble", visible: true },
-    { id: "requests", label: "Demandes", visible: user.isRequester || user.isAdmin },
-    { id: "orders", label: "Commandes", visible: user.isBuyer || user.isAdmin },
-    { id: "stock", label: "Réceptions et stock", visible: user.isRequester || user.isAdmin },
-    { id: "catalog", label: "Référentiels", visible: user.isEditor || user.isAdmin },
+    { id: "requests", label: "Demandes", visible: canRequest },
+    { id: "orders", label: "Commandes", visible: canBuy },
+    { id: "stock", label: "Réceptions et stock", visible: canRequest },
+    { id: "catalog", label: "Référentiels", visible: canEdit },
   ];
 
   return (
@@ -251,13 +260,14 @@ export function InventoryPage({ user }: { user: User }) {
           {user.isAdmin && workspaceUsers && workspaceUsers.length > 0 && (
             <section className="mt-8 border-t pt-6">
               <h2 className="text-lg font-semibold">Accès utilisateurs</h2>
+              <p className="text-muted-foreground mt-1 text-sm">L’administration des comptes ne donne pas les rôles métier : cochez séparément Demandeur, Acheteur et Éditeur.</p>
               <div className="mt-3 divide-y">
                 {workspaceUsers.map((account) => (
                   <UserAccessRow
                     account={account}
                     key={account.id}
                     sectors={catalog?.sectors ?? []}
-                    onSaved={() => refetchWorkspaceUsers().then(() => undefined)}
+                    onSaved={async () => { await refetchWorkspaceUsers(); if (account.id === user.id) window.location.reload(); }}
                   />
                 ))}
               </div>
@@ -265,14 +275,12 @@ export function InventoryPage({ user }: { user: User }) {
           )}
         </>
       ) : view === "requests" ? (
-        <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section className="space-y-4">
           <div>
             <h2 className="mb-3 text-lg font-semibold">Demandes en cours</h2>
             <OrderTable orders={orders ?? []} />
           </div>
-          <Card>
-            <CardHeader><CardTitle>Nouvelle demande</CardTitle></CardHeader>
-            <CardContent>
+          <WorkflowForm title="Nouvelle demande">
               <form className="space-y-4" onSubmit={onCreateRequest}>
                 <Field label="Article"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="articleId" required>{catalog?.articles.map((article) => <option key={article.id} value={article.id}>{article.label}</option>)}</select></Field>
                 <Field label="Secteur"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="sectorId" required>{catalog?.sectors.map((sector) => <option key={sector.id} value={sector.id}>{sector.label}</option>)}</select></Field>
@@ -281,16 +289,13 @@ export function InventoryPage({ user }: { user: User }) {
                 <Field label="Commentaire"><Input name="comment" maxLength={255} /></Field>
                 <Button disabled={working || !catalog?.articles.length || !catalog?.sectors.length}>Envoyer la demande</Button>
               </form>
-            </CardContent>
-          </Card>
+          </WorkflowForm>
         </section>
       ) : view === "orders" ? (
         <section>
           <h2 className="mb-3 text-lg font-semibold">À commander</h2>
-          <OrderTable orders={orders ?? []} />
-          <Card className="mt-6 max-w-2xl">
-            <CardHeader><CardTitle>Enregistrer une commande fournisseur</CardTitle></CardHeader>
-            <CardContent>
+          <OrderTable orders={orders ?? []} canPurchase={canBuy} disabled={working} onPurchase={(order, field, value) => run(() => setOrderPurchaseAction({ orderId: order.id, orderDate: field === "orderDate" ? value : new Date(order.orderDate!).toISOString().slice(0, 10), orderNumber: field === "orderNumber" ? value : order.orderNumber ?? "", comment: field === "comment" ? value : order.comment ?? "" }), refetchOrders)} />
+          <WorkflowForm title="Enregistrer une commande fournisseur">
               <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSetPurchase}>
                 <Field label="Demande"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="orderId" required>{orders?.filter((order) => !order.orderDate).map((order) => <option key={order.id} value={order.id}>#{order.id} · {order.article.label}</option>)}</select></Field>
                 <Field label="N° de commande"><Input name="orderNumber" maxLength={255} /></Field>
@@ -298,23 +303,15 @@ export function InventoryPage({ user }: { user: User }) {
                 <Field label="Commentaire"><Input name="comment" maxLength={255} /></Field>
                 <Button className="sm:col-span-2" disabled={working || !orders?.some((order) => !order.orderDate)}>Enregistrer</Button>
               </form>
-            </CardContent>
-          </Card>
+          </WorkflowForm>
         </section>
       ) : view === "stock" ? (
-        <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section className="space-y-4">
           <div>
             <h2 className="mb-3 text-lg font-semibold">Lots</h2>
-            <div className="overflow-x-auto border-y">
-              <table className="w-full min-w-[620px] text-left text-sm">
-                <thead className="text-muted-foreground border-b"><tr><th className="py-2 pr-4">Lot</th><th className="py-2 pr-4">Quantité reçue</th><th className="py-2 pr-4">Restante</th><th className="py-2">Péremption</th></tr></thead>
-                <tbody>{stock?.map((lot) => <StockRow key={lot.id} lot={lot} disabled={working} onSave={(remainingQty) => void run(() => updateStockAction({ stockId: lot.id, remainingQty }), refetchStock)} onDownload={() => void onDownloadCertificate(lot.id)} />)}</tbody>
-              </table>
-            </div>
+            <StockTable stock={stock ?? []} disabled={working} onSave={(lot, remainingQty) => run(() => updateStockAction({ stockId: lot.id, remainingQty }), refetchStock)} onDownload={(lot) => void onDownloadCertificate(lot.id)} />
           </div>
-          <Card>
-            <CardHeader><CardTitle>Enregistrer une réception</CardTitle></CardHeader>
-            <CardContent>
+          <WorkflowForm title="Enregistrer une réception">
               <form className="space-y-4" onSubmit={onRegisterReception}>
                 <Field label="Commande"><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" name="orderId" required>{orders?.filter((order) => order.orderDate && !order.receivedInFull).map((order) => <option key={order.id} value={order.id}>#{order.orderNumber || order.id} · {order.article.label}</option>)}</select></Field>
                 <Field label="Quantité reçue"><Input name="quantity" type="number" min="1" step="1" required /></Field>
@@ -325,16 +322,18 @@ export function InventoryPage({ user }: { user: User }) {
                 <Field label="Commentaire"><Input name="comment" maxLength={255} /></Field>
                 <Button disabled={working || !orders?.some((order) => order.orderDate && !order.receivedInFull)}>Enregistrer la réception</Button>
               </form>
-            </CardContent>
-          </Card>
+          </WorkflowForm>
         </section>
       ) : (
-        <section className="grid gap-8 xl:grid-cols-2">
+        <section className="space-y-6">
           <div>
             <h2 className="mb-3 text-lg font-semibold">Articles</h2>
-            <div className="overflow-x-auto border-y">
-              <table className="w-full text-left text-sm"><thead className="text-muted-foreground border-b"><tr><th className="py-2 pr-4">Article</th><th className="py-2 pr-4">Référence</th><th className="py-2">Conditionnement</th></tr></thead><tbody>{catalog?.articles.map((article) => <tr className="border-b last:border-0" key={article.id}><td className="py-3 pr-4">{article.label}</td><td className="py-3 pr-4">{article.reference || "—"}</td><td className="py-3">{article.packaging || "—"}</td></tr>)}</tbody></table>
-            </div>
+            <InventoryGrid label="Articles" rows={catalog?.articles ?? []} rowId={(article) => article.id} columns={[
+              { id: "label", label: "Article", group: "Articles", width: 300, value: (article) => article.label },
+              { id: "reference", label: "Référence", group: "Articles", value: (article) => article.reference },
+              { id: "packaging", label: "Conditionnement", group: "Articles", width: 180, value: (article) => article.packaging },
+              { id: "supplier", label: "Fournisseur", group: "Fournisseur", width: 220, value: (article) => catalog?.suppliers.find((supplier) => supplier.id === article.supplierId)?.label ?? "—" },
+            ]} />
           </div>
           <div className="space-y-6">
             <Card><CardHeader><CardTitle>Créer un article</CardTitle></CardHeader><CardContent>
@@ -430,33 +429,67 @@ function UserAccessRow({
   );
 }
 
-function OrderTable({ orders }: { orders: Awaited<ReturnType<typeof getOrders>> }) {
-  return (
-    <div className="overflow-x-auto border-y">
-      <table className="w-full min-w-[700px] text-left text-sm">
-        <thead className="text-muted-foreground border-b"><tr><th className="py-2 pr-4">Article</th><th className="py-2 pr-4">Secteur(s)</th><th className="py-2 pr-4">Quantité</th><th className="py-2 pr-4">Demande</th><th className="py-2 pr-4">Commande</th><th className="py-2">État</th></tr></thead>
-        <tbody>{orders.map((order) => <tr className="border-b last:border-0" key={order.id}><td className="py-3 pr-4"><span className="font-medium">{order.article.label}</span><span className="text-muted-foreground block text-xs">{order.article.reference || ""}</span></td><td className="py-3 pr-4">{order.sectors.map((item) => item.sector.label).join(", ")}</td><td className="py-3 pr-4">{order.sectors.reduce((sum, item) => sum + item.quantity, 0)}</td><td className="py-3 pr-4">{dateValue(order.requestDate)}</td><td className="py-3 pr-4">{order.orderNumber || dateValue(order.orderDate)}</td><td className="py-3">{order.receivedInFull ? "Reçue" : order.orderDate ? "Commandée" : "À commander"}</td></tr>)}</tbody>
-      </table>
-      {orders.length === 0 && <p className="text-muted-foreground py-6 text-sm">Aucune demande pour vos secteurs.</p>}
-    </div>
-  );
+type OrderRow = Awaited<ReturnType<typeof getOrders>>[number];
+type StockRow = Awaited<ReturnType<typeof getStock>>[number];
+
+function WorkflowForm({ title, children }: { title: string; children: ReactNode }) {
+  return <Dialog><DialogTrigger asChild><Button type="button" className="my-3">{title}</Button></DialogTrigger><DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>{children}</DialogContent></Dialog>;
 }
 
-function StockRow({ lot, disabled, onSave, onDownload }: {
-  lot: { id: number; lot: string | null; initialQty: number | null; remainingQty: number | null; expiresAt: Date | null; hasCertificate: boolean };
-  disabled: boolean;
-  onSave: (quantity: number) => void;
-  onDownload: () => void;
+function EditableCell({ value, label, type = "text", min, max, disabled, display, onSave }: {
+  value: string; label: string; type?: "text" | "number" | "date"; min?: number; max?: number; disabled?: boolean; display?: string;
+  onSave: (value: string) => Promise<boolean>;
 }) {
-  const [quantity, setQuantity] = useState(String(lot.remainingQty ?? 0));
-  return (
-    <tr className="border-b last:border-0">
-      <td className="py-3 pr-4">{lot.lot || "—"}</td>
-      <td className="py-3 pr-4">{lot.initialQty ?? "—"}</td>
-      <td className="py-3 pr-4"><form className="flex items-center gap-2" onSubmit={(event) => { event.preventDefault(); onSave(Number(quantity)); }}><Input className="h-8 w-20" aria-label="Quantité restante" type="number" min="0" max={lot.initialQty ?? undefined} value={quantity} onChange={(event) => setQuantity(event.target.value)} /><Button size="sm" variant="outline" disabled={disabled}>Enregistrer</Button></form></td>
-      <td className="py-3">{dateValue(lot.expiresAt)} {lot.hasCertificate && <button className="text-primary ml-2 hover:underline" onClick={onDownload} type="button">Certificat</button>}</td>
-    </tr>
-  );
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { if (!editing) setDraft(value); }, [value, editing]);
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (draft === value) { setEditing(false); return; }
+    setSaving(true);
+    try { if (await onSave(draft)) setEditing(false); }
+    finally { setSaving(false); }
+  }
+  return editing ? <form className="flex flex-wrap gap-1" onSubmit={save}>
+    <Input autoFocus className="h-8 min-w-20" aria-label={label} type={type} min={min} max={max} maxLength={255} required={type !== "text"} value={draft} disabled={saving} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); setEditing(false); } }} />
+    <Button type="submit" size="sm" variant="outline" disabled={saving || disabled}>Valider</Button><Button type="button" size="sm" variant="ghost" disabled={saving} onClick={() => setEditing(false)}>Annuler</Button>
+  </form> : <button type="button" className="hover:bg-muted w-full rounded px-1 py-1 text-left underline decoration-dotted underline-offset-4 disabled:no-underline" title={disabled ? undefined : "Cliquer pour modifier · Entrée pour valider · Échap pour annuler"} aria-label={`Modifier ${label}`} disabled={disabled} onClick={() => setEditing(true)}>{display ?? (value || "—")}</button>;
+}
+
+function OrderTable({ orders, canPurchase = false, disabled = false, onPurchase }: {
+  orders: OrderRow[]; canPurchase?: boolean; disabled?: boolean;
+  onPurchase?: (order: OrderRow, field: "orderDate" | "orderNumber" | "comment", value: string) => Promise<boolean>;
+}) {
+  const sectors = Array.from(new Map(orders.flatMap((order) => order.sectors.map(({ sector }) => [sector.id, sector] as const))).values());
+  const columns: GridColumn<OrderRow>[] = [
+    { id: "article", label: "Article", group: "Articles", width: 280, value: (order) => order.article.label },
+    { id: "reference", label: "Référence", group: "Articles", width: 120, value: (order) => order.article.reference },
+    ...sectors.map((sector): GridColumn<OrderRow> => ({ id: `sector-${sector.id}`, label: sector.label, group: "Quantités par secteur", width: 110, value: (order) => order.sectors.find((item) => item.sector.id === sector.id)?.quantity ?? 0 })),
+    { id: "quantity", label: "Total", group: "Quantités", width: 90, value: (order) => order.sectors.reduce((sum, item) => sum + item.quantity, 0) },
+    { id: "requestDate", label: "Demande", group: "Dates", width: 130, value: (order) => order.requestDate ? new Date(order.requestDate).toISOString().slice(0, 10) : "", render: (order) => dateValue(order.requestDate) },
+    { id: "orderDate", label: "Commande", group: "Dates", width: 160, editable: canPurchase, value: (order) => order.orderDate ? new Date(order.orderDate).toISOString().slice(0, 10) : "", render: (order) => canPurchase && onPurchase ? <EditableCell key={`${order.id}-date`} label={`Date de commande ${order.id}`} type="date" value={order.orderDate ? new Date(order.orderDate).toISOString().slice(0, 10) : ""} display={dateValue(order.orderDate)} disabled={disabled} onSave={(value) => onPurchase(order, "orderDate", value)} /> : dateValue(order.orderDate) },
+    { id: "orderNumber", label: "N° commande", group: "Commande", editable: canPurchase, value: (order) => order.orderNumber, render: (order) => canPurchase && onPurchase && order.orderDate ? <EditableCell label={`Numéro de commande ${order.id}`} value={order.orderNumber ?? ""} disabled={disabled} onSave={(value) => onPurchase(order, "orderNumber", value)} /> : order.orderNumber || "—" },
+    { id: "state", label: "État", group: "Commande", width: 120, value: (order) => order.receivedInFull ? "Reçue" : order.orderDate ? "Commandée" : "À commander", render: (order) => <span className={`inline-block rounded px-2 py-1 text-xs ${order.receivedInFull ? "bg-emerald-100 text-emerald-900" : order.orderDate ? "bg-blue-100 text-blue-900" : "bg-amber-100 text-amber-900"}`}>{order.receivedInFull ? "Reçue" : order.orderDate ? "Commandée" : "À commander"}</span> },
+    { id: "requestComment", label: "Demande", group: "Commentaires", width: 220, value: (order) => order.requesterComment },
+    { id: "comment", label: "Commande", group: "Commentaires", width: 220, editable: canPurchase, value: (order) => order.comment, render: (order) => canPurchase && onPurchase && order.orderDate ? <EditableCell label={`Commentaire commande ${order.id}`} value={order.comment ?? ""} disabled={disabled} onSave={(value) => onPurchase(order, "comment", value)} /> : order.comment || "—" },
+  ];
+  return <><InventoryGrid label="Demandes et commandes" rows={orders} columns={columns} rowId={(order) => order.id} emptyMessage="Aucune demande pour vos secteurs." />{canPurchase && <p className="text-muted-foreground mt-2 text-xs">Les colonnes soulignées en doré sont modifiables. Cliquez sur une cellule pour la modifier.</p>}</>;
+}
+
+function StockTable({ stock, disabled, onSave, onDownload }: { stock: StockRow[]; disabled: boolean; onSave: (lot: StockRow, quantity: number) => Promise<boolean>; onDownload: (lot: StockRow) => void }) {
+  const columns: GridColumn<StockRow>[] = [
+    { id: "lot", label: "N° de lot", group: "Lots", width: 200, value: (lot) => lot.lot },
+    { id: "initial", label: "Reçue", group: "Quantités", width: 120, value: (lot) => lot.initialQty },
+    { id: "remaining", label: "Restante", group: "Quantités", width: 180, editable: true, value: (lot) => lot.remainingQty, render: (lot) => <EditableCell label={`Quantité restante du lot ${lot.lot ?? lot.id}`} type="number" value={String(lot.remainingQty ?? 0)} min={0} max={lot.initialQty ?? undefined} disabled={disabled} onSave={(value) => onSave(lot, Number(value))} /> },
+    { id: "expires", label: "Péremption", group: "Dates", width: 190, value: (lot) => lot.expiresAt ? new Date(lot.expiresAt).toISOString().slice(0, 10) : "", render: (lot) => {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const days = lot.expiresAt ? Math.ceil((new Date(lot.expiresAt).getTime() - today.getTime()) / 86400000) : null;
+      return <span className={`inline-block rounded px-2 py-1 ${days !== null && days < 0 ? "bg-red-100 text-red-900" : days !== null && days < 30 ? "bg-amber-100 text-amber-900" : ""}`}>{dateValue(lot.expiresAt)}{days !== null && days < 0 ? " · Périmé" : days !== null && days < 30 ? " · < 30 jours" : ""}</span>;
+    } },
+    { id: "certificate", label: "Certificat d’analyse", group: "Documents", width: 190, value: (lot) => lot.hasCertificate ? "Disponible" : "—", render: (lot) => lot.hasCertificate ? <Button type="button" variant="ghost" size="sm" onClick={() => onDownload(lot)}>Télécharger le PDF</Button> : "—" },
+  ];
+  return <InventoryGrid label="Stock" rows={stock} columns={columns} rowId={(lot) => lot.id} />;
 }
 
 function readFileBase64(file: File) {
