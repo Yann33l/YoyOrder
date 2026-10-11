@@ -1,0 +1,4 @@
+# Legacy local JWT keys: confirmed unused by the repository owner on 2026-10-11.
+# Match only these two historical findings; new findings remain blocked.
+e46285e9b77d272d5867b9d4aa04c72a8394de4a:readme.md:generic-api-key:16
+6586e6aa7cee9f7128d7622f170d422d0aa5a3e5:Back/main.py:generic-api-key:21
