@@ -17,7 +17,7 @@ export function UserDropdown({ user }: { user: Partial<UserEntity> }) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <button className="text-foreground hover:text-primary flex items-center transition-colors duration-300 ease-in-out">
+        <button aria-label="Menu du compte" className="text-foreground hover:text-primary flex items-center transition-colors duration-300 ease-in-out">
           <span className="text-foreground mr-2 hidden text-right text-sm font-medium lg:block">
             {user.username}
           </span>
@@ -52,7 +52,7 @@ export function UserDropdown({ user }: { user: Partial<UserEntity> }) {
             className="flex w-full items-center gap-3"
           >
             <LogOut size="1.1rem" />
-            Log Out
+            Se déconnecter
           </button>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,4 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link, useLocation } from "react-router";
+import { canOpenView, workView } from "../client/navigation";
 import {
   downloadCertificate,
   getCatalog,
@@ -27,8 +29,6 @@ import { ReceptionTable } from "./ReceptionTable";
 import { AdminPanel } from "./AdminPanel";
 import { CompanyNews } from "./CompanyNews";
 
-type View = "overview" | "requests" | "orders" | "stock" | "catalog" | "history" | "admin";
-
 function formData(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
   return new FormData(event.currentTarget);
@@ -41,15 +41,11 @@ function dateValue(value: Date | null) {
 export function InventoryPage({ user: sessionUser }: { user: User }) {
   const { data: access, isLoading: accessLoading, error: accessError, refetch: refetchAccess } = useQuery(getMyAccess, {});
   const user = { ...sessionUser, ...(access ?? { isAuthorized: false, isRequester: false, isBuyer: false, isEditor: false }) };
-  const [view, setView] = useState<View>("overview");
+  const location = useLocation();
+  const view = workView(location.pathname, location.search);
   const [working, setWorking] = useState(false);
   const canRequest = hasBusinessRole(user, "isRequester");
   const canBuy = hasBusinessRole(user, "isBuyer");
-  const canEdit = hasBusinessRole(user, "isEditor");
-  const canViewHistory = user.isAuthorized && (user.isAdmin || canRequest || canBuy);
-  useEffect(() => {
-    if ((view === "requests" || view === "stock") && !canRequest || view === "orders" && !canBuy || view === "catalog" && !canEdit || view === "history" && !canViewHistory) setView("overview");
-  }, [view, canRequest, canBuy, canEdit, canViewHistory]);
   const { data: overview, isLoading, error } = useQuery(getInventoryOverview, {}, { enabled: user.isAuthorized });
   const { data: catalog, refetch: refetchCatalog } = useQuery(getCatalog, {}, { enabled: user.isAuthorized });
   const { data: orders, refetch: refetchOrders } = useQuery(getOrders, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
@@ -137,47 +133,27 @@ export function InventoryPage({ user: sessionUser }: { user: User }) {
     );
   }
 
-  const tabs: { id: View; label: string; visible: boolean }[] = [
-    { id: "overview", label: "Vue d’ensemble", visible: true },
-    { id: "requests", label: "Demandes", visible: canRequest },
-    { id: "orders", label: "Commandes", visible: canBuy },
-    { id: "stock", label: "Réceptions et stock", visible: canRequest },
-    { id: "history", label: "Historique", visible: canViewHistory },
-    { id: "catalog", label: "Référentiels", visible: canEdit },
-    { id: "admin", label: "Administration", visible: user.isAdmin },
-  ];
+  if (!canOpenView(view, { ...user, canPublishNews: sessionUser.isAdmin }) || location.pathname.startsWith("/company/") && !user.isAdmin) return <main className="px-3 py-8"><h1 className="text-xl font-semibold">Accès non autorisé</h1><p className="text-muted-foreground mt-2">Cette page n’est pas disponible avec vos permissions.</p><Link to="/inventory" className="mt-4 inline-block underline">Revenir à l’accueil</Link></main>;
+  const titles = { overview: "Accueil", requests: "Demandes", orders: "Commandes", receptions: "Réceptions", stock: "Stock", history: "Historique", catalog: "Référentiels", users: "Utilisateurs", roles: "Rôles et accès", news: "Actualités" };
 
   return (
     <main className="yoyorder-workspace w-full min-w-0 px-2 py-5 sm:px-3">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-muted-foreground text-sm">{access?.workspaceName ?? "Laboratoire"}</p>
-          <h1 className="text-2xl font-semibold">Stocks et commandes</h1>
+          <h1 className="text-2xl font-semibold">{titles[view]}</h1>
         </div>
         {isLoading && <span className="text-muted-foreground text-sm">Chargement…</span>}
       </div>
-      <nav aria-label="Sections de travail" className="mb-6 flex flex-wrap gap-2 border-b pb-3">
-        <a className="rounded px-3 py-2 text-sm" href="/tickets">Assistance</a>
-        {user.isAdmin && <a className="rounded px-3 py-2 text-sm" href="/pricing">Abonnement</a>}
-        {user.isSuperAdmin && <a className="rounded px-3 py-2 text-sm" href="/admin/plans">Administration SaaS</a>}
-        {tabs.filter((tab) => tab.visible).map((tab) => (
-          <Button key={tab.id} type="button" size="sm" variant={view === tab.id ? "default" : "ghost"} onClick={() => setView(tab.id)}>
-            {tab.label}
-          </Button>
-        ))}
-      </nav>
-
       {error ? (
         <p className="text-destructive py-6">Impossible de charger les données du laboratoire.</p>
       ) : view === "overview" ? (
         <>
-          <CompanyNews canPublish={sessionUser.isAdmin} />
+          <CompanyNews canPublish={false} />
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Résumé du stock">
             {[
               ["Articles", overview?.articleCount],
               ["Lots en stock", overview?.stockCount],
               ["Lots à vérifier", overview?.lowStockCount],
-              ...(user.isAdmin ? [["Comptes à activer", overview?.pendingUsers] as const] : []),
             ].map(([label, value]) => (
               <Card key={label}>
                 <CardHeader className="pb-2"><CardTitle className="text-muted-foreground text-sm font-medium">{label}</CardTitle></CardHeader>
@@ -200,18 +176,18 @@ export function InventoryPage({ user: sessionUser }: { user: User }) {
           <PurchaseTable orders={orders ?? []} onSaved={refetchOrders} />
           <details className="mt-6"><summary className="mb-3 cursor-pointer font-medium">Commandes déjà enregistrées</summary><OrderTable orders={orders?.filter((order) => order.orderDate) ?? []} canPurchase={canBuy} disabled={working} onPurchase={(order, field, value) => run(() => setOrderPurchaseAction({ orderId: order.id, orderDate: field === "orderDate" ? value : new Date(order.orderDate!).toISOString().slice(0, 10), orderNumber: field === "orderNumber" ? value : order.orderNumber ?? "", comment: field === "comment" ? value : order.comment ?? "" }), refetchOrders)} /></details>
         </section>
-      ) : view === "admin" && user.isAdmin ? (
-        <AdminPanel actorId={user.id} onChanged={async () => { await refetchAccess(); await Promise.all([refetchCatalog(), refetchOrders(), refetchStock()]); }} />
+      ) : (view === "users" || view === "roles") && user.isAdmin ? (
+        <AdminPanel key={view} section={view} actorId={user.id} onChanged={async () => { await refetchAccess(); await Promise.all([refetchCatalog(), refetchOrders(), refetchStock()]); }} />
+      ) : view === "news" ? (
+        <CompanyNews canPublish={sessionUser.isAdmin} />
       ) : view === "history" ? (
         <HistoryTable onDownload={(stockId) => void onDownloadCertificate(stockId)} />
+      ) : view === "receptions" ? (
+        <ReceptionTable orders={orders ?? []} disabled={working} onSubmit={onRegisterReception} />
       ) : view === "stock" ? (
-        <section className="space-y-4">
-          <ReceptionTable orders={orders ?? []} disabled={working} onSubmit={onRegisterReception} />
-          <div>
-            <h2 className="mb-3 text-lg font-semibold">Lots</h2>
+          <section>
             <StockTable stock={stock ?? []} disabled={working} onSave={(lot, remainingQty) => run(() => updateStockAction({ stockId: lot.id, remainingQty }), refetchStock)} onDownload={(lot) => void onDownloadCertificate(lot.id)} />
-          </div>
-        </section>
+          </section>
       ) : (
         catalog && <CatalogPage catalog={catalog} onSaved={refetchCatalog} />
       )}

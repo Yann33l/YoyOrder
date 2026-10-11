@@ -29,6 +29,10 @@ import {
 
 export const inventorySpec: Spec = [
   route("InventoryRoute", "/inventory", page(InventoryPage, { authRequired: true })),
+  route("CompanyUsersRoute", "/company/users", page(InventoryPage, { authRequired: true })),
+  route("CompanyRolesRoute", "/company/roles", page(InventoryPage, { authRequired: true })),
+  route("CompanyCatalogRoute", "/company/catalog", page(InventoryPage, { authRequired: true })),
+  route("CompanyNewsRoute", "/company/news", page(InventoryPage, { authRequired: true })),
   query(getCompanyNews, { entities: ["WorkspaceNews", "Workspace", "User"] }),
   action(saveCompanyNews, { entities: ["WorkspaceNews", "Workspace", "User"] }),
   query(getMyAccess, { entities: ["User", "AccessRole"] }),

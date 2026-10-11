@@ -15,6 +15,11 @@ const root = { ...user, isSuperAdmin: true };
 const plan = { name: "Entreprise", description: "", monthlyPriceCents: 1000, stripePriceId: "price_Test", maxUsers: 3, storageMb: 1, displayOrder: 0, published: true, featured: false, features: [] };
 beforeEach(() => { vi.resetAllMocks(); db.$transaction.mockImplementation((fn) => fn(db)); });
 describe("Isolation des entreprises", () => {
+  it("limite l’assistance de l’espace utilisateur à l’entreprise sélectionnée même pour le super admin", async () => {
+    db.supportTicket.findMany.mockResolvedValue([]);
+    await getTickets({ workspaceOnly: true }, { user: root } as never);
+    expect(db.supportTicket.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { workspaceId: "A" } }));
+  });
   it("réserve la publication des actualités à l’administrateur de l’entreprise", () => {
     expect(() => assertNewsAdmin(null)).toThrow();
     expect(() => assertNewsAdmin({ isAdmin: false })).toThrow();

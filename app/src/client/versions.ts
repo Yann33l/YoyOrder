@@ -1,5 +1,16 @@
 export const releases = [
   {
+    version: "0.1.1",
+    date: "2026-10-11",
+    changes: [
+      "Navigation séparée entre Utilisateur, Administration de l’entreprise et Super admin.",
+      "Accès directs aux sections, navigation conservée au rechargement et au retour arrière.",
+      "Gestion des actualités dans l’administration, et séparation des réceptions et du stock.",
+      "Assistance de l’entreprise distincte du support global de la plateforme.",
+      "Accès de développement compatible avec localhost et le réseau privé Tailscale.",
+    ],
+  },
+  {
     version: "0.1.0",
     date: "2026-10-11",
     changes: [

@@ -4,6 +4,10 @@ Chaque entreprise dispose d’un espace de travail séparé. Les référentiels,
 
 ## Administrateurs
 
+La navigation distingue trois espaces. **Utilisateur** regroupe l’accueil, les demandes, commandes, réceptions, stocks, historique et assistance, selon les permissions métier. **Administration** regroupe les utilisateurs, rôles, référentiels, actualités et abonnement de l’entreprise. **Super admin** regroupe les entreprises, plans et tickets de la plateforme. Le menu du compte contient uniquement le profil et la déconnexion. Un éditeur sans administration garde un accès aux référentiels dans son espace utilisateur.
+
+Les sections métier utilisent `/inventory?view=...`. Les pages de l’entreprise sont `/company/users`, `/company/roles`, `/company/catalog` et `/company/news`. La section reste sélectionnée après un rechargement et fonctionne avec le retour arrière du navigateur. La publication des actualités se fait dans l’administration ; l’accueil utilisateur affiche les actualités publiées. `/tickets` reste limité à l’entreprise sélectionnée, y compris pour un super administrateur ; `/admin/tickets` est le suivi global.
+
 L’administrateur d’entreprise gère les rôles, les utilisateurs et les actualités de son espace. Il peut activer un compte et renseigner une date de fin de validité : le compte devient inaccessible après cette date, sans supprimer son historique. Dans un rôle, « Tout » sélectionne ou désélectionne tous les secteurs ou pièces actuellement disponibles. Les nouveaux secteurs et pièces doivent ensuite être ajoutés aux rôles concernés.
 
 Le super administrateur accède à `/admin/plans`, `/admin/workspaces` et `/admin/tickets`. Il peut créer une entreprise avec son premier administrateur, suspendre un espace et sélectionner l’espace qu’il souhaite administrer. La publication des actualités nécessite aussi le statut d’administrateur de l’entreprise ; le statut de super administrateur seul ne donne pas ce droit.

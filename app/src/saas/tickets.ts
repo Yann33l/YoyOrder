@@ -19,9 +19,11 @@ export function ticketScope(user: Pick<User, "isSuperAdmin" | "isAdmin" | "works
   return user.isSuperAdmin ? {} : { workspaceId: user.workspaceId!, ...(!user.isAdmin ? { createdById: user.id } : {}) };
 }
 export type TicketView = SupportTicket & { messages: TicketMessage[]; workspace: { name: string } };
-export const getTickets: GetTickets<Record<string, never>, TicketView[]> = async (_args, context) => {
+export const getTickets: GetTickets<{ workspaceOnly?: boolean }, TicketView[]> = async (args, context) => {
   const user = await actor(context);
-  return prisma.supportTicket.findMany({ where: ticketScope(user), include: { workspace: { select: { name: true } }, messages: { orderBy: { createdAt: "asc" } } }, orderBy: { updatedAt: "desc" } });
+  const { workspaceOnly } = parse(z.object({ workspaceOnly: z.boolean().optional() }), args);
+  if (workspaceOnly && !user.workspaceId) throw new HttpError(403, "Sélectionnez un espace de travail");
+  return prisma.supportTicket.findMany({ where: user.isSuperAdmin && workspaceOnly ? { workspaceId: user.workspaceId! } : ticketScope(user), include: { workspace: { select: { name: true } }, messages: { orderBy: { createdAt: "asc" } } }, orderBy: { updatedAt: "desc" } });
 };
 const newSchema = z.object({ title: z.string().trim().min(3).max(200), category: z.enum(categories), body: z.string().trim().min(1).max(20000) });
 export const createTicket: CreateTicket<z.infer<typeof newSchema>, { id: string }> = async (args, context) => {
