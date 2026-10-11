@@ -51,6 +51,35 @@ describe.skipIf(!enabled)("Isolation SaaS avec PostgreSQL réel", () => {
     await expect(createRequest({ articleId: articleB, sectors: [{ sectorId: sectorA, quantity: 1 }], requestDate: "2026-10-10" }, { user: a } as never)).rejects.toMatchObject({ statusCode: 400 });
     expect((await prisma.article.findUnique({ where: { id: articleB } }))?.label).toBe("Article B");
   });
+  it("limite les quantités d’un administrateur à ses secteurs et pièces métier, même par appel direct", async () => {
+    const db = workspaceDb(a);
+    const otherSector = await db.sector.create({ data: { label: "Secteur caché" } });
+    const piece = await db.piece.create({ data: { label: "Pièce autorisée" } });
+    const role = await db.accessRole.create({ data: { name: "Demandeur limité", isRequester: true, isEditor: true, sectorIds: [sectorA], pieceIds: [piece.id] } });
+    await db.article.update({ where: { id: articleA }, data: { sectors: { create: { sectorId: otherSector.id } }, pieces: { create: { pieceId: piece.id } } } });
+    const restricted = await db.user.update({ where: { id: a.id }, data: { roleIds: [role.id] } });
+    try {
+      const catalog = await getCatalog({}, { user: restricted } as never);
+      expect(catalog.sectors.map((sector) => sector.id)).toEqual([sectorA]);
+      expect(catalog.articles[0].sectors).toEqual([{ sectorId: sectorA }]);
+      expect(catalog.pieces.map((entry) => entry.id)).toEqual([piece.id]);
+      expect((await getCatalog({ administration: true }, { user: restricted } as never)).sectors).toHaveLength(2);
+      const editor = { ...restricted, isAdmin: false, isSuperAdmin: false };
+      expect((await getCatalog({ administration: true }, { user: editor } as never)).sectors).toHaveLength(2);
+      await saveCatalogItem({ kind: "article", id: articleA, label: "Article A", sectorIds: [sectorA, otherSector.id], pieceIds: [piece.id] }, { user: editor } as never);
+      expect(await db.articleSector.count({ where: { articleId: articleA } })).toBe(2);
+      await expect(saveCatalogItem({ kind: "article", id: articleB, label: "Intrusion", sectorIds: [sectorA] }, { user: editor } as never)).rejects.toMatchObject({ statusCode: 404 });
+      const count = await db.order.count();
+      await expect(createRequest({ articleId: articleA, sectors: [{ sectorId: otherSector.id, quantity: 1 }], requestDate: "2026-10-11" }, { user: restricted } as never)).rejects.toMatchObject({ statusCode: 403 });
+      expect(await db.order.count()).toBe(count);
+      const allowed = await createRequest({ articleId: articleA, sectors: [{ sectorId: sectorA, quantity: 2 }], requestDate: "2026-10-11" }, { user: restricted } as never);
+      expect(await db.orderSector.findMany({ where: { orderId: allowed.id } })).toEqual([expect.objectContaining({ sectorId: sectorA, quantity: 2 })]);
+    } finally {
+      await db.user.update({ where: { id: a.id }, data: { roleIds: [] } });
+      await db.accessRole.delete({ where: { id: role.id } });
+      await db.piece.delete({ where: { id: piece.id } });
+    }
+  });
   it("isole l’historique, les réceptions et les certificats", async () => {
     const stock = await registerReception({ orderId: orderA, quantity: 1, receivedAt: "2026-10-12", lot: "TEST", coaBase64: Buffer.from("pdf").toString("base64") }, { user: a } as never);
     expect((await prisma.stock.findUnique({ where: { id: stock.id } }))?.workspaceId).toBe(a.workspaceId);

@@ -1,5 +1,14 @@
 export const releases = [
   {
+    version: "0.1.2",
+    date: "2026-10-11",
+    changes: [
+      "Visibilité et saisie des quantités limitées aux secteurs et pièces des rôles, y compris pour un administrateur ayant des rôles paramétrés.",
+      "Catalogue complet accessible aux éditeurs des référentiels, distinct du catalogue des demandes limité par rôle.",
+      "Sélecteur d’espace masqué lorsqu’un seul espace est accessible.",
+    ],
+  },
+  {
     version: "0.1.1",
     date: "2026-10-11",
     changes: [

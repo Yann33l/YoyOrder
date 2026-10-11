@@ -14,6 +14,8 @@ Le super administrateur accède à `/admin/plans`, `/admin/workspaces` et `/admi
 
 La migration conserve les données existantes dans « Entreprise historique » et promeut le premier administrateur actif existant en super administrateur. Pour les futures inscriptions, les adresses configurées dans `ADMIN_EMAILS` reçoivent ce statut. Cette variable doit rester limitée aux responsables de la plateforme.
 
+Dans les pages métier, les secteurs et pièces des rôles attribués limitent la visibilité et la saisie des quantités, même pour un administrateur ou super administrateur. Plusieurs rôles cumulent leurs secteurs et pièces ; une liste vide ne donne aucun accès. Le catalogue des demandes ne renvoie que ces secteurs, pièces et articles compatibles. Les éditeurs et administrateurs peuvent consulter le catalogue complet de l’entreprise dans les référentiels. Le rôle Éditeur permet de créer et modifier tous les articles, secteurs, pièces et compositions de cette entreprise, sans restriction métier de visibilité ; il ne donne aucun accès aux données d’une autre entreprise. Les comptes administrateurs sans rôle personnalisé conservent leur accès global existant.
+
 ## Plans et facturation
 
 Les plans publiés apparaissent sur `/pricing`. Les seuls quotas sont les utilisateurs actifs et le stockage des certificats. Les comptes désactivés ou arrivés en fin de validité ne consomment pas de place ; les certificats des anciens lots continuent de compter dans le stockage. Aucun quota d’articles n’est appliqué. Les activations et réceptions sont protégées contre les dépassements concurrents.

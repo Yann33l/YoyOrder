@@ -47,7 +47,7 @@ export function InventoryPage({ user: sessionUser }: { user: User }) {
   const canRequest = hasBusinessRole(user, "isRequester");
   const canBuy = hasBusinessRole(user, "isBuyer");
   const { data: overview, isLoading, error } = useQuery(getInventoryOverview, {}, { enabled: user.isAuthorized });
-  const { data: catalog, refetch: refetchCatalog } = useQuery(getCatalog, {}, { enabled: user.isAuthorized });
+  const { data: catalog, refetch: refetchCatalog } = useQuery(getCatalog, { administration: view === "catalog" }, { enabled: user.isAuthorized });
   const { data: orders, refetch: refetchOrders } = useQuery(getOrders, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
   const { data: stock, refetch: refetchStock } = useQuery(getStock, {}, { enabled: user.isAuthorized && (canRequest || canBuy) });
   const setOrderPurchaseAction = useAction(setOrderPurchase);

@@ -32,20 +32,20 @@ export function workspaceEntitled(workspace: { plan?: { monthlyPriceCents: numbe
   return !workspace.plan?.monthlyPriceCents || ["manual", "active", "trialing"].includes(workspace.subscriptionStatus ?? "");
 }
 export async function accessSectorIds(user: EffectiveUser) {
-  if (user.isAdmin) return null;
   if (user.roleSectorIds !== undefined) return user.roleSectorIds;
+  if (user.isAdmin) return null;
   const memberships = await workspaceDb(user).userSector.findMany({ where: { userId: user.id }, select: { sectorId: true } });
   return memberships.map(({ sectorId }) => sectorId);
 }
 export function pieceScope(user: EffectiveUser): Prisma.ArticleWhereInput {
-  return user.isAdmin || user.rolePieceIds === undefined ? {} : { pieces: { some: { pieceId: { in: user.rolePieceIds } } } };
+  return user.rolePieceIds === undefined ? {} : { pieces: { some: { pieceId: { in: user.rolePieceIds } } } };
 }
 export function orderScope(user: EffectiveUser, sectorIds: number[] | null): Prisma.OrderWhereInput | undefined {
-  if (user.isAdmin) return undefined;
+  if (sectorIds === null) return undefined;
   return { sectors: { some: { sectorId: { in: sectorIds ?? [] } } }, ...(user.rolePieceIds === undefined ? {} : { article: pieceScope(user) }) };
 }
 export async function assertArticleVisible(user: EffectiveUser, articleId: number) {
-  if (user.isAdmin || user.rolePieceIds === undefined) return;
+  if (user.rolePieceIds === undefined) return;
   const sectors = await accessSectorIds(user);
   const article = await workspaceDb(user).article.findFirst({ where: { id: articleId, sectors: { some: { sectorId: { in: sectors ?? [] } } }, ...pieceScope(user) }, select: { id: true } });
   if (!article) throw new HttpError(403, "Cet article n’est pas visible pour vos rôles");

@@ -24,6 +24,27 @@ describe("Rôles personnalisés et administration", () => {
     db.accessRole.findMany.mockResolvedValue([role, { ...role, id: 2, isBuyer: true, sectorIds: [10, 11], pieceIds: [20, 21] }]);
     expect(await resolveAccess({ ...user, roleIds: [1, 2] } as never)).toMatchObject({ isBuyer: true, roleSectorIds: [10, 11], rolePieceIds: [20, 21] });
   });
+  it("applique les restrictions métier des rôles même à un administrateur", async () => {
+    const access = await resolveAccess({ ...user, isAdmin: true } as never);
+    expect(await accessSectorIds(access)).toEqual([10]);
+    expect(orderScope(access, [10])).toMatchObject({ sectors: { some: { sectorId: { in: [10] } } }, article: { pieces: { some: { pieceId: { in: [20] } } } } });
+    for (const model of [db.article, db.sector, db.piece, db.supplier, db.subArticle, db.articleSubArticle]) model.findMany.mockResolvedValue([]);
+    await getCatalog({}, { user: { ...user, isAdmin: true } } as never);
+    expect(db.sector.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: { in: [10] } } }));
+    expect(db.article.findMany).toHaveBeenCalledWith(expect.objectContaining({ select: expect.objectContaining({ sectors: { where: { sectorId: { in: [10] } }, select: { sectorId: true } } }) }));
+    db.article.findFirst.mockResolvedValue(null);
+    await expect(assertArticleVisible(access, 1)).rejects.toMatchObject({ statusCode: 403 });
+  });
+  it("réserve le catalogue complet aux administrateurs et éditeurs dans les référentiels", async () => {
+    for (const model of [db.article, db.sector, db.piece, db.supplier, db.subArticle, db.articleSubArticle]) model.findMany.mockResolvedValue([]);
+    await expect(getCatalog({ administration: true }, { user } as never)).rejects.toMatchObject({ statusCode: 403 });
+    await getCatalog({ administration: true }, { user: { ...user, isAdmin: true } } as never);
+    expect(db.sector.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: undefined }));
+    expect(db.article.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: undefined }));
+    db.accessRole.findMany.mockResolvedValue([{ ...role, isEditor: true }]);
+    await getCatalog({ administration: true }, { user } as never);
+    expect(db.sector.findMany).toHaveBeenLastCalledWith(expect.objectContaining({ where: undefined }));
+  });
   it("préserve les accès existants des utilisateurs sans rôle personnalisé", async () => {
     db.userSector.findMany.mockResolvedValue([{ sectorId: 4 }]);
     const access = await resolveAccess({ ...user, roleIds: [], isEditor: true } as never);

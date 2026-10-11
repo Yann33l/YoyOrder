@@ -31,10 +31,10 @@ describe("Gestion des référentiels et compositions", () => {
     expect(db.$transaction).toHaveBeenCalledOnce();
     expect(db.articlePiece.createMany).toHaveBeenCalledWith({ data: [{ articleId: 1, pieceId: 3 }, { articleId: 1, pieceId: 4 }] });
   });
-  it("refuse la modification d’un article d’un autre secteur", async () => {
+  it("permet à un éditeur de modifier un article hors de ses secteurs métier", async () => {
     db.article.findUnique.mockResolvedValue({ sectors: [{ sectorId: 20 }] });
-    await expect(saveCatalogItem({ kind: "article", id: 1, label: "Kit", sectorIds: [10] }, { user: editor } as never)).rejects.toMatchObject({ statusCode: 403 });
-    expect(db.$transaction).not.toHaveBeenCalled();
+    await expect(saveCatalogItem({ kind: "article", id: 1, label: "Kit", sectorIds: [20] }, { user: editor } as never)).resolves.toEqual({ id: 1 });
+    expect(db.articleSector.createMany).toHaveBeenCalledWith({ data: [{ articleId: 1, sectorId: 20 }] });
   });
   it("ajoute ou ajuste la quantité d’un composant", async () => {
     await setArticleComposition({ articleId: 1, subArticleId: 2, quantity: 4 }, { user: editor } as never);
@@ -45,9 +45,9 @@ describe("Gestion des référentiels et compositions", () => {
     expect(db.articleSubArticle.deleteMany).toHaveBeenCalledWith({ where: { articleId: 1, subArticleId: 2 } });
     expect(db.subArticle.update).not.toHaveBeenCalled();
   });
-  it("refuse la composition d’un article non accessible et un composant inexistant", async () => {
-    db.article.findUnique.mockResolvedValueOnce({ sectors: [{ sectorId: 20 }] });
-    await expect(setArticleComposition({ articleId: 1, subArticleId: 2, quantity: 4 }, { user: editor } as never)).rejects.toMatchObject({ statusCode: 403 });
+  it("refuse la composition d’un article ou d’un composant inexistant dans l’entreprise", async () => {
+    db.article.findUnique.mockResolvedValueOnce(null);
+    await expect(setArticleComposition({ articleId: 1, subArticleId: 2, quantity: 4 }, { user: editor } as never)).rejects.toMatchObject({ statusCode: 404 });
     db.subArticle.findUnique.mockResolvedValueOnce(null);
     await expect(setArticleComposition({ articleId: 1, subArticleId: 2, quantity: 4 }, { user: editor } as never)).rejects.toMatchObject({ statusCode: 404 });
     expect(db.articleSubArticle.upsert).not.toHaveBeenCalled();
