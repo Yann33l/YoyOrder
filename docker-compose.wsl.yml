@@ -65,6 +65,8 @@ services:
     build:
       context: .
       dockerfile: deploy/Dockerfile.web
+      args:
+        NGINX_CONFIG: deploy/nginx.wsl.conf
     restart: unless-stopped
     depends_on:
       server:

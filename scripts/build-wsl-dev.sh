@@ -29,6 +29,7 @@ if [[ "$(realpath .wasp/out/db/migrations)" != "$(realpath migrations)" ]]; then
 fi
 # Inclure les migrations générées dans l'image serveur produite par Wasp.
 wasp build
+node /workspace/scripts/prepare-wsl-client.cjs
 REACT_APP_API_URL=http://localhost:3083 npx --no-install vite build
 chmod -R a+rX .wasp/out/web-app/build
 node /workspace/scripts/prepare-wsl-server.cjs

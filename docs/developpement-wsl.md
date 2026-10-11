@@ -7,6 +7,27 @@ Deux raccourcis sont créés par `scripts/install-desktop-shortcuts.ps1`, comme 
 
 L'application s'ouvre sur **http://localhost:8083** et l'API utilise le port **3083**. Le projet Docker est `yoyorder-wsl-test`, avec sa propre base `yoyorder_wsl_test`. YoyImmo et la production ne sont pas modifiés.
 
+## Accès depuis Tailscale
+
+Le client WSL utilise `/api` sur l’adresse de la page. Nginx relaie ces appels vers le serveur, ce qui permet d’utiliser le même client sur localhost et depuis un autre appareil. L’API sur le port 3083 et Mailpit restent accessibles uniquement localement.
+
+Sur le PC Windows hébergeant WSL, activer le relais privé persistant :
+
+```powershell
+& 'C:\Program Files\Tailscale\tailscale.exe' serve --bg --tcp=8083 tcp://127.0.0.1:8083
+```
+
+YoyOrder est alors accessible à **http://100.114.13.122:8083** depuis les appareils autorisés du même réseau Tailscale, lorsque l’environnement WSL est démarré. Le relais reste configuré après les mises à jour et redémarrages de Tailscale. Les règles d’accès du réseau Tailscale s’appliquent au port 8083.
+
+Contrôler ou désactiver uniquement ce relais :
+
+```powershell
+& 'C:\Program Files\Tailscale\tailscale.exe' serve status
+& 'C:\Program Files\Tailscale\tailscale.exe' serve --tcp=8083 off
+```
+
+Après cette modification du client, utiliser le raccourci « Mettre à jour » et recharger le navigateur avec Ctrl + F5. La configuration Nginx et l’adaptation du SDK concernent seulement la compilation WSL ; la production conserve sa configuration.
+
 Les e-mails de test (vérification de compte et réinitialisation du mot de passe) arrivent dans Mailpit sur **http://localhost:8027**. Le fournisseur SMTP est configuré uniquement dans la copie Linux compilée pour cet environnement.
 
 Le code de développement est copié dans `/home/yoylinux/yoyorder-wsl-test` sur le système de fichiers Linux, conformément aux recommandations Wasp pour WSL. Les dépendances, artefacts de compilation et migrations locales restent dans cette copie. Les modifications effectuées dans cette copie Linux ne sont pas recopiées vers le dépôt Windows.
