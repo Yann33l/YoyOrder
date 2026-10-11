@@ -11,6 +11,8 @@ const emailDataSchema = z.object({
 });
 
 export const getEmailUserFields = defineUserSignupFields({
+  isSuperAdmin: (data) => isAdminEmail(emailDataSchema.parse(data).email),
+  workspace: (data) => isAdminEmail(emailDataSchema.parse(data).email) ? { connect: { id: "legacy" } } : undefined,
   email: (data) => {
     const emailData = emailDataSchema.parse(data);
     return emailData.email;

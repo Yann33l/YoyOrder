@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const db = vi.hoisted(() => ({ accessRole: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() }, user: { findMany: vi.fn(), findFirst: vi.fn(), update: vi.fn() }, userSector: { findMany: vi.fn() }, article: { findFirst: vi.fn(), findMany: vi.fn() }, sector: { count: vi.fn(), findMany: vi.fn() }, piece: { count: vi.fn(), findMany: vi.fn() }, supplier: { findMany: vi.fn() }, subArticle: { findMany: vi.fn() }, articleSubArticle: { findMany: vi.fn() }, stock: { findUnique: vi.fn() } }));
+const db = vi.hoisted(() => ({ accessRole: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() }, user: { findUnique: vi.fn(), findMany: vi.fn(), findFirst: vi.fn(), update: vi.fn() }, userSector: { findMany: vi.fn() }, article: { findFirst: vi.fn(), findMany: vi.fn() }, sector: { count: vi.fn(), findMany: vi.fn() }, piece: { count: vi.fn(), findMany: vi.fn() }, supplier: { findMany: vi.fn() }, subArticle: { findMany: vi.fn() }, articleSubArticle: { findMany: vi.fn() }, stock: { findUnique: vi.fn() } }));
 const auth = vi.hoisted(() => ({ createUser: vi.fn(), createProviderId: vi.fn(), sanitizeAndSerializeProviderData: vi.fn(), createEmailVerificationLink: vi.fn() }));
-vi.mock("wasp/server", () => ({ prisma: db, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
+vi.mock("./workspace", () => ({ workspaceDb: () => db, validateReferences: vi.fn() }));
+vi.mock("./quotas", () => ({ withUserQuota: (_id: string, callback: () => unknown) => callback(), checkStorageQuota: vi.fn() }));
+vi.mock("wasp/server", () => ({ prisma: { ...db, workspace: { findUnique: async () => ({ enabled: true, name: "Test", plan: null }) } }, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
 vi.mock("wasp/server/auth", () => auth);
 import { resolveAccess, requireActiveUser, isAccountValid, accessSectorIds, assertArticleVisible, assertPieceSelection, orderScope } from "./access";
 import { getAccessAdministration, saveAccessRole, saveManagedUser, createManagedUser } from "./admin";
 import { createRequest, getCatalog, downloadCertificate } from "./workflows";
-const user = { id: "dcd5c759-67c8-4c5d-8023-8e4e9573b89c", isAdmin: false, isAuthorized: true, isRequester: false, isBuyer: false, isEditor: false, validUntil: null, roleIds: [1] };
+const user = { id: "dcd5c759-67c8-4c5d-8023-8e4e9573b89c", workspaceId: "legacy", isSuperAdmin: false, isAdmin: false, isAuthorized: true, isRequester: false, isBuyer: false, isEditor: false, validUntil: null, roleIds: [1] };
 const admin = { ...user, isAdmin: true, roleIds: [] };
 const role = { id: 1, name: "Technicien ACP", isRequester: true, isBuyer: false, isEditor: false, sectorIds: [10], pieceIds: [20] };
 describe("Rôles personnalisés et administration", () => {

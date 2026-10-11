@@ -24,6 +24,8 @@ import {
 import * as z from "zod";
 import { ensureArgsSchemaOrThrowHttpError } from "../server/validation";
 import { hasBusinessRole } from "./permissions";
+import { workspaceDb, validateReferences } from "./workspace";
+import { checkStorageQuota, withUserQuota } from "./quotas";
 import { requireActiveUser, accessSectorIds, pieceScope, orderScope, assertArticleVisible, assertPieceSelection, type EffectiveUser } from "./access";
 
 type CatalogArticle = Pick<Article, "id" | "label" | "reference" | "packaging" | "supplierId"> & {
@@ -63,6 +65,7 @@ type HistoryRow = {
 
 export const getHistory: GetHistory<Record<string, never>, HistoryRow[]> = async (_args, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   if (!user.isAdmin && !user.isRequester && !user.isBuyer) throw new HttpError(403, "Aucun rôle ne permet de consulter l’historique");
   const sectorIds = await getSectorIds(user);
   const orders = await prisma.order.findMany({
@@ -104,6 +107,7 @@ function requireRole(user: User, role: "isRequester" | "isBuyer" | "isEditor") {
 const getSectorIds = accessSectorIds;
 
 async function assertSectorAccess(user: EffectiveUser, sectorId: number) {
+  const prisma = workspaceDb(user);
   if (user.isAdmin) return;
   if (user.roleSectorIds !== undefined) {
     if (!user.roleSectorIds.includes(sectorId)) throw new HttpError(403, "Ce secteur n’est pas autorisé par vos rôles");
@@ -118,6 +122,7 @@ async function assertSectorAccess(user: EffectiveUser, sectorId: number) {
 
 export const getCatalog: GetCatalog<Record<string, never>, Catalog> = async (_args, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   if (!user.isAdmin && !user.isRequester && !user.isBuyer && !user.isEditor) {
     throw new HttpError(403, "Aucun rôle ne permet de consulter les référentiels");
   }
@@ -143,6 +148,7 @@ export const getCatalog: GetCatalog<Record<string, never>, Catalog> = async (_ar
 
 export const getWorkspaceUsers: GetWorkspaceUsers<Record<string, never>, WorkspaceUser[]> = async (_args, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   if (!user.isAdmin) throw new HttpError(403, "Réservé aux administrateurs");
   return prisma.user.findMany({
     select: {
@@ -170,8 +176,12 @@ type UserAccessInput = z.infer<typeof userAccessSchema>;
 
 export const updateUserAccess: UpdateUserAccess<UserAccessInput, WorkspaceUser> = async (rawArgs, context) => {
   const actor = await requireUser(context);
+  const prisma = workspaceDb(actor);
   if (!actor.isAdmin) throw new HttpError(403, "Réservé aux administrateurs");
   const input = ensureArgsSchemaOrThrowHttpError(userAccessSchema, rawArgs);
+  const target = await prisma.user.findUnique({ where: { id: input.userId } });
+  if (!target) throw new HttpError(404, "Compte introuvable");
+  if (target.isSuperAdmin && !actor.isSuperAdmin) throw new HttpError(403, "Seul le super administrateur peut modifier ce compte");
   if (input.userId === actor.id && !input.isAuthorized) {
     throw new HttpError(400, "Vous ne pouvez pas désactiver votre propre compte administrateur");
   }
@@ -181,7 +191,7 @@ export const updateUserAccess: UpdateUserAccess<UserAccessInput, WorkspaceUser> 
   const sectorCount = await prisma.sector.count({ where: { id: { in: input.sectorIds } } });
   if (sectorCount !== new Set(input.sectorIds).size) throw new HttpError(400, "Un secteur sélectionné est introuvable");
 
-  return prisma.$transaction(async (tx) => {
+  const save = () => prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: input.userId },
       data: {
@@ -210,10 +220,12 @@ export const updateUserAccess: UpdateUserAccess<UserAccessInput, WorkspaceUser> 
       },
     });
   });
+  return input.isAuthorized && !target.isSuperAdmin ? withUserQuota(actor.workspaceId!, save, input.userId) : save();
 };
 
 export const getOrders: GetOrders<Record<string, never>, OrderSummary[]> = async (_args, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   if (!user.isAdmin && !user.isRequester && !user.isBuyer) {
     throw new HttpError(403, "Aucun rôle ne permet de consulter les commandes");
   }
@@ -252,6 +264,7 @@ type RequestInput = z.infer<typeof requestSchema>;
 
 export const createRequest: CreateRequest<RequestInput, Order> = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   requireRole(user, "isRequester");
   const input = ensureArgsSchemaOrThrowHttpError(requestSchema, rawArgs);
   await assertArticleVisible(user, input.articleId);
@@ -286,6 +299,7 @@ type PurchaseInput = z.infer<typeof purchaseSchema>;
 
 export const setOrderPurchase: SetOrderPurchase<PurchaseInput, Order> = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   requireRole(user, "isBuyer");
   const input = ensureArgsSchemaOrThrowHttpError(purchaseSchema, rawArgs);
   const existing = await prisma.order.findUnique({
@@ -317,6 +331,7 @@ const batchPurchaseSchema = purchaseSchema.omit({ orderId: true }).extend({ orde
 type BatchPurchaseInput = z.infer<typeof batchPurchaseSchema>;
 export const setBatchOrderPurchase: SetBatchOrderPurchase<BatchPurchaseInput, { count: number }> = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   requireRole(user, "isBuyer");
   const input = ensureArgsSchemaOrThrowHttpError(batchPurchaseSchema, rawArgs);
   const ids = [...new Set(input.orderIds)];
@@ -347,6 +362,7 @@ type ReceptionInput = z.infer<typeof receptionSchema>;
 
 export const registerReception: RegisterReception<ReceptionInput, StockSummary> = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   requireRole(user, "isRequester");
   const input = ensureArgsSchemaOrThrowHttpError(receptionSchema, rawArgs);
   const order = await prisma.order.findUnique({
@@ -374,6 +390,8 @@ export const registerReception: RegisterReception<ReceptionInput, StockSummary> 
 
   const quantityOrdered = order.sectors.reduce((total, item) => total + item.quantity, 0);
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const coa = input.coaBase64 ? Buffer.from(input.coaBase64, "base64") : null;
+    await checkStorageQuota(tx, user, coa?.byteLength ?? 0);
     const alreadyReceived = await tx.reception.aggregate({
       where: { orderId: order.id },
       _sum: { quantity: true },
@@ -397,7 +415,8 @@ export const registerReception: RegisterReception<ReceptionInput, StockSummary> 
         remainingQty: input.quantity,
         lot: input.lot,
         expiresAt: input.expiresAt ? new Date(`${input.expiresAt}T00:00:00.000Z`) : null,
-        coa: input.coaBase64 ? Buffer.from(input.coaBase64, "base64") : null,
+        coa,
+        coaBytes: coa?.byteLength ?? 0,
         receptions: { create: { receptionId: reception.id } },
       },
       select: { id: true, initialQty: true, remainingQty: true, lot: true, expiresAt: true },
@@ -417,6 +436,7 @@ export const downloadCertificate: DownloadCertificate<
   { filename: string; base64: string } | null
 > = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   if (!user.isAdmin && !user.isRequester && !user.isBuyer) throw new HttpError(403, "Aucun rôle ne permet de consulter les certificats");
   const { stockId } = ensureArgsSchemaOrThrowHttpError(certificateSchema, rawArgs);
   const stock = await prisma.stock.findUnique({
@@ -448,6 +468,7 @@ export const downloadCertificate: DownloadCertificate<
 
 export const getStock: GetStock<Record<string, never>, StockSummary[]> = async (_args, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   if (!user.isAdmin && !user.isRequester && !user.isBuyer) {
     throw new HttpError(403, "Aucun rôle ne permet de consulter les stocks");
   }
@@ -478,6 +499,7 @@ type StockUpdateInput = z.infer<typeof stockUpdateSchema>;
 
 export const updateStock: UpdateStock<StockUpdateInput, StockSummary> = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   requireRole(user, "isRequester");
   const { stockId, remainingQty } = ensureArgsSchemaOrThrowHttpError(stockUpdateSchema, rawArgs);
   const stock = await prisma.stock.findUnique({
@@ -517,6 +539,7 @@ type SupplierInput = z.infer<typeof supplierSchema>;
 
 export const createSupplier: CreateSupplier<SupplierInput, Supplier> = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   requireRole(user, "isEditor");
   const { label } = ensureArgsSchemaOrThrowHttpError(supplierSchema, rawArgs);
   return prisma.supplier.create({ data: { label } });
@@ -524,6 +547,7 @@ export const createSupplier: CreateSupplier<SupplierInput, Supplier> = async (ra
 
 export const createSector: CreateSector<SupplierInput, Sector> = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   requireRole(user, "isEditor");
   const { label } = ensureArgsSchemaOrThrowHttpError(supplierSchema, rawArgs);
   return prisma.sector.create({ data: { label } });
@@ -531,6 +555,7 @@ export const createSector: CreateSector<SupplierInput, Sector> = async (rawArgs,
 
 export const createPiece: CreatePiece<SupplierInput, Piece> = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   requireRole(user, "isEditor");
   const { label } = ensureArgsSchemaOrThrowHttpError(supplierSchema, rawArgs);
   return prisma.piece.create({ data: { label } });
@@ -547,6 +572,7 @@ const articleSchema = z.object({
 type ArticleInput = z.infer<typeof articleSchema>;
 
 async function assertArticleEditAccess(user: EffectiveUser, articleId: number) {
+  const prisma = workspaceDb(user);
   await assertArticleVisible(user, articleId);
   const article = await prisma.article.findUnique({ where: { id: articleId }, select: { sectors: { select: { sectorId: true } }, pieces: { select: { pieceId: true } } } });
   if (!article) throw new HttpError(404, "Article introuvable");
@@ -567,10 +593,12 @@ const catalogItemSchema = z.object({
   sectorIds: z.array(z.number().int().positive()).optional(), pieceIds: z.array(z.number().int().positive()).optional(),
 });
 export const saveCatalogItem: SaveCatalogItem<z.infer<typeof catalogItemSchema>, { id: number }> = async (rawArgs, context) => {
-  const user = await requireUser(context); requireRole(user, "isEditor");
+  const user = await requireUser(context);
+  const prisma = workspaceDb(user); requireRole(user, "isEditor");
   const input = ensureArgsSchemaOrThrowHttpError(catalogItemSchema, rawArgs);
   const { kind, id, label } = input;
   if (kind === "article") {
+    await validateReferences(prisma, input);
     assertPieceSelection(user, input.pieceIds ?? []);
     if (id) await assertArticleEditAccess(user, id);
     if (!input.sectorIds?.length) throw new HttpError(400, "Sélectionnez au moins un secteur compatible");
@@ -608,7 +636,8 @@ export const saveCatalogItem: SaveCatalogItem<z.infer<typeof catalogItemSchema>,
 
 const compositionSchema = z.object({ articleId: z.number().int().positive(), subArticleId: z.number().int().positive(), quantity: z.number().int().nonnegative() });
 export const setArticleComposition: SetArticleComposition<z.infer<typeof compositionSchema>, { articleId: number }> = async (rawArgs, context) => {
-  const user = await requireUser(context); requireRole(user, "isEditor");
+  const user = await requireUser(context);
+  const prisma = workspaceDb(user); requireRole(user, "isEditor");
   const input = ensureArgsSchemaOrThrowHttpError(compositionSchema, rawArgs);
   await assertArticleEditAccess(user, input.articleId);
   if (!await prisma.subArticle.findUnique({ where: { id: input.subArticleId }, select: { id: true } })) throw new HttpError(404, "Sous-article introuvable");
@@ -620,8 +649,10 @@ export const setArticleComposition: SetArticleComposition<z.infer<typeof composi
 
 export const createArticle: CreateArticle<ArticleInput, Article> = async (rawArgs, context) => {
   const user = await requireUser(context);
+  const prisma = workspaceDb(user);
   requireRole(user, "isEditor");
   const input = ensureArgsSchemaOrThrowHttpError(articleSchema, rawArgs);
+  await validateReferences(prisma, input);
   assertPieceSelection(user, input.pieceIds);
   for (const sectorId of input.sectorIds) await assertSectorAccess(user, sectorId);
   return prisma.article.create({

@@ -9,7 +9,11 @@ import { toast } from "../client/hooks/use-toast";
 type Data = Awaited<ReturnType<typeof getAccessAdministration>>;
 type Role = Data["roles"][number]; type Account = Data["users"][number];
 function Checks({ title, name, options, selected }: { title: string; name: string; options: { id: number; label: string }[]; selected: number[] }) {
-  return <fieldset className="space-y-2"><legend className="text-sm font-medium">{title}</legend><div className="max-h-48 space-y-2 overflow-auto rounded border p-3">{options.map((item) => <label key={item.id} className="flex gap-2 text-sm"><input type="checkbox" name={name} value={item.id} defaultChecked={selected.includes(item.id)} />{item.label}</label>)}{!options.length && <p className="text-muted-foreground text-sm">Aucun élément disponible.</p>}</div></fieldset>;
+  const [checked, setChecked] = useState(selected);
+  const all = options.length > 0 && options.every((item) => checked.includes(item.id));
+  return <fieldset className="space-y-2"><legend className="text-sm font-medium">{title}</legend><div className="max-h-48 space-y-2 overflow-auto rounded border p-3">
+    {name !== "roleIds" && <label className="mb-2 flex gap-2 border-b pb-2 text-sm font-medium"><input type="checkbox" checked={all} disabled={!options.length} aria-label={`Tout sélectionner : ${title}`} ref={(input) => { if (input) input.indeterminate = !all && checked.length > 0; }} onChange={(event) => setChecked(event.target.checked ? options.map((item) => item.id) : [])} />Tout</label>}
+    {options.map((item) => <label key={item.id} className="flex gap-2 text-sm"><input type="checkbox" name={name} value={item.id} checked={checked.includes(item.id)} onChange={(event) => setChecked(event.target.checked ? [...checked, item.id] : checked.filter((id) => id !== item.id))} />{item.label}</label>)}{!options.length && <p className="text-muted-foreground text-sm">Aucun élément disponible.</p>}</div></fieldset>;
 }
 const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Paris" });
 const expired = (account: Account) => Boolean(account.validUntil && new Date(account.validUntil).toISOString().slice(0, 10) < today());
@@ -29,7 +33,7 @@ export function AdminPanel({ actorId, onChanged }: { actorId: string; onChanged:
     try {
       if (edit.kind === "role") await saveRole({ id: edit.role?.id, name: String(values.get("name")), isRequester: values.has("isRequester"), isBuyer: values.has("isBuyer"), isEditor: values.has("isEditor"), sectorIds: ids("sectorIds"), pieceIds: ids("pieceIds") });
       else {
-        const account = { isAuthorized: values.has("isAuthorized"), validUntil: String(values.get("validUntil") || "") || null, roleIds: ids("roleIds") };
+        const account = { isAdmin: values.has("isAdmin"), isAuthorized: values.has("isAuthorized"), validUntil: String(values.get("validUntil") || "") || null, roleIds: ids("roleIds") };
         if (edit.user) await saveUser({ ...account, userId: edit.user.id });
         else { const created = await createUser({ ...account, email: String(values.get("email")), password: String(values.get("password")) }); setVerificationLink(created.verificationLink); }
       }
@@ -69,6 +73,7 @@ export function AdminPanel({ actorId, onChanged }: { actorId: string; onChanged:
     <Dialog open={Boolean(edit)} onOpenChange={(open) => { if (!open && !saving) setEdit(null); }}><DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>{edit?.kind === "role" ? edit.role ? "Modifier le rôle" : "Créer un rôle" : edit?.user ? `Modifier ${edit.user.email}` : "Ajouter un utilisateur"}</DialogTitle></DialogHeader>{edit && <form className="space-y-4" onSubmit={submit}>
       {edit.kind === "role" ? <><label className="block space-y-1 text-sm">Nom du rôle<Input name="name" defaultValue={edit.role?.name} maxLength={120} required /></label><fieldset className="space-y-2"><legend className="mb-2 text-sm font-medium">Permissions</legend>{([ ["isRequester", "Demander, réceptionner et gérer le stock"], ["isBuyer", "Passer des commandes"], ["isEditor", "Gérer les référentiels"] ] as const).map(([name, label]) => <label key={name} className="flex gap-2 text-sm"><input type="checkbox" name={name} defaultChecked={edit.role?.[name]} />{label}</label>)}</fieldset><Checks title="Secteurs visibles" name="sectorIds" options={data.sectors} selected={edit.role?.sectorIds ?? []} /><Checks title="Pièces visibles" name="pieceIds" options={data.pieces} selected={edit.role?.pieceIds ?? []} /></> : <>
         {!edit.user && <><label className="block space-y-1 text-sm">Email<Input name="email" type="email" required /></label><label className="block space-y-1 text-sm">Mot de passe initial (12 caractères minimum)<Input name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required /></label></>}
+        <label className="flex gap-2 text-sm"><input type="checkbox" name="isAdmin" defaultChecked={edit.user?.isAdmin ?? false} />Administrateur de l’entreprise</label>
         <label className="flex gap-2 text-sm"><input type="checkbox" name="isAuthorized" defaultChecked={edit.user?.isAuthorized ?? false} />Compte activé</label>
         <label className="block space-y-1 text-sm">Fin de validité (facultative)<Input name="validUntil" type="date" defaultValue={edit.user?.validUntil ? new Date(edit.user.validUntil).toISOString().slice(0, 10) : ""} /></label>
         <Checks title="Rôles attribués" name="roleIds" options={roleOptions} selected={edit.user?.roleIds ?? []} />

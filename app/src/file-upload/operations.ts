@@ -17,6 +17,9 @@ import {
   getUploadFileSignedURLFromS3,
 } from "./s3Utils";
 import { ALLOWED_FILE_TYPES } from "./validation";
+function requireCertificatesFlow(): void {
+  throw new HttpError(410, "Ajoutez les certificats directement dans les réceptions YoyOrder : le stockage y est contrôlé par entreprise");
+}
 
 const createFileInputSchema = z.object({
   fileType: z.enum(ALLOWED_FILE_TYPES),
@@ -42,6 +45,7 @@ export const createFileUploadUrl: CreateFileUploadUrl<
     rawArgs,
   );
 
+  requireCertificatesFlow();
   return await getUploadFileSignedURLFromS3({
     fileType,
     fileName,
@@ -70,6 +74,7 @@ export const addFileToDb: AddFileToDb<AddFileToDbInput, File> = async (
     rawArgs,
   );
 
+  requireCertificatesFlow();
   const fileExists = await checkFileExistsInS3({ s3Key: args.s3Key });
   if (!fileExists) {
     throw new HttpError(404, "File not found in S3.");

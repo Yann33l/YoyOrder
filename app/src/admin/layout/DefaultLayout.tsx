@@ -12,7 +12,7 @@ interface Props {
 export function DefaultLayout({ children, user }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  if (!user.isAdmin) {
+  if (!user.isSuperAdmin) {
     return <Link to={routes.LandingPageRoute.to} replace />;
   }
 

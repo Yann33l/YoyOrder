@@ -17,8 +17,8 @@ export const userMenuItems = [
     isAdminOnly: false,
   },
   {
-    name: "Admin Dashboard",
-    to: routes.AdminRoute.to,
+    name: "Administration SaaS",
+    to: routes.SaasPlansRoute.to,
     icon: Shield,
     isAuthRequired: false,
     isAdminOnly: true,

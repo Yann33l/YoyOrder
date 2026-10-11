@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const db = vi.hoisted(() => ({ order: { findUnique: vi.fn(), findMany: vi.fn() }, userSector: { findMany: vi.fn() }, $transaction: vi.fn() }));
-vi.mock("wasp/server", () => ({ prisma: db, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
+vi.mock("./workspace", () => ({ workspaceDb: () => db, validateReferences: vi.fn() }));
+vi.mock("./quotas", () => ({ withUserQuota: (_id: string, callback: () => unknown) => callback(), checkStorageQuota: vi.fn() }));
+vi.mock("wasp/server", () => ({ prisma: { ...db, workspace: { findUnique: async () => ({ enabled: true, name: "Test", plan: null }) } }, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
 import { getOrders, registerReception } from "./workflows";
-const user = { id: "requester", isAuthorized: true, isAdmin: false, isRequester: true };
+const user = { id: "requester", workspaceId: "legacy", isSuperAdmin: false, isAuthorized: true, isAdmin: false, isRequester: true };
 const input = { orderId: 1, quantity: 2, receivedAt: "2026-10-10", lot: "LOT-1", expiresAt: "2027-10-10", coaBase64: Buffer.from("pdf").toString("base64") };
 const tx = { reception: { aggregate: vi.fn(), create: vi.fn() }, stock: { create: vi.fn() }, order: { update: vi.fn() } };
 describe("Réceptions depuis les commandes en attente", () => {

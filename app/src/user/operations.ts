@@ -1,3 +1,4 @@
+import { isAccountValid } from "../inventory/access";
 import { type Prisma } from "@prisma/client";
 import { type User } from "wasp/entities";
 import { HttpError, prisma } from "wasp/server";
@@ -32,7 +33,7 @@ export const updateIsUserAdminById: UpdateIsUserAdminById<
     );
   }
 
-  if (!context.user.isAdmin) {
+  if (!context.user.isSuperAdmin || !isAccountValid(context.user)) {
     throw new HttpError(
       403,
       "Only admins are allowed to perform this operation",
@@ -82,7 +83,7 @@ export const getPaginatedUsers: GetPaginatedUsers<
     );
   }
 
-  if (!context.user.isAdmin) {
+  if (!context.user.isSuperAdmin || !isAccountValid(context.user)) {
     throw new HttpError(
       403,
       "Only admins are allowed to perform this operation",

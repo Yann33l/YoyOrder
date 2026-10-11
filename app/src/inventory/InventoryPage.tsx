@@ -25,6 +25,7 @@ import { CatalogPage } from "./CatalogPage";
 import { HistoryTable } from "./HistoryTable";
 import { ReceptionTable } from "./ReceptionTable";
 import { AdminPanel } from "./AdminPanel";
+import { CompanyNews } from "./CompanyNews";
 
 type View = "overview" | "requests" | "orders" | "stock" | "catalog" | "history" | "admin";
 
@@ -129,6 +130,9 @@ export function InventoryPage({ user: sessionUser }: { user: User }) {
       <main className="mx-auto max-w-3xl px-6 py-12">
         <h1 className="text-2xl font-semibold">{user.validUntil && new Date(user.validUntil).toISOString().slice(0, 10) < new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Paris" }) ? "Compte arrivé en fin de validité" : "Compte en attente d’activation"}</h1>
         <p className="text-muted-foreground mt-2">Un administrateur doit vérifier votre activation et votre fin de validité.</p>
+        {!user.workspaceId && <p className="mt-4"><a className="underline" href="/pricing">Créer un espace pour votre entreprise</a></p>}
+        {user.workspaceId && user.isAdmin && <p className="mt-4"><a className="underline" href="/pricing">Vérifier l’abonnement de l’entreprise</a></p>}
+        {user.isSuperAdmin && <p className="mt-4"><a className="underline" href="/admin/plans">Administration SaaS</a></p>}
       </main>
     );
   }
@@ -144,15 +148,18 @@ export function InventoryPage({ user: sessionUser }: { user: User }) {
   ];
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-8">
+    <main className="yoyorder-workspace w-full min-w-0 px-2 py-5 sm:px-3">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-muted-foreground text-sm">Laboratoire</p>
+          <p className="text-muted-foreground text-sm">{access?.workspaceName ?? "Laboratoire"}</p>
           <h1 className="text-2xl font-semibold">Stocks et commandes</h1>
         </div>
         {isLoading && <span className="text-muted-foreground text-sm">Chargement…</span>}
       </div>
       <nav aria-label="Sections de travail" className="mb-6 flex flex-wrap gap-2 border-b pb-3">
+        <a className="rounded px-3 py-2 text-sm" href="/tickets">Assistance</a>
+        {user.isAdmin && <a className="rounded px-3 py-2 text-sm" href="/pricing">Abonnement</a>}
+        {user.isSuperAdmin && <a className="rounded px-3 py-2 text-sm" href="/admin/plans">Administration SaaS</a>}
         {tabs.filter((tab) => tab.visible).map((tab) => (
           <Button key={tab.id} type="button" size="sm" variant={view === tab.id ? "default" : "ghost"} onClick={() => setView(tab.id)}>
             {tab.label}
@@ -164,6 +171,7 @@ export function InventoryPage({ user: sessionUser }: { user: User }) {
         <p className="text-destructive py-6">Impossible de charger les données du laboratoire.</p>
       ) : view === "overview" ? (
         <>
+          <CompanyNews canPublish={sessionUser.isAdmin} />
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Résumé du stock">
             {[
               ["Articles", overview?.articleCount],

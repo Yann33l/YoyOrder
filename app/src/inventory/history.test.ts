@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const db = vi.hoisted(() => ({ order: { findMany: vi.fn() }, userSector: { findMany: vi.fn() }, stock: { findUnique: vi.fn() } }));
-vi.mock("wasp/server", () => ({ prisma: db, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
+vi.mock("./workspace", () => ({ workspaceDb: () => db, validateReferences: vi.fn() }));
+vi.mock("./quotas", () => ({ withUserQuota: (_id: string, callback: () => unknown) => callback(), checkStorageQuota: vi.fn() }));
+vi.mock("wasp/server", () => ({ prisma: { ...db, workspace: { findUnique: async () => ({ enabled: true, name: "Test", plan: null }) } }, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
 import { getHistory, downloadCertificate } from "./workflows";
-const user = { id: "reader", isAuthorized: true, isAdmin: false, isRequester: false, isBuyer: true, isEditor: false };
+const user = { id: "reader", workspaceId: "legacy", isSuperAdmin: false, isAuthorized: true, isAdmin: false, isRequester: false, isBuyer: true, isEditor: false };
 const order = {
   id: 1, orderNumber: "CMD-123", requestDate: new Date("2026-10-01"), orderDate: new Date("2026-10-02"), receivedInFull: true, requesterComment: "Demande", comment: "Commande",
   requestedBy: { email: "test@example.com" }, article: { label: "Article", reference: "REF", packaging: "Boîte", supplier: { label: "Fournisseur" } },

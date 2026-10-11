@@ -7,7 +7,91 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Workspace {
+  id String @id @default(uuid())
+  name String
+  enabled Boolean @default(true)
+  createdAt DateTime @default(now())
+  planId String?
+  plan SaasPlan? @relation(fields: [planId], references: [id])
+  stripeCustomerId String? @unique
+  stripeSubscriptionId String? @unique
+  subscriptionStatus String?
+  billingUpdatedAt DateTime?
+  users User[]
+  roles AccessRole[]
+  sectors Sector[]
+  pieces Piece[]
+  suppliers Supplier[]
+  articles Article[]
+  subArticles SubArticle[]
+  orders Order[]
+  receptions Reception[]
+  stocks Stock[]
+  tickets SupportTicket[]
+  news WorkspaceNews[]
+}
+
+model WorkspaceNews {
+  id String @id @default(uuid())
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  title String
+  body String
+  published Boolean @default(false)
+  createdByUserId String
+  createdByEmail String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([workspaceId, published, createdAt])
+}
+
+model SaasPlan {
+  id String @id @default(uuid())
+  name String
+  description String @default("")
+  monthlyPriceCents Int @default(0)
+  stripePriceId String? @unique
+  maxUsers Int?
+  storageMb Int @default(250)
+  displayOrder Int @default(0)
+  published Boolean @default(false)
+  featured Boolean @default(false)
+  features String[] @default([])
+  workspaces Workspace[]
+}
+
+model SupportTicket {
+  id String @id @default(uuid())
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  createdById String
+  title String
+  category String
+  status String @default("OPEN")
+  priority String @default("NORMAL")
+  reviewed Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages TicketMessage[]
+  @@index([workspaceId, updatedAt])
+}
+
+model TicketMessage {
+  id String @id @default(uuid())
+  ticketId String
+  ticket SupportTicket @relation(fields: [ticketId], references: [id])
+  authorId String
+  authorEmail String
+  isStaff Boolean @default(false)
+  body String
+  createdAt DateTime @default(now())
+}
+
 model User {
+  workspaceId String?
+  workspace Workspace? @relation(fields: [workspaceId], references: [id])
+  isSuperAdmin Boolean @default(false)
   id                        String          @id @default(uuid())
   createdAt                 DateTime        @default(now())
   email                     String?         @unique
@@ -34,13 +118,16 @@ model User {
 }
 
 model AccessRole {
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
   id          Int     @id @default(autoincrement())
-  name        String  @unique
+  name        String
   isRequester Boolean @default(false)
   isBuyer     Boolean @default(false)
   isEditor    Boolean @default(false)
   sectorIds   Int[]    @default([])
   pieceIds    Int[]    @default([])
+  @@unique([workspaceId, name])
 }
 
 model GptResponse {
@@ -114,6 +201,8 @@ model ContactFormMessage {
 }
 
 model Sector {
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
   id          Int          @id @default(autoincrement())
   label       String
   validFrom   DateTime?
@@ -133,6 +222,8 @@ model UserSector {
 }
 
 model Piece {
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
   id         Int             @id @default(autoincrement())
   label      String
   validFrom  DateTime?
@@ -141,6 +232,8 @@ model Piece {
 }
 
 model Supplier {
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
   id                    Int       @id @default(autoincrement())
   label                 String
   telephone             String?
@@ -153,6 +246,8 @@ model Supplier {
 }
 
 model Article {
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
   id             Int              @id @default(autoincrement())
   label          String
   reference      String?
@@ -189,6 +284,8 @@ model ArticlePiece {
 }
 
 model SubArticle {
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
   id           Int                 @id @default(autoincrement())
   label        String
   reference    String?
@@ -211,6 +308,8 @@ model ArticleSubArticle {
 }
 
 model Order {
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
   id                Int           @id @default(autoincrement())
   orderNumber       String?
   articleId         Int
@@ -249,6 +348,8 @@ model SubOrder {
 }
 
 model Reception {
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
   id             Int              @id @default(autoincrement())
   orderId        Int
   subOrderId     Int?
@@ -264,11 +365,14 @@ model Reception {
 }
 
 model Stock {
+  workspaceId String @default("legacy")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
   id             Int              @id @default(autoincrement())
   initialQty     Int?
   remainingQty   Int?
   lot            String?
   expiresAt      DateTime?
+  coaBytes       Int @default(0)
   coa            Bytes?
   receptions     ReceptionStock[]
 }

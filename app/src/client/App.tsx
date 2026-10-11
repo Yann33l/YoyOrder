@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Link, Outlet, useLocation } from "react-router";
+import { currentVersion } from "./versions";
 import { routes } from "wasp/client/router";
 import { Toaster } from "../client/components/ui/toaster";
 import "./Main.css";
@@ -39,6 +40,8 @@ export function App() {
   }, [location]);
 
   useEffect(() => {
+    document.body.classList.remove("dark");
+    document.documentElement.classList.remove("dark");
     if (location.hash) {
       const id = location.hash.replace("#", "");
       const element = document.getElementById(id);
@@ -58,11 +61,12 @@ export function App() {
             {shouldDisplayAppNavBar && (
               <NavBar navigationItems={navigationItems} />
             )}
-            <div className="max-w-(--breakpoint-2xl) mx-auto">
+            <div className={isMarketingPage ? "max-w-(--breakpoint-2xl) mx-auto" : "w-full min-w-0"}>
               <Outlet />
             </div>
           </>
         )}
+        <footer className="text-muted-foreground px-3 py-3 text-right text-xs"><Link to="/versions" className="hover:text-foreground underline underline-offset-4" aria-label={`Historique des versions, version ${currentVersion}`}>Version {currentVersion}</Link></footer>
       </div>
       <Toaster position="bottom-right" />
       <CookieConsentBanner />

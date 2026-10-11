@@ -10,6 +10,7 @@ import { getPaymentPlanIdByPaymentProcessorPlanId } from "../paymentProcessorPla
 import { PaymentPlanId, paymentPlans, SubscriptionStatus } from "../plans";
 import { updateUserCredits, updateUserSubscription } from "../user";
 import { stripeClient } from "./stripeClient";
+import { handleWorkspaceStripeEvent } from "../../saas/stripe";
 
 /**
  * Stripe requires a raw request to construct events successfully.
@@ -33,6 +34,7 @@ export const stripeWebhook: PaymentsWebhook = async (
   const prismaUserDelegate = context.entities.User;
   try {
     const event = constructStripeEvent(request);
+    if (await handleWorkspaceStripeEvent(event)) return response.status(204).send();
 
     // If you'd like to handle more events, you can add more cases below.
     // When deploying your app, you configure your webhook in the Stripe dashboard

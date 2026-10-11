@@ -9,15 +9,15 @@ const date = (value: Date | null) => value ? new Date(value).toLocaleDateString(
 function ReceptionFields({ order, disabled, onSubmit }: { order: Order; disabled: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void> }) {
   const [receivedAt, setReceivedAt] = useState(new Date().toLocaleDateString("en-CA"));
   const remaining = Math.max(0, order.quantityOrdered - order.receivedQty);
-  return <form className="flex items-end gap-2 p-2" onSubmit={onSubmit} aria-label={`Réception de ${order.article.label}, commande ${order.orderNumber || order.id}`}>
+  return <form className="p-1" onSubmit={onSubmit} aria-label={`Réception de ${order.article.label}, commande ${order.orderNumber || order.id}`}>
     <input type="hidden" name="orderId" value={order.id} />
-    <fieldset className="flex items-end gap-2" disabled={disabled}>
-      <label className="w-24 text-xs">Quantité<Input aria-label="Quantité reçue" className="mt-1 h-9" name="quantity" type="number" min="1" max={remaining} step="1" required /></label>
-      <label className="w-36 text-xs">Réception<Input aria-label="Date de réception" className="mt-1 h-9" name="receivedAt" type="date" min={order.orderDate ? new Date(order.orderDate).toISOString().slice(0, 10) : undefined} value={receivedAt} onChange={(event) => setReceivedAt(event.target.value)} required /></label>
-      <label className="w-36 text-xs">N° de lot<Input aria-label="Numéro de lot" className="mt-1 h-9" name="lot" maxLength={255} required /></label>
-      <label className="w-36 text-xs">Péremption<Input aria-label="Date de péremption" className="mt-1 h-9" name="expiresAt" type="date" min={receivedAt} /></label>
-      <label className="w-48 text-xs">Certificat PDF<Input aria-label="Certificat d’analyse PDF" className="mt-1 h-9" name="coa" type="file" accept="application/pdf,.pdf" /></label>
-      <label className="w-40 text-xs">Commentaire<Input aria-label="Commentaire de réception" className="mt-1 h-9" name="comment" maxLength={255} /></label>
+    <fieldset className="grid grid-cols-[64px_124px_150px_124px] items-end gap-1.5" disabled={disabled}>
+      <label className="text-xs">Quantité<Input aria-label="Quantité reçue" className="mt-1 h-9" name="quantity" type="number" min="1" max={remaining} step="1" required /></label>
+      <label className="text-xs">Réception<Input aria-label="Date de réception" className="mt-1 h-9" name="receivedAt" type="date" min={order.orderDate ? new Date(order.orderDate).toISOString().slice(0, 10) : undefined} value={receivedAt} onChange={(event) => setReceivedAt(event.target.value)} required /></label>
+      <label className="text-xs">N° de lot<Input aria-label="Numéro de lot" className="mt-1 h-9" name="lot" maxLength={255} required /></label>
+      <label className="text-xs">Péremption<Input aria-label="Date de péremption" className="mt-1 h-9" name="expiresAt" type="date" min={receivedAt} /></label>
+      <label className="col-span-2 text-xs">Certificat PDF<Input aria-label="Certificat d’analyse PDF" className="mt-1 h-9" name="coa" type="file" accept="application/pdf,.pdf" /></label>
+      <label className="text-xs">Commentaire<Input aria-label="Commentaire de réception" className="mt-1 h-9" name="comment" maxLength={255} /></label>
       <Button size="sm" type="submit" disabled={disabled || remaining === 0}>Réceptionner</Button>
     </fieldset>
   </form>;
@@ -40,7 +40,7 @@ export function ReceptionTable({ orders, disabled, onSubmit }: { orders: Order[]
     { id: "receivedQty", label: "Déjà reçu", group: "Quantités", value: (order) => order.receivedQty },
     { id: "remaining", label: "À recevoir", group: "Quantités", value: (order) => Math.max(0, order.quantityOrdered - order.receivedQty) },
     { id: "comment", label: "Commentaire commande", group: "Commande", width: 220, value: (order) => order.comment },
-    { id: "reception", label: "Tracer une réception", group: "Réception", width: 1100, value: () => "", render: (order) => <ReceptionFields order={order} disabled={disabled} onSubmit={onSubmit} /> },
+    { id: "reception", label: "Tracer une réception", group: "Réception", width: 510, value: () => "", render: (order) => <ReceptionFields order={order} disabled={disabled} onSubmit={onSubmit} /> },
   ];
   return <section className="space-y-3">
     <h2 className="text-lg font-semibold">Articles en attente de réception</h2>

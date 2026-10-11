@@ -1,3 +1,4 @@
+import { isAccountValid } from "../inventory/access";
 import { type DailyStats, type PageViewSource } from "wasp/entities";
 import { HttpError, prisma } from "wasp/server";
 import { type GetDailyStats } from "wasp/server/operations";
@@ -22,7 +23,7 @@ export const getDailyStats: GetDailyStats<
     );
   }
 
-  if (!context.user.isAdmin) {
+  if (!context.user.isSuperAdmin || !isAccountValid(context.user)) {
     throw new HttpError(
       403,
       "Only admins are allowed to perform this operation",

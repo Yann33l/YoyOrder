@@ -330,3 +330,6 @@
 .apexcharts-xaxistooltip-bottom:before {
   @apply dark:border-b-muted!;
 }
+
+/* Sélecteurs compacts, y compris dans les formulaires ouverts en dialogue. */
+select { font-size: 13px; line-height: 1.35; }

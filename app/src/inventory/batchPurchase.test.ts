@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const db = vi.hoisted(() => ({ order: { findMany: vi.fn(), updateMany: vi.fn() }, userSector: { findMany: vi.fn() }, $transaction: vi.fn() }));
-vi.mock("wasp/server", () => ({ prisma: db, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
+vi.mock("./workspace", () => ({ workspaceDb: () => db, validateReferences: vi.fn() }));
+vi.mock("./quotas", () => ({ withUserQuota: (_id: string, callback: () => unknown) => callback(), checkStorageQuota: vi.fn() }));
+vi.mock("wasp/server", () => ({ prisma: { ...db, workspace: { findUnique: async () => ({ enabled: true, name: "Test", plan: null }) } }, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
 import { setBatchOrderPurchase } from "./workflows";
-const buyer = { id: "buyer", isAuthorized: true, isAdmin: false, isBuyer: true, isRequester: false, isEditor: false };
+const buyer = { id: "buyer", workspaceId: "legacy", isSuperAdmin: false, isAuthorized: true, isAdmin: false, isBuyer: true, isRequester: false, isEditor: false };
 const input = { orderIds: [1, 2], orderDate: "2026-10-11", orderNumber: "C-2026-42", comment: "Commande commune" };
 const order = (id: number, supplierId = 10, requestDate = "2026-10-10") => ({ id, orderDate: null, requestDate: new Date(`${requestDate}T00:00:00Z`), article: { supplierId }, sectors: [{ sectorId: 1 }] });
 describe("Enregistrement groupé des commandes", () => {

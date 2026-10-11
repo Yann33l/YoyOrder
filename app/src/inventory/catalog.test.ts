@@ -7,9 +7,11 @@ const db = vi.hoisted(() => ({
   userSector: { findMany: vi.fn(), findUnique: vi.fn() }, supplier: { update: vi.fn(), create: vi.fn() },
   sector: { update: vi.fn(), create: vi.fn() }, piece: { update: vi.fn(), create: vi.fn(), findFirst: vi.fn() }, $transaction: vi.fn(),
 }));
-vi.mock("wasp/server", () => ({ prisma: db, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
+vi.mock("./workspace", () => ({ workspaceDb: () => db, validateReferences: vi.fn() }));
+vi.mock("./quotas", () => ({ withUserQuota: (_id: string, callback: () => unknown) => callback(), checkStorageQuota: vi.fn() }));
+vi.mock("wasp/server", () => ({ prisma: { ...db, workspace: { findUnique: async () => ({ enabled: true, name: "Test", plan: null }) } }, HttpError: class extends Error { constructor(public statusCode: number, message: string) { super(message); } } }));
 import { saveCatalogItem, setArticleComposition } from "./workflows";
-const editor = { id: "editor", isAuthorized: true, isAdmin: false, isEditor: true, isRequester: false, isBuyer: false };
+const editor = { id: "editor", workspaceId: "legacy", isSuperAdmin: false, isAuthorized: true, isAdmin: false, isEditor: true, isRequester: false, isBuyer: false };
 describe("Gestion des référentiels et compositions", () => {
   beforeEach(() => {
     vi.resetAllMocks();

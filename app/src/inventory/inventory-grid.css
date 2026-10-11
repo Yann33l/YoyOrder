@@ -7,7 +7,10 @@
 .inventory-grid .inventory-grid-groups th { font-size: 12px; text-align: center; padding: 5px 12px; color: hsl(var(--muted-foreground)); }
 .inventory-grid .inventory-grid-editable { box-shadow: inset 0 -3px #bf9d51; }
 .inventory-grid td { padding: 12px; border-right: 1px solid hsl(var(--border)); border-bottom: 1px solid hsl(var(--border)); overflow-wrap: anywhere; vertical-align: middle; }
-.inventory-grid-compact td { padding: 6px 12px; }
+.inventory-grid-compact td { padding: 4px 6px; }
+.inventory-grid-compact th { padding: 7px 6px; }
+.inventory-grid-compact table { font-size: 12px; }
+.inventory-grid-compact input, .inventory-grid-compact button { font-size: 12px; }
 .inventory-grid tbody tr:nth-child(even) { background: color-mix(in srgb, hsl(var(--muted)) 35%, transparent); }
 .inventory-grid tbody tr:hover { background: color-mix(in srgb, #bf9d51 10%, hsl(var(--background))); }
 .inventory-grid-resize { position: absolute; top: 0; right: -3px; width: 6px; height: 100%; cursor: col-resize; touch-action: none; z-index: 2; }

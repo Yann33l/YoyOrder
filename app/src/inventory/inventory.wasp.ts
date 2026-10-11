@@ -1,6 +1,7 @@
 import { action, page, query, route, type Spec } from "@wasp.sh/spec";
 
 import { InventoryPage } from "./InventoryPage" with { type: "ref" };
+import { getCompanyNews, saveCompanyNews } from "./news" with { type: "ref" };
 import { getMyAccess, getAccessAdministration, saveAccessRole, saveManagedUser, createManagedUser } from "./admin" with { type: "ref" };
 import {
   getInventoryOverview,
@@ -28,6 +29,8 @@ import {
 
 export const inventorySpec: Spec = [
   route("InventoryRoute", "/inventory", page(InventoryPage, { authRequired: true })),
+  query(getCompanyNews, { entities: ["WorkspaceNews", "Workspace", "User"] }),
+  action(saveCompanyNews, { entities: ["WorkspaceNews", "Workspace", "User"] }),
   query(getMyAccess, { entities: ["User", "AccessRole"] }),
   query(getAccessAdministration, { entities: ["User", "AccessRole", "Sector", "Piece"] }),
   action(saveAccessRole, { entities: ["AccessRole", "Sector", "Piece", "User"] }),

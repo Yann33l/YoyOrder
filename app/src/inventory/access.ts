@@ -1,6 +1,7 @@
 import type { User } from "wasp/entities";
 import { HttpError, prisma } from "wasp/server";
 import type { Prisma } from "@prisma/client";
+import { workspaceDb } from "./workspace";
 
 export type EffectiveUser = User & { roleSectorIds?: number[]; rolePieceIds?: number[] };
 export function isAccountValid(user: { isAuthorized: boolean; validUntil?: Date | null }, now = new Date()) {
@@ -9,7 +10,7 @@ export function isAccountValid(user: { isAuthorized: boolean; validUntil?: Date 
 }
 export async function resolveAccess(user: User): Promise<EffectiveUser> {
   if (!user.roleIds?.length) return { ...user, isAuthorized: isAccountValid(user) };
-  const roles = await prisma.accessRole.findMany({ where: { id: { in: user.roleIds } } });
+  const roles = await workspaceDb(user).accessRole.findMany({ where: { id: { in: user.roleIds } } });
   return {
     ...user, isAuthorized: isAccountValid(user),
     isRequester: roles.some((role) => role.isRequester), isBuyer: roles.some((role) => role.isBuyer), isEditor: roles.some((role) => role.isEditor),
@@ -18,14 +19,22 @@ export async function resolveAccess(user: User): Promise<EffectiveUser> {
 }
 export async function requireActiveUser(context: { user?: User | null }) {
   if (!context.user) throw new HttpError(401, "Authentification requise");
-  const user = await resolveAccess(context.user);
+  const resolved = await resolveAccess(context.user);
+  const user = { ...resolved, isAdmin: resolved.isAdmin || resolved.isSuperAdmin };
   if (!user.isAuthorized) throw new HttpError(403, "Compte inactif ou arrivé en fin de validité");
+  if (!user.workspaceId) throw new HttpError(403, "Aucun espace de travail attribué");
+  const workspace = await prisma.workspace.findUnique({ where: { id: user.workspaceId }, include: { plan: true } });
+  if (!workspace?.enabled) throw new HttpError(403, "Cet espace de travail est suspendu");
+  if (!workspaceEntitled(workspace) && !user.isSuperAdmin) throw new HttpError(403, "Abonnement à régulariser depuis la page Tarifs");
   return user;
+}
+export function workspaceEntitled(workspace: { plan?: { monthlyPriceCents: number } | null; subscriptionStatus?: string | null }) {
+  return !workspace.plan?.monthlyPriceCents || ["manual", "active", "trialing"].includes(workspace.subscriptionStatus ?? "");
 }
 export async function accessSectorIds(user: EffectiveUser) {
   if (user.isAdmin) return null;
   if (user.roleSectorIds !== undefined) return user.roleSectorIds;
-  const memberships = await prisma.userSector.findMany({ where: { userId: user.id }, select: { sectorId: true } });
+  const memberships = await workspaceDb(user).userSector.findMany({ where: { userId: user.id }, select: { sectorId: true } });
   return memberships.map(({ sectorId }) => sectorId);
 }
 export function pieceScope(user: EffectiveUser): Prisma.ArticleWhereInput {
@@ -38,7 +47,7 @@ export function orderScope(user: EffectiveUser, sectorIds: number[] | null): Pri
 export async function assertArticleVisible(user: EffectiveUser, articleId: number) {
   if (user.isAdmin || user.rolePieceIds === undefined) return;
   const sectors = await accessSectorIds(user);
-  const article = await prisma.article.findFirst({ where: { id: articleId, sectors: { some: { sectorId: { in: sectors ?? [] } } }, ...pieceScope(user) }, select: { id: true } });
+  const article = await workspaceDb(user).article.findFirst({ where: { id: articleId, sectors: { some: { sectorId: { in: sectors ?? [] } } }, ...pieceScope(user) }, select: { id: true } });
   if (!article) throw new HttpError(403, "Cet article n’est pas visible pour vos rôles");
 }
 export function assertPieceSelection(user: EffectiveUser, pieceIds: number[]) {

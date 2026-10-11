@@ -1,5 +1,6 @@
 import { type GetInventoryOverview } from "wasp/server/operations";
 import { requireActiveUser, accessSectorIds, pieceScope, orderScope } from "./access";
+import { workspaceDb } from "./workspace";
 
 
 type InventoryOverview = {
@@ -14,6 +15,7 @@ export const getInventoryOverview: GetInventoryOverview<
   InventoryOverview
 > = async (_args, context) => {
   const user = await requireActiveUser(context);
+  const db = workspaceDb(user);
   const sectorIds = await accessSectorIds(user);
   const stockWhere = sectorIds === null ? undefined : {
     receptions: {
@@ -27,11 +29,11 @@ export const getInventoryOverview: GetInventoryOverview<
     ...pieceScope(user),
   };
   const [articleCount, stockCount, lowStockCount, pendingUsers] = await Promise.all([
-    context.entities.Article.count({ where: articleWhere }),
-    context.entities.Stock.count({ where: stockWhere }),
-    context.entities.Stock.count({ where: { ...stockWhere, remainingQty: { lte: 2 } } }),
+    db.article.count({ where: articleWhere }),
+    db.stock.count({ where: stockWhere }),
+    db.stock.count({ where: { ...stockWhere, remainingQty: { lte: 2 } } }),
     user.isAdmin
-      ? context.entities.User.count({ where: { isAuthorized: false } })
+      ? db.user.count({ where: { isAuthorized: false } })
       : Promise.resolve(0),
   ]);
 

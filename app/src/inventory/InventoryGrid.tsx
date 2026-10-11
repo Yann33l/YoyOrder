@@ -33,6 +33,7 @@ export function InventoryGrid<Row>({ rows, columns, rowId, label, emptyMessage =
   const [compact, setCompact] = useState(true);
   const [widths, setWidths] = useState<Record<string, number>>({});
   const visible = columns.filter((column) => !hidden.includes(column.id));
+  const columnWidth = (column: GridColumn<Row>) => widths[column.id] ?? (compact && (column.width ?? 130) < 500 ? Math.max(column.render || column.editable ? 100 : 72, Math.round((column.width ?? 130) * 0.72)) : column.width ?? 150);
   const filtered = filterAndSortRows(rows, columns, search, filters, sort);
   const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
   const currentPage = Math.min(page, lastPage);
@@ -72,19 +73,19 @@ export function InventoryGrid<Row>({ rows, columns, rowId, label, emptyMessage =
         {(search || Object.values(filters).some(Boolean) || sort) && <Button type="button" variant="ghost" size="sm" onClick={() => { setSearch(""); setFilters({}); setSort(null); setPage(0); }}>Réinitialiser</Button>}
       </div>
       <div className="inventory-grid-scroll" tabIndex={0} aria-label={`Défilement du tableau ${label}`}>
-        <table aria-label={label} style={{ width: visible.reduce((sum, column) => sum + (widths[column.id] ?? column.width ?? 150), 0), minWidth: "100%" }}>
-          <colgroup>{visible.map((column) => <col key={column.id} style={{ width: widths[column.id] ?? column.width ?? 150 }} />)}</colgroup>
+        <table aria-label={label} style={{ width: visible.reduce((sum, column) => sum + columnWidth(column), 0), minWidth: "100%" }}>
+          <colgroup>{visible.map((column) => <col key={column.id} style={{ width: columnWidth(column) }} />)}</colgroup>
           <thead>
             <tr className="inventory-grid-groups">{groups.map((group, index) => <th key={index} colSpan={group.count} scope="colgroup">{group.name}</th>)}</tr>
             <tr>{visible.map((column) => <th key={column.id} scope="col" aria-sort={sort?.id === column.id ? sort.descending ? "descending" : "ascending" : "none"} className={column.editable ? "inventory-grid-editable" : ""}>
               {column.header ? column.header(filtered) : <button type="button" className="flex w-full items-center gap-2 text-left" onClick={() => { setSort(sort?.id === column.id ? sort.descending ? null : { id: column.id, descending: true } : { id: column.id, descending: false }); setPage(0); }}>{column.label}{sort?.id === column.id && (sort.descending ? <ArrowDown className="size-3 shrink-0" /> : <ArrowUp className="size-3 shrink-0" />)}</button>}
-              <span role="separator" aria-label={`Largeur de ${column.label}`} aria-orientation="vertical" tabIndex={0} className="inventory-grid-resize" onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setWidths({ ...widths, [column.id]: Math.max(80, (widths[column.id] ?? column.width ?? 150) + (event.key === "ArrowRight" ? 20 : -20)) }); } }} onPointerDown={(event) => {
+              <span role="separator" aria-label={`Largeur de ${column.label}`} aria-orientation="vertical" tabIndex={0} className="inventory-grid-resize" onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setWidths({ ...widths, [column.id]: Math.max(64, columnWidth(column) + (event.key === "ArrowRight" ? 20 : -20)) }); } }} onPointerDown={(event) => {
                 event.preventDefault();
                 const start = event.clientX;
-                const width = widths[column.id] ?? column.width ?? 150;
+                const width = columnWidth(column);
                 const target = event.currentTarget;
                 target.setPointerCapture(event.pointerId);
-                target.onpointermove = (move) => setWidths((current) => ({ ...current, [column.id]: Math.max(80, width + move.clientX - start) }));
+                target.onpointermove = (move) => setWidths((current) => ({ ...current, [column.id]: Math.max(64, width + move.clientX - start) }));
                 target.onpointerup = () => { target.onpointermove = null; target.onpointerup = null; };
               }} />
             </th>)}</tr>
