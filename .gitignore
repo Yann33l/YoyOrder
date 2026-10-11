@@ -37,3 +37,4 @@ backups/
 *.agekey
 .env.wsl
 .wsl-update.lock
+reports/security/

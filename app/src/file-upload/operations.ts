@@ -157,7 +157,8 @@ export const deleteFile: DeleteFile<DeleteFileInput, File> = async (
     await deleteFileFromS3({ s3Key: deletedFile.s3Key });
   } catch (error) {
     console.error(
-      `S3 deletion failed. Orphaned file s3Key: ${deletedFile.s3Key}`,
+      "S3 deletion failed. Orphaned file s3Key:",
+      deletedFile.s3Key,
       error,
     );
   }

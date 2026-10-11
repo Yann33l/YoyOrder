@@ -1,5 +1,4 @@
-import { existsSync } from "fs";
-import path from "path";
+import { existsSync, readdirSync } from "fs";
 import { fileURLToPath } from "url";
 
 export const BANNER_PATH = "/banner-images";
@@ -14,11 +13,6 @@ export const checkBannerImageExists = ({
 }: {
   bannerImageFileName: string;
 }) => {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const imagePath = path.join(
-    __dirname,
-    `../../public/${BANNER_PATH}`,
-    bannerImageFileName,
-  );
-  return existsSync(imagePath);
+  const bannersDirectory = fileURLToPath(new URL("../../public/banner-images/", import.meta.url));
+  return existsSync(bannersDirectory) && readdirSync(bannersDirectory).includes(bannerImageFileName);
 };
