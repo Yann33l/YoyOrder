@@ -20,12 +20,13 @@ export function AppNavigation() {
     { id: "company", label: "Administration", to: "/company/users", icon: Building2, visible: access.isAdmin },
     { id: "platform", label: "Super admin", to: "/admin/workspaces", icon: ShieldCheck, visible: access.isSuperAdmin },
   ];
+  const visibleSpaces = spaces.filter((item) => item.visible);
   const menu = spaceMenu(space, access);
   const active = (entry: typeof menu[number]) => entry.view ? view === entry.view && (location.pathname.startsWith("/inventory") || location.pathname.startsWith("/company/")) : location.pathname === entry.to;
   return <header className={`app-navigation app-navigation-${space}`}>
     <div className="app-navigation-top">
       <Link to="/inventory" className="app-brand" aria-label="YoyOrder — accueil"><img src={logo} alt="YoyOrder" /></Link>
-      <nav className="app-space-switch" aria-label="Espaces de navigation">{spaces.filter((item) => item.visible).map((item) => <Link key={item.id} to={item.to} aria-current={space === item.id ? "page" : undefined}><item.icon size={16} aria-hidden="true" /><span>{item.label}</span></Link>)}</nav>
+      {visibleSpaces.length > 1 && <nav className="app-space-switch" aria-label="Espaces de navigation">{visibleSpaces.map((item) => <Link key={item.id} to={item.to} aria-current={space === item.id ? "page" : undefined}><item.icon size={16} aria-hidden="true" /><span>{item.label}</span></Link>)}</nav>}
       <div className="app-navigation-account"><span className="app-workspace-name" title={permissions?.workspaceName ?? undefined}>{space === "platform" ? "Toutes les entreprises" : permissions?.workspaceName ?? "Mon entreprise"}</span><UserDropdown user={user} /></div>
     </div>
     <nav className="app-section-navigation" aria-label={space === "user" ? "Menu utilisateur" : space === "company" ? "Administration de l’entreprise" : "Super administration"}>{menu.map((entry) => <Link key={entry.to} to={entry.to} aria-current={active(entry) ? "page" : undefined}>{entry.label}</Link>)}</nav>
